@@ -1,0 +1,171 @@
+# yaml-language-server: $schema=https://frigate.devbu.io/api/config/schema.json
+logger:
+  default: info
+  # logs:
+  #   frigate.record: debug
+
+mqtt:
+  enabled: true
+  host: homeassistant.calzone.zone
+  topic_prefix: frigate
+  user: hamqtt
+  password: PatsWin17!
+
+database:
+  path: /config/frigate.db
+
+detectors:
+  coral:
+    type: edgetpu
+    device: usb
+
+ffmpeg:
+  hwaccel_args: preset-intel-qsv-h264
+  global_args: [-hide_banner, -loglevel, warning]
+  output_args:
+    record: preset-record-ubiquiti
+
+birdseye:
+  enabled: false
+
+snapshots:
+  enabled: true
+  # timestamp: true
+  # bounding_box: true
+  # crop: false
+  # retain:
+  #   default: 10
+
+record:
+  enabled: true
+  retain:
+    days: 3
+    mode: all
+  alerts:
+    retain:
+      days: 30
+      mode: motion
+  detections:
+    retain:
+      days: 30
+      mode: motion
+objects:
+  track:
+    - person
+    - car
+    # - dog
+    # - cat
+    # - motorcycle
+    # - bus
+    # - bird
+    # - fox
+    # - goat
+    # - squirrel
+    # - bicycle
+    # - face
+    # - package
+    # - license_plate
+
+review:
+  alerts:
+    labels:
+      - car
+      - person
+      # - motorcycle
+  # detections:
+  #   labels:
+  #     - cat
+  #     - dog
+  #     - bus
+  #     - bird
+  #     - fox
+  #     - goat
+  #     - squirrel
+  #     - bicycle
+  #     - face
+  #     - package
+  #     - license_plate
+
+# motion:
+#   enabled: true
+#   # threshold: 70
+#   # lightning_threshold: 0.8
+#   # contour_area: 20
+#   # frame_alpha: 0.01
+#   # frame_height: 100
+#   # # mask: 0.683,0.04,0.683,0.084,0.974,0.079,0.975,0.038
+#   # improve_contrast: true
+#   mqtt_off_delay: 30
+
+go2rtc:
+  streams:
+    frigate_frontdoor_hq: rtspx://192.168.1.1:7441/uOdLAlKjUTaCcKey
+    frigate_frontdoor_lq: rtspx://192.168.1.1:7441/8KanNbc6boyTJpmV
+    frigate_packagecam: rtspx://192.168.1.1:7441/oZ6zmPyXEdVwUOZs
+    frigate_garage_hq: rtspx://192.168.1.1:7441/xnexsGcsDCI8PxZY
+    frigate_garage_lq: rtspx://192.168.1.1:7441/aDWsDvkL16CmQpiB
+    frigate_front_hq: rtspx://192.168.1.1:7441/Iu7PTWnVramD4hyn
+    frigate_front_lq: rtspx://192.168.1.1:7441/wJUTOiaAWvzFj0CX
+
+cameras:
+  frigate_frontdoor:
+    detect:
+      width: 1280
+      height: 720
+      fps: 5
+    ffmpeg:
+      inputs:
+        - path: rtsp://localhost:8554/frigate_frontdoor_lq
+          roles:
+            - detect
+        - path: rtsp://localhost:8554/frigate_frontdoor_hq
+          roles:
+            - record
+            # - detect
+
+  frigate_packagecam:
+    # detect:
+    #   width: 1280
+    #   height: 720
+    #   fps: 5
+    ffmpeg:
+      inputs:
+        - path: rtsp://localhost:8554/frigate_packagecam
+          roles:
+            - record
+            - detect
+
+  frigate_garage:
+    detect:
+      width: 1280
+      height: 720
+      fps: 5
+    ffmpeg:
+      inputs:
+        - path: rtsp://localhost:8554/frigate_garage_lq
+          roles:
+            - detect
+        - path: rtsp://localhost:8554/frigate_garage_hq
+          roles:
+            - record
+            # - detect
+
+  frigate_front:
+    detect:
+      width: 1280
+      height: 720
+      fps: 5
+    ffmpeg:
+      inputs:
+        - path: rtsp://localhost:8554/frigate_front_lq
+          roles:
+            - detect
+        - path: rtsp://localhost:8554/frigate_front_hq
+          roles:
+            - record
+            # - detect
+    zones:
+      driveway:
+        coordinates: 0.136,0.285,0.433,0.163,0.671,0.354,0.977,0.659,0.86,1,0.221,0.997,0.161,0.676
+        loitering_time: 0
+version: 0.15-1
