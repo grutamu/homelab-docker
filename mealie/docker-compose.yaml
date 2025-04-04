@@ -1,0 +1,25 @@
+services:
+  mealie:
+    container_name: mealie
+    image: ghcr.io/mealie-recipes/mealie:latest
+    restart: always
+    volumes:
+      - /docker-data/mealie:/app/data/
+    # ports:
+    #   - 9091:9000
+    environment:
+      ALLOW_SIGNUP: "false"
+      LOG_LEVEL: "DEBUG"
+      DB_ENGINE: sqlite
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mealie.rule=Host(`mealie.calzone.zone`)"
+      - "traefik.http.routers.mealie.entrypoints=https"
+      - "traefik.http.routers.mealie.tls=true"
+      - "traefik.http.services.mealie.loadbalancer.server.port=9091"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
