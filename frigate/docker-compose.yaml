@@ -16,6 +16,7 @@ services:
       - type: bind
         source: ./config/config.yml
         target: /config/config.yml
+        read_only: true
       - nfs-frigate:/media/frigate
       - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
         target: /tmp/cache
