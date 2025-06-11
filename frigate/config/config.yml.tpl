@@ -5,10 +5,10 @@ logger:
 
 mqtt:
   enabled: true
-  host: homeassistant.calzone.zone
+  host: op://docker/frigate/FRIGATE_MQTT_HOST
   topic_prefix: frigate
-  user: ${FRIGATE_MQTT_USER}
-  password: ${FRIGATE_MQTT_PASSWORD}
+  user: op://docker/frigate/FRIGATE_MQTT_USER
+  password: op://docker/frigate/FRIGATE_MQTT_PASSWORD
 
 database:
   path: /config/frigate.db
