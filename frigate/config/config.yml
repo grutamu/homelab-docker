@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://frigate.devbu.io/api/config/schema.json
 logger:
   default: info
   # logs:
@@ -8,8 +7,8 @@ mqtt:
   enabled: true
   host: homeassistant.calzone.zone
   topic_prefix: frigate
-  user: hamqtt
-  password: PatsWin17!
+  user: ${FRIGATE_MQTT_USER}
+  password: ${FRIGATE_MQTT_PASSWORD}
 
 database:
   path: /config/frigate.db
@@ -20,7 +19,7 @@ detectors:
     device: usb
 
 ffmpeg:
-  hwaccel_args: preset-intel-qsv-h264
+  hwaccel_args: preset-vaapi
   global_args: [-hide_banner, -loglevel, warning]
   output_args:
     record: preset-record-ubiquiti
@@ -99,9 +98,9 @@ review:
 
 go2rtc:
   streams:
-    frigate_frontdoor_hq: rtspx://192.168.1.1:7441/uOdLAlKjUTaCcKey
-    frigate_frontdoor_lq: rtspx://192.168.1.1:7441/8KanNbc6boyTJpmV
-    frigate_packagecam: rtspx://192.168.1.1:7441/oZ6zmPyXEdVwUOZs
+    frigate_frontdoor_hq: rtspx://192.168.1.1:7441/aW5kuiYd6041kfpv
+    frigate_frontdoor_lq: rtspx://192.168.1.1:7441/wGHaudajQAV9316J
+    frigate_packagecam: rtspx://192.168.1.1:7441/mpgv0uUu622nxXTQ
     frigate_garage_hq: rtspx://192.168.1.1:7441/xnexsGcsDCI8PxZY
     frigate_garage_lq: rtspx://192.168.1.1:7441/aDWsDvkL16CmQpiB
     frigate_front_hq: rtspx://192.168.1.1:7441/Iu7PTWnVramD4hyn

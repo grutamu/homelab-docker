@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     image: dgtlmoon/changedetection.io
     volumes:
-      - /config/changedetection:/datastore
+      - /docker-data/changedetection:/datastore
     environment:
       # - WEBDRIVER_URL=http://playwright-chrome:4444/wd/hub
       - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000

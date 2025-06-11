@@ -1,0 +1,75 @@
+#
+# WARNING: Make sure to use the docker-compose.yml of the current release:
+#
+# https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+#
+# The compose file on main may not be compatible with the latest release.
+#
+
+name: immich
+
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      # Do not edit the next line. If you want to change the media storage location on your system, edit the value of UPLOAD_LOCATION in the .env file
+      - nfs-photos:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    ports:
+      - 2283:2283
+    depends_on:
+      - redis
+      - database
+    restart: always
+    healthcheck:
+      disable: false
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.immich.rule=Host(`photos.calzone.zone`)"
+      - "traefik.http.routers.immich.entrypoints=https"
+      - "traefik.http.routers.immich.tls=true"
+      - "traefik.http.services.immich.loadbalancer.server.port=2283"
+
+  redis:
+    container_name: immich_redis
+    image: docker.io/redis:6.2-alpine@sha256:2d1463258f2764328496376f5d965f20c6a67f66ea2b06dc42af351f75248792
+    healthcheck:
+      test: redis-cli ping || exit 1
+    restart: always
+    networks:
+      - proxy
+
+  database:
+    container_name: immich_postgres
+    image: ghcr.io/immich-app/postgres:16-vectorchord0.3.0-pgvectors0.2.0
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      # Do not edit the next line. If you want to change the database storage location on your system, edit the value of DB_DATA_LOCATION in the .env file
+      - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - proxy
+
+volumes:
+  model-cache:
+
+  nfs-photos:
+    driver_opts:
+      type: "nfs"
+      o: "addr=truenas.calzone.zone,nolock,soft,nfsvers=4"
+      device: ":/mnt/hdd-pool/photos"
+
+networks:
+  proxy:
+    external: true

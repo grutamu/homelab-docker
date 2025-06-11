@@ -1,0 +1,23 @@
+services:
+  onepassword-connect-api:
+    container_name: onepassword-connect-api
+    environment:
+      OP_HTTP_PORT: 7070
+    image: docker.io/1password/connect-api:1.7.3
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - "./1password-credentials.json:/home/opuser/.op/1password-credentials.json"
+      - "data:/home/opuser/.op/data"
+  onepassword-connect-sync:
+    container_name: onepassword-connect-sync
+    environment:
+      OP_HTTP_PORT: 7071
+    image: docker.io/1password/connect-sync:1.7.3
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - "./1password-credentials.json:/home/opuser/.op/1password-credentials.json"
+      - "data:/home/opuser/.op/data"
+volumes:
+  data:

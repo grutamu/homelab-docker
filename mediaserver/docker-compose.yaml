@@ -9,8 +9,9 @@ services:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel --no-autoupdate run
+    env_file: .env
     environment:
-      - TUNNEL_TOKEN=eyJhIjoiYjQzNDE0MzNlZWRjMDUxZjI5MDczYmEzYzZkYmY5ZmUiLCJ0IjoiYjdjODFiNjQtYzhhNC00MDMzLTllNGMtYzdkNWE3NDVkODUzIiwicyI6IlpqQXlaVE15TmpRdFpUZzVOUzAwTmpRMkxUazJaRGt0WmprNVpEWXlNelpqT1RjMiJ9
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     networks:
       - proxy
 
@@ -121,6 +122,7 @@ services:
       - /config/overseerr:/app/config
     environment:
       - TZ=America/Chicago
+      - LOG_LEVEL=debug
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.overseerr.rule=Host(`requests.calzone.zone`)"
@@ -147,6 +149,7 @@ services:
     restart: unless-stopped
     volumes:
       - /config/bazarr:/config
+      - nfs-media:/media
     environment:
       - PUID=1000
       - PGID=1000
