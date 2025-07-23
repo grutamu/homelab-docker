@@ -20,9 +20,6 @@ detectors:
 
 ffmpeg:
   hwaccel_args: preset-vaapi
-  global_args: [-hide_banner, -loglevel, warning]
-  output_args:
-    record: preset-record-ubiquiti
 
 birdseye:
   enabled: false
@@ -108,10 +105,10 @@ go2rtc:
 
 cameras:
   frigate_frontdoor:
-    detect:
-      width: 1280
-      height: 720
-      fps: 5
+    # detect:
+    #   width: 1280
+    #   height: 720
+    #   fps: 5
     ffmpeg:
       inputs:
         - path: rtsp://localhost:8554/frigate_frontdoor_lq
@@ -120,7 +117,8 @@ cameras:
         - path: rtsp://localhost:8554/frigate_frontdoor_hq
           roles:
             - record
-            # - detect
+      output_args:
+        record: preset-record-ubiquiti
 
   frigate_packagecam:
     # detect:
@@ -133,12 +131,14 @@ cameras:
           roles:
             - record
             - detect
+      output_args:
+        record: preset-record-ubiquiti
 
   frigate_garage:
-    detect:
-      width: 1280
-      height: 720
-      fps: 5
+    # detect:
+    #   width: 1280
+    #   height: 720
+    #   fps: 5
     ffmpeg:
       inputs:
         - path: rtsp://localhost:8554/frigate_garage_lq
@@ -147,13 +147,14 @@ cameras:
         - path: rtsp://localhost:8554/frigate_garage_hq
           roles:
             - record
-            # - detect
+      output_args:
+        record: preset-record-ubiquiti
 
   frigate_front:
-    detect:
-      width: 1280
-      height: 720
-      fps: 5
+    # detect:
+    #   width: 1280
+    #   height: 720
+    #   fps: 5
     ffmpeg:
       inputs:
         - path: rtsp://localhost:8554/frigate_front_lq
@@ -162,7 +163,8 @@ cameras:
         - path: rtsp://localhost:8554/frigate_front_hq
           roles:
             - record
-            # - detect
+      output_args:
+        record: preset-record-ubiquiti
     zones:
       driveway:
         coordinates: 0.136,0.285,0.433,0.163,0.671,0.354,0.977,0.659,0.86,1,0.221,0.997,0.161,0.676
