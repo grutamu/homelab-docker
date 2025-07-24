@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #frigate
-docker compose -f ./trafrigateefik/docker-compose.yml down
+docker compose -f ./frigate/docker-compose.yaml down
 
 #traefik
-docker compose -f ./traefik/docker-compose.yml down
+docker compose -f ./traefik/docker-compose.yaml down
