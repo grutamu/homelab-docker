@@ -105,29 +105,26 @@ go2rtc:
 
 cameras:
   frigate_frontdoor:
-    # detect:
-    #   width: 1280
-    #   height: 720
-    #   fps: 5
     ffmpeg:
+      hwaccel_args: preset-intel-qsv-h264
       inputs:
         - path: rtsp://localhost:8554/frigate_frontdoor_lq
+          input_args: preset-rtsp-restream
           roles:
             - detect
         - path: rtsp://localhost:8554/frigate_frontdoor_hq
+          input_args: preset-rtsp-restream
           roles:
             - record
       output_args:
         record: preset-record-ubiquiti
 
   frigate_packagecam:
-    # detect:
-    #   width: 1280
-    #   height: 720
-    #   fps: 5
     ffmpeg:
+      hwaccel_args: preset-intel-qsv-h264
       inputs:
         - path: rtsp://localhost:8554/frigate_packagecam
+          input_args: preset-rtsp-restream
           roles:
             - record
             - detect
@@ -135,32 +132,30 @@ cameras:
         record: preset-record-ubiquiti
 
   frigate_garage:
-    # detect:
-    #   width: 1280
-    #   height: 720
-    #   fps: 5
     ffmpeg:
+      hwaccel_args: preset-intel-qsv-h264
       inputs:
         - path: rtsp://localhost:8554/frigate_garage_lq
+          input_args: preset-rtsp-restream
           roles:
             - detect
         - path: rtsp://localhost:8554/frigate_garage_hq
+          input_args: preset-rtsp-restream
           roles:
             - record
       output_args:
         record: preset-record-ubiquiti
 
   frigate_front:
-    # detect:
-    #   width: 1280
-    #   height: 720
-    #   fps: 5
     ffmpeg:
+      hwaccel_args: preset-intel-qsv-h264
       inputs:
         - path: rtsp://localhost:8554/frigate_front_lq
+          input_args: preset-rtsp-restream
           roles:
             - detect
         - path: rtsp://localhost:8554/frigate_front_hq
+          input_args: preset-rtsp-restream
           roles:
             - record
       output_args:
