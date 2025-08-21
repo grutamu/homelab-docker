@@ -69,6 +69,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
+    user: "472"
     volumes:
       - /docker-data/grafana:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning

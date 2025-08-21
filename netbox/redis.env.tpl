@@ -1,0 +1,1 @@
+REDIS_PASSWORD=op://docker/netbox/REDIS_PASSWORD

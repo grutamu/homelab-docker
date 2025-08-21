@@ -1,0 +1,54 @@
+---
+services:
+  netbox-postgres:
+    container_name: netbox-postgres
+    image: postgres:16.3-alpine
+    env_file: ./postgres.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "netbox", "-U", "netbox"]
+      timeout: 45s
+      interval: 10s
+      retries: 10   
+    volumes:
+      - /docker-data/netbox/postgres:/var/lib/postgresql/data
+    networks:
+      - netbox
+     
+  netbox-redis:
+    container_name: netbox-redis
+    image: redis:7-alpine
+    env_file: ./redis.env
+    restart: unless-stopped
+    command: redis-server
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+    volumes:
+      - /docker-data/netbox/redis:/data
+    networks:
+      - netbox
+      
+  netbox-server:
+    container_name: netbox-server
+    image: lscr.io/linuxserver/netbox:latest
+    env_file: ./netbox.env
+    restart: unless-stopped
+    volumes:
+      - /docker-data/netbox/config:/config
+    depends_on:
+      - netbox-postgres
+      - netbox-redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.netbox.rule=Host(`netbox.calzone.zone`)"
+      - "traefik.http.routers.netbox.entrypoints=https"
+      - "traefik.http.routers.netbox.tls=true"
+      - "traefik.http.services.netbox.loadbalancer.server.port=8000"
+    networks:
+      - proxy
+      - netbox
+
+networks:
+  proxy:
+    external: true
+  netbox:
