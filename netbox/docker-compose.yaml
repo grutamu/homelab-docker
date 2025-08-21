@@ -18,7 +18,7 @@ services:
   netbox-redis:
     container_name: netbox-redis
     image: redis:7-alpine
-    env_file: ./redis.env
+    # env_file: ./redis.env
     restart: unless-stopped
     command: redis-server
     healthcheck:
