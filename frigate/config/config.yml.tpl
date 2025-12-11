@@ -16,7 +16,7 @@ database:
 detectors:
   ov:
     type: openvino
-    device: GPU
+    device: AUTO
 
 model:
   width: 300
@@ -27,7 +27,7 @@ model:
   labelmap_path: /openvino-model/coco_91cl_bkgr.txt
 
 ffmpeg:
-  hwaccel_args: preset-vaapi
+  hwaccel_args: preset-intel-qsv-h264
 
 birdseye:
   enabled: false
