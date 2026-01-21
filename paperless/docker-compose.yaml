@@ -53,6 +53,7 @@ services:
       - broker
 #    ports:
 #      - "8010:8000"
+    env_file: ./.env
     volumes:
       - /docker-data/paperless/data:/usr/src/paperless/data
       - media:/usr/src/paperless/media
