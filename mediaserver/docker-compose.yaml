@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 300
+    command: --cleanup
   
   cf-tunnel:
     image: cloudflare/cloudflared:latest
@@ -115,7 +115,7 @@ services:
       - proxy
 
   overseerr:
-    image: ghcr.io/sct/overseerr:develop
+    image: fallenbagel/jellyseerr:preview-seerr
     container_name: overseerr
     restart: unless-stopped
     volumes:
@@ -179,6 +179,28 @@ services:
       - "traefik.http.routers.tautulli.entrypoints=https"
       - "traefik.http.routers.tautulli.tls=true"
       - "traefik.http.services.tautulli.loadbalancer.server.port=8181"
+    networks:
+      - proxy
+
+  maintainerr:
+    image: ghcr.io/maintainerr/maintainerr:latest # or jorenn92/maintainerr:latest
+    container_name: maintainerr
+    restart: unless-stopped
+    user: 1000:1000
+    volumes:
+      - /docker-data/maintainerr:/opt/data
+    environment:
+      - TZ=America/Chicago
+#      - BASE_PATH=/maintainerr # uncomment if you're serving maintainerr from a subdirectory
+#      - UI_HOSTNAME=:: # uncomment if you want to listen on IPv6 instead (default 0.0.0.0)
+#      - UI_PORT=6247 # uncomment to change the UI port (default 6246). Useful if you're on a network where the port is already in use
+#      - API_PORT=3002 # uncomment to change the API port (default 3001). Useful if you're on a network where the port is already in use
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.maintainerr.rule=Host(`maintainerr.calzone.zone`)"
+      - "traefik.http.routers.maintainerr.entrypoints=https"
+      - "traefik.http.routers.maintainerr.tls=true"
+      - "traefik.http.services.maintainerr.loadbalancer.server.port=6246"
     networks:
       - proxy
 

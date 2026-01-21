@@ -17,3 +17,9 @@ op inject -i ./monitoring/.env.tpl -o ./monitoring/.env -f
 op inject -i ./netbox/netbox.env.tpl -o ./netbox/netbox.env -f
 op inject -i ./netbox/postgres.env.tpl -o ./netbox/postgres.env -f
 op inject -i ./netbox/redis.env.tpl -o ./netbox/redis.env -f
+
+#immich
+op inject -i ./immich/.env.tpl -o ./immich/.env -f
+
+#paperless
+op inject -i ./paperless/.env.tpl -o ./paperless/.env -f
