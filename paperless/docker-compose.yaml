@@ -63,6 +63,7 @@ services:
       PAPERLESS_DBHOST: db
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
       - "traefik.http.routers.paperless.rule=Host(`paperless.calzone.zone`)"
       - "traefik.http.routers.paperless.entrypoints=https"
       - "traefik.http.routers.paperless.tls=true"
