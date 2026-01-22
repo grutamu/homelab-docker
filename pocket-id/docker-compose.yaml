@@ -21,3 +21,6 @@ services:
       - "traefik.http.services.pocket-id.loadbalancer.server.port=1411"
     networks:
       - proxy
+networks:
+  proxy:
+    external: true
