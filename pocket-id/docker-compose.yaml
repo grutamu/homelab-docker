@@ -3,6 +3,7 @@ services:
     image: ghcr.io/pocket-id/pocket-id:v2.2.0
     restart: unless-stopped
     env_file: .env
+    user: 1000:1000
     volumes:
       - /docker-data/pocket-id:/app/data
     # Optional healthcheck
