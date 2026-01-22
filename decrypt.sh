@@ -23,3 +23,6 @@ op inject -i ./immich/.env.tpl -o ./immich/.env -f
 
 #paperless
 op inject -i ./paperless/.env.tpl -o ./paperless/.env -f
+
+#pocket-id
+op inject -i ./pocket-id/.env.tpl -o ./pocket-id/.env -f
