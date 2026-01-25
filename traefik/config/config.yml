@@ -1,6 +1,15 @@
 http:
  #region routers 
   routers:
+    adguard:
+      entryPoints:
+        - "https"
+      rule: "Host(`adguard.calzone.zone`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: adguard
     proxmox:
       entryPoints:
         - "https"
@@ -14,6 +23,11 @@ http:
 #endregion
 #region services
   services:
+    adguard:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.99.5"
+        passHostHeader: true
     proxmox:
       loadBalancer:
         servers:
