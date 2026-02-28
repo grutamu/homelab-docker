@@ -120,7 +120,7 @@ services:
     container_name: seerr
     restart: unless-stopped
     volumes:
-      - /docker-data/overseerr:/app/config
+      - /docker-data/seerr:/app/config
     environment:
       - TZ=America/Chicago
       - LOG_LEVEL=debug
