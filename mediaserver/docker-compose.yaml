@@ -140,7 +140,7 @@ services:
       - proxy
 
   readarr:
-    image: ghcr.io/hotio/readarr:nightly
+    image: hotio/readarr:nightly
     container_name: readarr
     restart: unless-stopped
     volumes:
