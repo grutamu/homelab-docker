@@ -140,7 +140,7 @@ services:
       - proxy
 
   readarr:
-    image: lscr.io/linuxserver/readarr:nightly
+    image: lscr.io/linuxserver/readarr:develop
     container_name: readarr
     restart: unless-stopped
     volumes:
