@@ -139,26 +139,6 @@ services:
     networks:
       - proxy
 
-  readarr:
-    image: cr.hotio.dev/hotio/readarr:nightly
-    container_name: readarr
-    restart: unless-stopped
-    volumes:
-      - /docker-data/readarr:/config
-      - nfs-media:/media
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/Chicago
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.readarr.rule=Host(`readarr.calzone.zone`)"
-      - "traefik.http.routers.readarr.entrypoints=https"
-      - "traefik.http.routers.readarr.tls=true"
-      - "traefik.http.services.readarr.loadbalancer.server.port=8787"
-    networks:
-      - proxy
-
   recyclarr:
     image: ghcr.io/recyclarr/recyclarr
     container_name: recyclarr
