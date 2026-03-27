@@ -1,25 +1,4 @@
 services:
-  traefik-forward-auth:
-    image: thomseddon/traefik-forward-auth:2
-    container_name: traefik-forward-auth
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      DEFAULT_PROVIDER: oidc
-      PROVIDERS_OIDC_ISSUER_URL: https://auth.calzone.zone
-      PROVIDERS_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
-      PROVIDERS_OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
-      SECRET: ${FORWARD_AUTH_SECRET}
-      AUTH_HOST: forward-auth.calzone.zone
-      COOKIE_DOMAIN: calzone.zone
-      LOG_LEVEL: info
-    extra_hosts:
-      - "auth.calzone.zone:host-gateway"
-    labels:
-      - "traefik.enable=false"
-    networks:
-      - proxy
-
   traefik:
     image: traefik:v3.2.3
     container_name: traefik
@@ -36,6 +15,9 @@ services:
     env_file: .env
     environment:
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN} # if using .env
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      FORWARD_AUTH_SECRET: ${FORWARD_AUTH_SECRET}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro

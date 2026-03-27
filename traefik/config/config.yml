@@ -28,13 +28,6 @@ http:
         - https-redirectscheme
       tls: {}
       service: amp-admin
-    forward-auth:
-      entryPoints:
-        - "https"
-      rule: "Host(`forward-auth.calzone.zone`)"
-      tls:
-        certResolver: cloudflare
-      service: forward-auth
 
 #endregion
 #region services
@@ -53,11 +46,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.99.232:8080/"
-        passHostHeader: true
-    forward-auth:
-      loadBalancer:
-        servers:
-          - url: "http://traefik-forward-auth:4181"
         passHostHeader: true
 
 #endregion
@@ -93,8 +81,14 @@ http:
         - default-headers
 
     pocket-id-auth:
-      forwardAuth:
-        address: "http://traefik-forward-auth:4181"
-        trustForwardHeader: true
-        authResponseHeaders:
-          - X-Forwarded-User
+      plugin:
+        traefikoidc:
+          callbackURL: /oauth2/callback
+          clientID: {{ env "OIDC_CLIENT_ID" }}
+          clientSecret: {{ env "OIDC_CLIENT_SECRET" }}
+          providerURL: "https://auth.calzone.zone"
+          sessionEncryptionKey: {{ env "FORWARD_AUTH_SECRET" }}
+          scopes:
+            - openid
+            - profile
+            - email

@@ -1,6 +1,11 @@
 api:
   dashboard: true
   debug: true
+experimental:
+  plugins:
+    traefikoidc:
+      moduleName: "github.com/lukaszraczylo/traefikoidc"
+      version: "v0.8.24"
 entryPoints:
   http:
     address: ":80"
