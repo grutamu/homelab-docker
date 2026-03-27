@@ -140,7 +140,7 @@ services:
       - proxy
 
   readarr:
-    image: hotio/readarr:nightly
+    image: cr.hotio.dev/hotio/readarr:nightly
     container_name: readarr
     restart: unless-stopped
     volumes:
