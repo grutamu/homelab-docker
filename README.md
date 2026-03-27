@@ -31,7 +31,6 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [Plex](https://plex.tv) | Media server |
 | [Radarr](https://radarr.video) | Movie library management |
 | [Sonarr](https://sonarr.tv) | TV series library management |
-| [Readarr](https://readarr.com) | Audiobook/ebook library management |
 | [Prowlarr](https://github.com/Prowlarr/Prowlarr) | Indexer manager for the *arr suite |
 | [Bazarr](https://bazarr.media) | Subtitle management |
 | [Seerr](https://github.com/seerr-team/seerr) | Media request interface |
