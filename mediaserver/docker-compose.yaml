@@ -15,6 +15,7 @@ services:
       - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.calzone.zone`)"
       - "traefik.http.routers.sabnzbd.entrypoints=https"
       - "traefik.http.routers.sabnzbd.tls=true"
+      - "traefik.http.routers.sabnzbd.middlewares=pocket-id-auth@file"
       - "traefik.http.services.sabnzbd.loadbalancer.server.port=8080"
     networks:
       - proxy
@@ -71,6 +72,7 @@ services:
       - "traefik.http.routers.radarr.rule=Host(`radarr.calzone.zone`)"
       - "traefik.http.routers.radarr.entrypoints=https"
       - "traefik.http.routers.radarr.tls=true"
+      - "traefik.http.routers.radarr.middlewares=pocket-id-auth@file"
       - "traefik.http.services.radarr.loadbalancer.server.port=7878"
     networks:
       - proxy
@@ -91,6 +93,7 @@ services:
       - "traefik.http.routers.radarr-4k.rule=Host(`radarr-4k.calzone.zone`)"
       - "traefik.http.routers.radarr-4k.entrypoints=https"
       - "traefik.http.routers.radarr-4k.tls=true"
+      - "traefik.http.routers.radarr-4k.middlewares=pocket-id-auth@file"
       - "traefik.http.services.radarr-4k.loadbalancer.server.port=7878"
     networks:
       - proxy
@@ -111,6 +114,7 @@ services:
       - "traefik.http.routers.sonarr.rule=Host(`sonarr.calzone.zone`)"
       - "traefik.http.routers.sonarr.entrypoints=https"
       - "traefik.http.routers.sonarr.tls=true"
+      - "traefik.http.routers.sonarr.middlewares=pocket-id-auth@file"
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
     networks:
       - proxy
@@ -130,6 +134,7 @@ services:
       - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.calzone.zone`)"
       - "traefik.http.routers.prowlarr.entrypoints=https"
       - "traefik.http.routers.prowlarr.tls=true"
+      - "traefik.http.routers.prowlarr.middlewares=pocket-id-auth@file"
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
     networks:
       - proxy
@@ -186,6 +191,7 @@ services:
       - "traefik.http.routers.bazarr.rule=Host(`bazarr.calzone.zone`)"
       - "traefik.http.routers.bazarr.entrypoints=https"
       - "traefik.http.routers.bazarr.tls=true"
+      - "traefik.http.routers.bazarr.middlewares=pocket-id-auth@file"
       - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
     networks:
       - proxy
@@ -205,6 +211,7 @@ services:
       - "traefik.http.routers.tautulli.rule=Host(`tautulli.calzone.zone`)"
       - "traefik.http.routers.tautulli.entrypoints=https"
       - "traefik.http.routers.tautulli.tls=true"
+      - "traefik.http.routers.tautulli.middlewares=pocket-id-auth@file"
       - "traefik.http.services.tautulli.loadbalancer.server.port=8181"
     networks:
       - proxy
@@ -227,6 +234,7 @@ services:
       - "traefik.http.routers.maintainerr.rule=Host(`maintainerr.calzone.zone`)"
       - "traefik.http.routers.maintainerr.entrypoints=https"
       - "traefik.http.routers.maintainerr.tls=true"
+      - "traefik.http.routers.maintainerr.middlewares=pocket-id-auth@file"
       - "traefik.http.services.maintainerr.loadbalancer.server.port=6246"
     networks:
       - proxy
