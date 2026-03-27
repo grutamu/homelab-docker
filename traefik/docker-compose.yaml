@@ -13,6 +13,8 @@ services:
       AUTH_HOST: forward-auth.calzone.zone
       COOKIE_DOMAIN: calzone.zone
       LOG_LEVEL: info
+    extra_hosts:
+      - "auth.calzone.zone:host-gateway"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.forward-auth.rule=Host(`forward-auth.calzone.zone`)"
