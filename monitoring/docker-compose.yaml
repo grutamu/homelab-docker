@@ -15,12 +15,6 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus-data:/prometheus
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.calzone.zone`)"
-      - "traefik.http.routers.prometheus.entrypoints=https"
-      - "traefik.http.routers.prometheus.tls=true"
-      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
     networks:
       - proxy
 
@@ -36,12 +30,6 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.node-exporter.rule=Host(`node-exporter.calzone.zone`)"
-      - "traefik.http.routers.node-exporter.entrypoints=https"
-      - "traefik.http.routers.node-exporter.tls=true"
-      - "traefik.http.services.node-exporter.loadbalancer.server.port=9100"
     networks:
       - proxy
     
@@ -56,12 +44,6 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.calzone.zone`)"
-      - "traefik.http.routers.cadvisor.entrypoints=https"
-      - "traefik.http.routers.cadvisor.tls=true"
-      - "traefik.http.services.cadvisor.loadbalancer.server.port=8080"
     networks:
       - proxy
     
@@ -95,12 +77,6 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.alertmanager.rule=Host(`alertmanager.calzone.zone`)"
-      - "traefik.http.routers.alertmanager.entrypoints=https"
-      - "traefik.http.routers.alertmanager.tls=true"
-      - "traefik.http.services.alertmanager.loadbalancer.server.port=9093"
     networks:
       - proxy
 
