@@ -28,7 +28,14 @@ http:
         - https-redirectscheme
       tls: {}
       service: amp-admin
-  
+    forward-auth:
+      entryPoints:
+        - "https"
+      rule: "Host(`forward-auth.calzone.zone`)"
+      tls:
+        certResolver: cloudflare
+      service: forward-auth
+
 #endregion
 #region services
   services:
@@ -46,6 +53,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.99.232:8080/"
+        passHostHeader: true
+    forward-auth:
+      loadBalancer:
+        servers:
+          - url: "http://traefik-forward-auth:4181"
         passHostHeader: true
 
 #endregion
@@ -79,3 +91,10 @@ http:
         middlewares:
         - default-whitelist
         - default-headers
+
+    pocket-id-auth:
+      forwardAuth:
+        address: "http://traefik-forward-auth:4181"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-Forwarded-User

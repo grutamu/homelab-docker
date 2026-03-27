@@ -16,15 +16,7 @@ services:
     extra_hosts:
       - "auth.calzone.zone:host-gateway"
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.forward-auth.rule=Host(`forward-auth.calzone.zone`)"
-      - "traefik.http.routers.forward-auth.entrypoints=https"
-      - "traefik.http.routers.forward-auth.tls=true"
-      - "traefik.http.routers.forward-auth.tls.certresolver=cloudflare"
-      - "traefik.http.services.forward-auth.loadbalancer.server.port=4181"
-      - "traefik.http.middlewares.pocket-id-auth.forwardauth.address=http://traefik-forward-auth:4181"
-      - "traefik.http.middlewares.pocket-id-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
-      - "traefik.http.middlewares.pocket-id-auth.forwardauth.trustForwardHeader=true"
+      - "traefik.enable=false"
     networks:
       - proxy
 
@@ -62,7 +54,7 @@ services:
       - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
       - "traefik.http.routers.traefik-secure.entrypoints=https"
       - "traefik.http.routers.traefik-secure.rule=Host(`traefik-dashboard.calzone.zone`)"
-      - "traefik.http.routers.traefik-secure.middlewares=pocket-id-auth"
+      - "traefik.http.routers.traefik-secure.middlewares=pocket-id-auth@file"
       - "traefik.http.routers.traefik-secure.tls=true"
       - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare"
       - "traefik.http.routers.traefik-secure.tls.domains[0].main=calzone.zone"
