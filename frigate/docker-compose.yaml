@@ -35,6 +35,7 @@ services:
       - "traefik.http.routers.frigate.rule=Host(`frigate.calzone.zone`)"
       - "traefik.http.routers.frigate.entrypoints=https"
       - "traefik.http.routers.frigate.tls=true"
+      - "traefik.http.routers.frigate.middlewares=pocket-id-auth@file"
       - "traefik.http.services.frigate.loadbalancer.server.port=5000"
     networks:
       - proxy

@@ -44,6 +44,7 @@ services:
       - "traefik.http.routers.netbox.rule=Host(`netbox.calzone.zone`)"
       - "traefik.http.routers.netbox.entrypoints=https"
       - "traefik.http.routers.netbox.tls=true"
+      - "traefik.http.routers.netbox.middlewares=pocket-id-auth@file"
       - "traefik.http.services.netbox.loadbalancer.server.port=8000"
     networks:
       - proxy
