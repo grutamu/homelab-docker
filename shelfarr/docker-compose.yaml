@@ -13,7 +13,7 @@ services:
       - SOLID_QUEUE_IN_PUMA=1
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.shelfarr.rule=Host(`shelfarr.calzone.zone`)"
+      - "traefik.http.routers.shelfarr.rule=Host(`bookrequests.calzone.zone`)"
       - "traefik.http.routers.shelfarr.entrypoints=https"
       - "traefik.http.routers.shelfarr.tls=true"
       - "traefik.http.services.shelfarr.loadbalancer.server.port=80"
