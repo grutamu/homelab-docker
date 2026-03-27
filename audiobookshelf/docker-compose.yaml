@@ -1,0 +1,32 @@
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    container_name: audiobookshelf
+    restart: unless-stopped
+    volumes:
+      - /docker-data/audiobookshelf/config:/config
+      - /docker-data/audiobookshelf/metadata:/metadata
+      - nfs-media:/media
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.audiobookshelf.rule=Host(`audiobookshelf.calzone.zone`)"
+      - "traefik.http.routers.audiobookshelf.entrypoints=https"
+      - "traefik.http.routers.audiobookshelf.tls=true"
+      - "traefik.http.services.audiobookshelf.loadbalancer.server.port=80"
+    networks:
+      - proxy
+
+volumes:
+  nfs-media:
+    driver_opts:
+      type: "nfs"
+      o: "addr=truenas.calzone.zone,nolock,soft,nfsvers=4"
+      device: ":/mnt/hdd-pool/media"
+
+networks:
+  proxy:
+    external: true
