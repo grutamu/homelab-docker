@@ -1,0 +1,44 @@
+services:
+  backrest:
+    build: .
+    container_name: backrest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - /docker-data/backrest:/data
+      - /docker-data:/source
+      - ./scripts:/scripts:ro
+      - /etc/localtime:/etc/localtime:ro
+      - nfs-backup:/backups
+    environment:
+      - TZ=America/Chicago
+      - BACKREST_PORT=9898
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backrest.rule=Host(`backrest.calzone.zone`)"
+      - "traefik.http.routers.backrest.entrypoints=https"
+      - "traefik.http.routers.backrest.tls=true"
+      - "traefik.http.routers.backrest.middlewares=pocket-id-auth@file"
+      - "traefik.http.services.backrest.loadbalancer.server.port=9898"
+    networks:
+      - proxy
+      - immich_immich
+      - netbox_netbox
+      - paperless_paperless
+
+volumes:
+  nfs-backup:
+    driver_opts:
+      type: "nfs"
+      o: "addr=truenas.calzone.zone,nolock,soft,nfsvers=4"
+      device: ":/mnt/hdd-pool/backups/docker01"
+
+networks:
+  proxy:
+    external: true
+  immich_immich:
+    external: true
+  netbox_netbox:
+    external: true
+  paperless_paperless:
+    external: true
