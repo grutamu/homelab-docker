@@ -54,15 +54,10 @@ pull-all: ## Pull latest images for all stacks
 		docker compose -f $$s/docker-compose.yaml pull; \
 	done
 
-##@ Secrets
-
-decrypt: ## Inject secrets from 1Password for all stacks
-	./decrypt.sh
-
 ##@ Help
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make <target> [stack=<name>]\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  %-12s %s\n", $$1, $$2 } /^##@/ { printf "\n%s\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 
-.PHONY: check-stack up down restart logs pull update ps up-all down-all pull-all decrypt help
+.PHONY: check-stack up down restart logs pull update ps up-all down-all pull-all help
 .DEFAULT_GOAL := help

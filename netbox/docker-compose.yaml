@@ -3,7 +3,10 @@ services:
   netbox-postgres:
     container_name: netbox-postgres
     image: postgres:16.3-alpine
-    env_file: ./postgres.env
+    environment:
+      POSTGRES_DB: netbox
+      POSTGRES_USER: netbox
+      POSTGRES_PASSWORD:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-d", "netbox", "-U", "netbox"]
@@ -18,7 +21,6 @@ services:
   netbox-redis:
     container_name: netbox-redis
     image: redis:7-alpine
-    # env_file: ./redis.env
     restart: unless-stopped
     command: redis-server
     healthcheck:
@@ -31,7 +33,20 @@ services:
   netbox-server:
     container_name: netbox-server
     image: lscr.io/linuxserver/netbox:latest
-    env_file: ./netbox.env
+    environment:
+      PGID: "1000"
+      PUID: "1000"
+      TZ: Etc/UTC
+      SUPERUSER_EMAIL:
+      SUPERUSER_PASSWORD:
+      ALLOWED_HOST: netbox.calzone.zone
+      DB_NAME: netbox
+      DB_USER: netbox
+      DB_PASSWORD:
+      DB_HOST: netbox-postgres
+      DB_PORT: "5432"
+      REDIS_HOST: netbox-redis
+      REDIS_PORT: "6379"
     restart: unless-stopped
     volumes:
       - /docker-data/netbox/config:/config

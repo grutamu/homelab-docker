@@ -2,9 +2,9 @@
 
 ## Secret Management
 
-- [ ] **Remove `decrypt.sh`** — Superseded by `deploy.sh`. Delete the file and remove references from docs.
+- [x] **Remove `decrypt.sh`** — Superseded by `deploy.sh`. Delete the file and remove references from docs.
 
-- [ ] **Migrate remaining stacks to `environment:` passthrough** — `traefik`, `immich`, `paperless`, `pocket-id`, `monitoring`, `mediaserver` still use `env_file:` and write `.env` files to disk. Refactor to use `environment:` passthrough so `op run` can inject secrets without touching disk.
+- [x] **Migrate remaining stacks to `environment:` passthrough** — All stacks now use `op run` for secret injection. `deploy.sh` simplified to a single code path (frigate remains an exception — its config.yml must be written to disk). Consolidated netbox's 3 `.env.tpl` files into one.
 
 ## Backup
 

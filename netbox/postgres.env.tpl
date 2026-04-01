@@ -1,3 +1,0 @@
- POSTGRES_DB=netbox
- POSTGRES_PASSWORD=op://docker/netbox/POSTGRES_PASSWORD
- POSTGRES_USER=netbox

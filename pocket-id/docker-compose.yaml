@@ -2,7 +2,13 @@ services:
   pocket-id:
     image: ghcr.io/pocket-id/pocket-id:v2.5.0
     restart: unless-stopped
-    env_file: .env
+    environment:
+      APP_URL:
+      ENCRYPTION_KEY:
+      MAXMIND_LICENSE_KEY:
+      TRUST_PROXY: "true"
+      PUID: "1000"
+      PGID: "1000"
     user: 1000:1000
     volumes:
       - /docker-data/pocket-id:/app/data
