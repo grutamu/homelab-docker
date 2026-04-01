@@ -24,7 +24,7 @@ services:
       - "traefik.http.routers.backrest.rule=Host(`backrest.calzone.zone`)"
       - "traefik.http.routers.backrest.entrypoints=https"
       - "traefik.http.routers.backrest.tls=true"
-      # - "traefik.http.routers.backrest.middlewares=pocket-id-auth@file"
+      - "traefik.http.routers.backrest.middlewares=pocket-id-auth@file"
       - "traefik.http.services.backrest.loadbalancer.server.port=9898"
     networks:
       - proxy
