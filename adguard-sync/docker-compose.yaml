@@ -1,0 +1,13 @@
+services:
+  adguard-sync:
+    build: .
+    container_name: adguard-sync
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ADGUARD_URL=http://192.168.99.5
+      - CNAME_TARGET=docker-01.calzone.zone
+      - ADGUARD_USER=${ADGUARD_USER}
+      - ADGUARD_PASSWORD=${ADGUARD_PASSWORD}
