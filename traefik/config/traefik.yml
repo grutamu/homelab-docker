@@ -1,6 +1,6 @@
 api:
   dashboard: true
-  debug: true
+  debug: false
 experimental:
   plugins:
     traefikoidc:
@@ -22,7 +22,7 @@ entryPoints:
         idleTimeout: 600s
         writeTimeout: 600s
 serversTransport:
-  insecureSkipVerify: true
+  insecureSkipVerify: false
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"

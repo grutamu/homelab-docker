@@ -1,5 +1,5 @@
 http:
- #region routers 
+ #region routers
   routers:
     adguard:
       entryPoints:
@@ -39,6 +39,7 @@ http:
         passHostHeader: true
     proxmox:
       loadBalancer:
+        serversTransport: proxmox-insecure
         servers:
           - url: "https://192.168.10.10:8006"
         passHostHeader: true
@@ -49,6 +50,10 @@ http:
         passHostHeader: true
 
 #endregion
+  serversTransports:
+    proxmox-insecure:
+      insecureSkipVerify: true
+
   middlewares:
     https-redirectscheme:
       redirectScheme:

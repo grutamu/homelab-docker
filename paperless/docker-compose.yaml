@@ -42,7 +42,7 @@ services:
     environment:
       POSTGRES_DB: paperless
       POSTGRES_USER: paperless
-      POSTGRES_PASSWORD: paperless
+      POSTGRES_PASSWORD:
     networks:
       - paperless
   webserver:
@@ -61,6 +61,7 @@ services:
     environment:
       PAPERLESS_REDIS: redis://broker:6379
       PAPERLESS_DBHOST: db
+      PAPERLESS_DBPASS:
       USERMAP_UID: "1000"
       USERMAP_GID: "1000"
       PAPERLESS_URL:
