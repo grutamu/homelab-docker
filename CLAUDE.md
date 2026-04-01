@@ -115,3 +115,4 @@ Application data is backed up to TrueNAS (`/mnt/hdd-pool/backups/docker01`) via 
 - Localtime is bind-mounted read-only: `/etc/localtime:/etc/localtime:ro`
 - Hardware passthrough: `/dev/dri` (Intel QuickSync for Frigate/Plex), `/dev/bus/usb` (Coral TPU for Frigate)
 - New stacks should use `environment:` passthrough (not `env_file:`) for secret injection
+- Containers on multiple networks **must** include `traefik.docker.network=proxy` label, otherwise Traefik picks the wrong network and returns a gateway timeout
