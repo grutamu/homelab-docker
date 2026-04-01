@@ -93,6 +93,7 @@ services:
     restart: unless-stopped
     environment:
       DISCORD_WEBHOOK: ${DISCORD_WEBHOOK_URL}
+      DISCORD_USERNAME: AlertManager
     networks:
       - proxy
 
