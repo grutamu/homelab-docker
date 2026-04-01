@@ -16,6 +16,30 @@
 
 - [ ] **Test a restore** — Verify the backup actually works before you need it. Restore a single file via Backrest UI and confirm a `pg_dump` loads cleanly into a test database.
 
+## Monitoring
+
+- [ ] **Fix AlertManager configuration** — Replace placeholder credentials (`your-email@example.com`) with real ones via 1Password. Consider Discord or Ntfy over SMTP. Currently alerts fire but go nowhere.
+
+- [ ] **Add blackbox_exporter for HTTP uptime monitoring** — Add HTTP probes for key services (Immich, Paperless, Plex, NetBox, etc.) so a container serving 502s is caught. Add scrape job and alert rules for probe failures.
+
+- [ ] **Scrape Traefik Prometheus metrics** — Traefik exposes metrics at `:8080/metrics`. Add a scrape job for request rates, error rates, and response times per router. Add a Grafana dashboard.
+
+- [ ] **Add postgres_exporter for database monitoring** — Cover the 3 PostgreSQL instances (immich, netbox, paperless). Surface connection pool exhaustion, slow queries, dead tuples. Credentials via 1Password.
+
+- [ ] **Add NFS mount health alert** — Alert if TrueNAS NFS mounts go stale or disappear. Use `absent()` or a stale-read check on `node_filesystem_*` metrics. Failure here silently breaks media and backups.
+
+- [ ] **Add severity-based alert routing** — Configure separate AlertManager routes for `critical` vs `warning`. Critical alerts (disk full, container down) page immediately; warnings can be batched.
+
+- [ ] **Fix ContainerRestarting alert expression** — Current expression `delta(container_start_time_seconds[15m]) > 0` fires on first start. Replace with a reliable restart count expression using cAdvisor metrics.
+
+- [ ] **Add "container absent" alerts for critical services** — Use `absent()` to alert when critical containers (immich, paperless, netbox, traefik) stop entirely, not just restart loop.
+
+- [ ] **Add Loki + Promtail for log aggregation** — Ship Docker logs into Grafana via Loki. Completes metrics+logs observability. Configure Loki as a Grafana datasource.
+
+- [ ] **Add backup freshness alert** — Alert if last successful Backrest backup is older than 24h. Options: cron script exposing a Prometheus metric, or Backrest webhook updating a heartbeat endpoint.
+
+- [ ] **Configure Grafana SSO via Pocket-ID OIDC** — Grafana currently uses its own auth. Integrate with Pocket-ID so all access goes through SSO.
+
 ## Docker Deployment Improvements
 
 - [ ] **Pin image versions** — Replace `:latest` tags with specific versions (e.g. `radarr:5.14.0`). Keeps a known-good version in git for rollbacks. Watchtower will still handle updates.

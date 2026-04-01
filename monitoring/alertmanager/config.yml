@@ -6,13 +6,10 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: 'email-notifications'
+  receiver: 'discord'
 
 receivers:
-- name: 'email-notifications'
-  email_configs:
-  - to: 'your-email@example.com'
-    from: 'alertmanager@example.com'
-    smarthost: smtp.example.com:587
-    auth_username: 'your-username'
-    auth_password: 'your-password'
+- name: 'discord'
+  webhook_configs:
+  - url: 'http://alertmanager-discord:9094'
+    send_resolved: true

@@ -80,6 +80,15 @@ services:
     networks:
       - proxy
 
+  alertmanager-discord:
+    image: rogerrum/alertmanager-discord:latest
+    container_name: alertmanager-discord
+    restart: unless-stopped
+    environment:
+      - DISCORD_WEBHOOK_URL
+    networks:
+      - proxy
+
 networks:
   proxy:
     external: true
