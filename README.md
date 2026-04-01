@@ -9,12 +9,14 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 |---------|-------------|
 | [Traefik](https://traefik.io) | Reverse proxy and TLS termination via Let's Encrypt + Cloudflare DNS |
 | [Portainer](https://portainer.io) | Docker management UI |
-| [1Password Connect](https://developer.1password.com/docs/connect) | Local secrets API used for injecting credentials |
+| [1Password Connect](https://developer.1password.com/docs/connect) | Local secrets API — serves credentials to `op` CLI at deploy time |
+| [AdGuard Home](https://adguard.com/en/adguard-home/overview.html) | DNS server with ad blocking (`192.168.99.5`) |
+| [adguard-sync](./adguard-sync/) | Watches Docker events and auto-creates AdGuard CNAME rewrites for Traefik-labelled containers |
 
 ### Authentication
 | Service | Description |
 |---------|-------------|
-| [Pocket ID](https://github.com/stonith404/pocket-id) | Self-hosted OIDC provider |
+| [Pocket ID](https://github.com/stonith404/pocket-id) | Self-hosted OIDC provider — SSO for all internal services |
 
 ### Monitoring
 | Service | Description |
@@ -60,50 +62,39 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [Mealie](https://mealie.io) | Recipe management |
 | [NetBox](https://netbox.dev) | Network documentation and IPAM |
 
+### Backup
+| Service | Description |
+|---------|-------------|
+| [Backrest](https://github.com/garethgeorge/backrest) | Restic backup UI — backs up `/docker-data/` to TrueNAS NFS share nightly |
+
 ---
 
 ## Secret Management
 
-Secrets are stored in 1Password and never committed to this repository. `.env` files and sensitive config files are generated locally from `.tpl` templates using the [1Password CLI](https://developer.1password.com/docs/cli).
-
-### Injecting all secrets
-
-Run the decrypt script from the repo root. It will prompt you to authenticate with 1Password and then populate all secrets across every stack:
-
-```bash
-./decrypt.sh
-```
-
-### Injecting secrets for a single stack
-
-```bash
-eval $(op signin)
-op inject -i ./[stack]/.env.tpl -o ./[stack]/.env -f
-```
-
-### How it works
+Secrets are stored in 1Password and never committed to this repository. The [1Password Connect](https://developer.1password.com/docs/connect) server runs locally on `docker01` (`http://localhost:7070`) and serves as the secrets API — no interactive sign-in required at deploy time.
 
 Template files (`.env.tpl`, `config.yml.tpl`) contain `op://` references in place of secret values:
 
 ```
-CF_DNS_API_TOKEN=op://docker/traefik/CF_DNS_API_TOKEN
+DB_PASSWORD=op://docker/immich/DB_PASSWORD
 ```
 
-`op inject` resolves each reference against your 1Password vault and writes the populated file. The generated files are gitignored.
+### How secrets are injected
 
----
+There are two injection methods depending on how each stack is structured:
 
-## Networking
+| Method | When used | How |
+|--------|-----------|-----|
+| `op run` | Stack uses `environment:` passthrough — secrets stay in memory only | `op run --env-file=.env.tpl -- docker compose up -d` |
+| `op inject` | Stack uses `env_file:` — Docker needs a file on disk to inject into containers | `op inject -i .env.tpl -o .env -f` |
 
-All services are exposed through Traefik via an external Docker network called `proxy`. Services are accessed at `[service].calzone.zone` over HTTPS.
-
-Persistent data is stored in `/docker-data/[stack]/` on the host. Shared media is served from TrueNAS over NFS at `truenas.calzone.zone`.
+When adding a new stack, prefer the `environment:` passthrough pattern (see `backup/docker-compose.yaml`) so secrets are never written to disk.
 
 ---
 
 ## Deployment
 
-The Docker host is `docker01`, accessible via Tailscale SSH:
+The Docker host is `docker01` (`100.79.25.97`), accessible via Tailscale SSH:
 
 ```bash
 ssh root@docker01
@@ -111,24 +102,42 @@ ssh root@docker01
 
 ### Deploying a change
 
-1. Commit and push changes from your local machine
-2. Pull the updated config on the host:
-   ```bash
-   ssh root@100.79.25.97 'cd /root/homelab-docker && git pull'
-   ```
-3. Redeploy the affected stack:
-   ```bash
-   ssh root@100.79.25.97 'cd /root/homelab-docker && docker compose -f [stack]/docker-compose.yaml up -d'
-   ```
-
-### Starting a new stack for the first time
+Commit and push locally, then run `deploy.sh` on docker01. It handles `git pull`, secret injection, and `docker compose up` in one step:
 
 ```bash
-ssh root@100.79.25.97 'cd /root/homelab-docker && docker compose -f [stack]/docker-compose.yaml up -d'
+# Deploy a single stack
+ssh root@docker01 'bash -l -c "/root/homelab-docker/deploy.sh [stack]"'
+
+# Deploy all stacks
+ssh root@docker01 'bash -l -c "/root/homelab-docker/deploy.sh"'
 ```
+
+### DNS
+
+All services are accessed at `[service].calzone.zone` over HTTPS. DNS rewrites are managed automatically by the `adguard-sync` container — when a container with Traefik labels starts, a CNAME rewrite (`service.calzone.zone → docker-01.calzone.zone`) is created in AdGuard Home automatically. No manual DNS configuration needed when adding new services.
 
 ### Viewing logs
 
 ```bash
-ssh root@100.79.25.97 'cd /root/homelab-docker && docker compose -f [stack]/docker-compose.yaml logs -f [service]'
+ssh root@docker01 'docker compose -f /root/homelab-docker/[stack]/docker-compose.yaml logs -f [service]'
 ```
+
+---
+
+## Networking
+
+All services join an external Docker network called `proxy`, owned by the Traefik stack. Persistent data is stored in `/docker-data/[stack]/` on the host. Shared media is served from TrueNAS over NFS at `truenas.calzone.zone`.
+
+---
+
+## Backup
+
+Application data in `/docker-data/` is backed up to TrueNAS (`/mnt/hdd-pool/backups/docker01`) via Backrest (Restic). Before each backup, a pre-backup hook dumps all PostgreSQL databases:
+
+| Database | Container |
+|----------|-----------|
+| `immich` | `immich_postgres` |
+| `netbox` | `netbox-postgres` |
+| `paperless` | `paperless-db-1` |
+
+TrueNAS then syncs the backup share to Backblaze B2. Plex is excluded from backups (rebuilable metadata).
