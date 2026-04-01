@@ -88,12 +88,12 @@ services:
       - proxy
 
   alertmanager-discord:
-    image: rogerrum/alertmanager-discord:latest
+    image: benjojo/alertmanager-discord:latest
     container_name: alertmanager-discord
     restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c", "/go/bin/alertmanager-discord -webhook.url $$DISCORD_WEBHOOK_URL"]
     environment:
-      DISCORD_WEBHOOK: ${DISCORD_WEBHOOK_URL}
-      DISCORD_USERNAME: AlertManager
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
     networks:
       - proxy
 
