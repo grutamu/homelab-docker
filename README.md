@@ -103,10 +103,10 @@ Persistent data is stored in `/docker-data/[stack]/` on the host. Shared media i
 
 ## Deployment
 
-The Docker host is `docker01` (`100.79.25.97`), accessible via Tailscale SSH:
+The Docker host is `docker01`, accessible via Tailscale SSH:
 
 ```bash
-ssh root@100.79.25.97
+ssh root@docker01
 ```
 
 ### Deploying a change
