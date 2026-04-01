@@ -77,6 +77,13 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alertmanager.rule=Host(`alertmanager.calzone.zone`)"
+      - "traefik.http.routers.alertmanager.entrypoints=https"
+      - "traefik.http.routers.alertmanager.tls=true"
+      - "traefik.http.routers.alertmanager.middlewares=pocket-id-auth@file"
+      - "traefik.http.services.alertmanager.loadbalancer.server.port=9093"
     networks:
       - proxy
 
