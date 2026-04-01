@@ -12,6 +12,7 @@ services:
     environment:
       - TZ=America/Chicago
       - BACKREST_PORT=9898
+      - BACKREST_INSTANCE=docker01
       - IMMICH_DB_USER
       - IMMICH_DB_PASSWORD
       - NETBOX_DB_PASSWORD
