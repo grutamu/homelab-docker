@@ -32,13 +32,16 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [Radarr](https://radarr.video) | Movie library management |
 | [Sonarr](https://sonarr.tv) | TV series library management |
 | [Prowlarr](https://github.com/Prowlarr/Prowlarr) | Indexer manager for the *arr suite |
+| [SABnzbd](https://sabnzbd.org) | Usenet download client |
 | [Bazarr](https://bazarr.media) | Subtitle management |
 | [Seerr](https://github.com/seerr-team/seerr) | Media request interface |
+| [Shelfarr](https://github.com/pedro-revez-silva/shelfarr) | Book request interface |
 | [Recyclarr](https://recyclarr.dev) | Sync TRaSH Guide quality profiles to Radarr/Sonarr |
 | [Tautulli](https://tautulli.com) | Plex analytics |
 | [Maintainerr](https://github.com/jorenn92/Maintainerr) | Automated media collection cleanup |
 | [Watchtower](https://containrrr.dev/watchtower) | Automatic container image updates |
 | [Audiobookshelf](https://audiobookshelf.org) | Audiobook and podcast server |
+| [Calibre-Web](https://github.com/janeczku/calibre-web) | Ebook library management and reader |
 
 ### Surveillance
 | Service | Description |
@@ -95,3 +98,37 @@ CF_DNS_API_TOKEN=op://docker/traefik/CF_DNS_API_TOKEN
 All services are exposed through Traefik via an external Docker network called `proxy`. Services are accessed at `[service].calzone.zone` over HTTPS.
 
 Persistent data is stored in `/docker-data/[stack]/` on the host. Shared media is served from TrueNAS over NFS at `truenas.calzone.zone`.
+
+---
+
+## Deployment
+
+The Docker host is `docker01` (`100.79.25.97`), accessible via Tailscale SSH:
+
+```bash
+ssh root@100.79.25.97
+```
+
+### Deploying a change
+
+1. Commit and push changes from your local machine
+2. Pull the updated config on the host:
+   ```bash
+   ssh root@100.79.25.97 'cd /root/homelab-docker && git pull'
+   ```
+3. Redeploy the affected stack:
+   ```bash
+   ssh root@100.79.25.97 'cd /root/homelab-docker && docker compose -f [stack]/docker-compose.yaml up -d'
+   ```
+
+### Starting a new stack for the first time
+
+```bash
+ssh root@100.79.25.97 'cd /root/homelab-docker && docker compose -f [stack]/docker-compose.yaml up -d'
+```
+
+### Viewing logs
+
+```bash
+ssh root@100.79.25.97 'cd /root/homelab-docker && docker compose -f [stack]/docker-compose.yaml logs -f [service]'
+```
