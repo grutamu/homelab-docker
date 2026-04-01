@@ -26,3 +26,9 @@ op inject -i ./paperless/.env.tpl -o ./paperless/.env -f
 
 #pocket-id
 op inject -i ./pocket-id/.env.tpl -o ./pocket-id/.env -f
+
+#backup
+op inject -i ./backup/.env.tpl -o ./backup/.env -f
+
+#adguard-sync
+op inject -i ./adguard-sync/.env.tpl -o ./adguard-sync/.env -f
