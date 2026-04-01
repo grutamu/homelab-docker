@@ -19,6 +19,7 @@ services:
       - RESTIC_PASSWORD
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
       - "traefik.http.routers.backrest.rule=Host(`backrest.calzone.zone`)"
       - "traefik.http.routers.backrest.entrypoints=https"
       - "traefik.http.routers.backrest.tls=true"
