@@ -1,2 +1,2 @@
-ADGUARD_USER=op://docker/adguard/username
-ADGUARD_PASSWORD=op://docker/adguard/password
+ADGUARD_USER=op://docker/adguard/ADGUARD_USER
+ADGUARD_PASSWORD=op://docker/adguard/ADGUARD_PASSWORD
