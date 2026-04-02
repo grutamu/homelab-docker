@@ -2,13 +2,28 @@ groups:
 - name: container_alerts
   rules:
   - alert: ContainerRestarting
-    expr: delta(container_start_time_seconds{name!=""}[15m]) > 0
-    for: 5m
+    expr: increase(container_restart_count{name!=""}[15m]) > 0
+    for: 0m
     labels:
       severity: warning
     annotations:
       summary: "Container restarting ({{ $labels.name }})"
-      description: "Container {{ $labels.name }} has restarted in the last 15 minutes"
+      description: "Container {{ $labels.name }} has restarted {{ $value | humanize }} time(s) in the last 15 minutes"
+
+  - alert: CriticalContainerDown
+    expr: |
+      absent(container_last_seen{name="traefik"}) or
+      absent(container_last_seen{name="prometheus"}) or
+      absent(container_last_seen{name="grafana"}) or
+      absent(container_last_seen{name="immich_server"}) or
+      absent(container_last_seen{name="paperless-ngx"}) or
+      absent(container_last_seen{name="netbox"})
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Critical container is down"
+      description: "A critical container has stopped and is no longer visible to cAdvisor"
       
   - alert: ContainerHighMemoryUsage
     expr: (container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""} * 100) > 80 and container_spec_memory_limit_bytes{name!=""} > 0

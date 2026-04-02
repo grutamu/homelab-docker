@@ -1,6 +1,8 @@
 api:
   dashboard: true
   debug: false
+metrics:
+  prometheus: {}
 experimental:
   plugins:
     traefikoidc:
