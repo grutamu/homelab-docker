@@ -13,7 +13,7 @@
       "title": "Running Containers",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none" },
       "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } } },
       "targets": [{ "expr": "count(container_last_seen{name!=\"\", name!~\"POD.*\"})", "instant": true, "legendFormat": "containers" }]
@@ -23,7 +23,7 @@
       "title": "Total CPU Usage",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": {
         "defaults": {
@@ -39,7 +39,7 @@
       "title": "Total Memory Usage",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": {
         "defaults": {
@@ -55,7 +55,7 @@
       "title": "Total Network I/O",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "orientation": "horizontal" },
       "fieldConfig": { "defaults": { "unit": "Bps", "color": { "mode": "fixed", "fixedColor": "purple" } } },
       "targets": [
@@ -68,7 +68,7 @@
       "title": "CPU Usage per Container",
       "type": "timeseries",
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] } },
       "fieldConfig": {
         "defaults": { "unit": "percent", "custom": { "lineWidth": 1, "fillOpacity": 5 } },
@@ -81,7 +81,7 @@
       "title": "Memory Usage per Container",
       "type": "timeseries",
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] } },
       "fieldConfig": {
         "defaults": { "unit": "bytes", "custom": { "lineWidth": 1, "fillOpacity": 5 } }
@@ -93,7 +93,7 @@
       "title": "Network I/O per Container",
       "type": "timeseries",
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 22 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "lastNotNull"] } },
       "fieldConfig": {
         "defaults": { "unit": "Bps", "custom": { "lineWidth": 1, "fillOpacity": 5 } }
@@ -108,7 +108,7 @@
       "title": "Container Summary",
       "type": "table",
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 31 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "sortBy": [{ "displayName": "CPU %", "desc": true }] },
       "fieldConfig": {
         "defaults": { "custom": { "align": "auto" } },
