@@ -38,7 +38,7 @@
 
 - [ ] **Add backup freshness alert** — Alert if last successful Backrest backup is older than 24h. Options: cron script exposing a Prometheus metric, or Backrest webhook updating a heartbeat endpoint.
 
-- [ ] **Configure Grafana SSO via Pocket-ID OIDC** — Grafana currently uses its own auth. Integrate with Pocket-ID so all access goes through SSO.
+- [x] **Configure Grafana SSO via Pocket-ID OIDC** — Configured via Grafana UI. Scopes: openid, email, profile. API URL: https://auth.calzone.zone/api/oidc/userinfo.
 
 ## Docker Deployment Improvements
 
