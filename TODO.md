@@ -18,21 +18,21 @@
 
 ## Monitoring
 
-- [ ] **Fix AlertManager configuration** — Replace placeholder credentials (`your-email@example.com`) with real ones via 1Password. Consider Discord or Ntfy over SMTP. Currently alerts fire but go nowhere.
+- [x] **Fix AlertManager configuration** — Replaced email placeholder with Discord webhook via alertmanager-discord bridge. Alerts routing to Discord.
 
 - [ ] **Add blackbox_exporter for HTTP uptime monitoring** — Add HTTP probes for key services (Immich, Paperless, Plex, NetBox, etc.) so a container serving 502s is caught. Add scrape job and alert rules for probe failures.
 
-- [ ] **Scrape Traefik Prometheus metrics** — Traefik exposes metrics at `:8080/metrics`. Add a scrape job for request rates, error rates, and response times per router. Add a Grafana dashboard.
+- [x] **Scrape Traefik Prometheus metrics** — Enabled `metrics: prometheus: {}` in traefik.yml, added scrape job targeting `traefik:8080`.
 
 - [ ] **Add postgres_exporter for database monitoring** — Cover the 3 PostgreSQL instances (immich, netbox, paperless). Surface connection pool exhaustion, slow queries, dead tuples. Credentials via 1Password.
 
-- [ ] **Add NFS mount health alert** — Alert if TrueNAS NFS mounts go stale or disappear. Use `absent()` or a stale-read check on `node_filesystem_*` metrics. Failure here silently breaks media and backups.
+- [x] **Add NFS mount health alert** — NFSMountError alert using `node_filesystem_device_error{fstype=~"nfs4?"}` on Docker volume mount points.
 
 - [ ] **Add severity-based alert routing** — Configure separate AlertManager routes for `critical` vs `warning`. Critical alerts (disk full, container down) page immediately; warnings can be batched.
 
-- [ ] **Fix ContainerRestarting alert expression** — Current expression `delta(container_start_time_seconds[15m]) > 0` fires on first start. Replace with a reliable restart count expression using cAdvisor metrics.
+- [x] **Fix ContainerRestarting alert expression** — Switched to `increase(container_restart_count[15m]) > 0`.
 
-- [ ] **Add "container absent" alerts for critical services** — Use `absent()` to alert when critical containers (immich, paperless, netbox, traefik) stop entirely, not just restart loop.
+- [x] **Add "container absent" alerts for critical services** — CriticalContainerDown alert using `absent(container_last_seen{name="..."})` for traefik, prometheus, grafana, immich_server, paperless-ngx, netbox.
 
 - [ ] **Add Loki + Promtail for log aggregation** — Ship Docker logs into Grafana via Loki. Completes metrics+logs observability. Configure Loki as a Grafana datasource.
 
