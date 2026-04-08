@@ -1,0 +1,105 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "docker:enableMajor"
+  ],
+  "timezone": "America/Chicago",
+  "schedule": ["every weekend"],
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 10,
+  "labels": ["renovate"],
+  "enabledManagers": ["docker-compose"],
+  "docker-compose": {
+    "fileMatch": ["(^|/)docker-compose\\.ya?ml$"]
+  },
+  "packageRules": [
+    {
+      "description": "Group all monitoring stack updates",
+      "matchFileNames": ["monitoring/**"],
+      "groupName": "monitoring stack",
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Group all mediaserver stack updates",
+      "matchFileNames": ["mediaserver/**"],
+      "groupName": "mediaserver stack"
+    },
+    {
+      "description": "Group all immich updates",
+      "matchFileNames": ["immich/**"],
+      "groupName": "immich stack"
+    },
+    {
+      "description": "Group all paperless updates",
+      "matchFileNames": ["paperless/**"],
+      "groupName": "paperless stack"
+    },
+    {
+      "description": "Group all netbox updates",
+      "matchFileNames": ["netbox/**"],
+      "groupName": "netbox stack"
+    },
+    {
+      "description": "Group all frigate updates",
+      "matchFileNames": ["frigate/**"],
+      "groupName": "frigate stack"
+    },
+    {
+      "description": "Group traefik stack updates",
+      "matchFileNames": ["traefik/**"],
+      "groupName": "traefik stack"
+    },
+    {
+      "description": "Group 1Password Connect updates",
+      "matchFileNames": ["1password/**"],
+      "groupName": "1password stack",
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Automerge minor/patch for low-risk services",
+      "matchFileNames": [
+        "audiobookshelf/**",
+        "mealie/**",
+        "calibre-web/**",
+        "shelfarr/**",
+        "portainer/**",
+        "backup/**",
+        "adguard-sync/**"
+      ],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Require manual review for pocket-id (auth provider)",
+      "matchFileNames": ["pocket-id/**"],
+      "groupName": "pocket-id stack",
+      "automerge": false
+    },
+    {
+      "description": "Pin postgres and redis to minor versions only",
+      "matchPackageNames": [
+        "docker.io/library/postgres",
+        "docker.io/library/redis"
+      ],
+      "allowedVersions": "!/^[0-9]+$/",
+      "groupName": "database images"
+    },
+    {
+      "description": "Ignore digest-only updates for latest-tagged images",
+      "matchUpdateTypes": ["digest"],
+      "matchCurrentValue": "latest",
+      "enabled": false
+    },
+    {
+      "description": "Ignore stable/release pseudo-tags (Frigate, Immich)",
+      "matchCurrentValue": "/^(stable|release)$/",
+      "enabled": false
+    }
+  ]
+}
