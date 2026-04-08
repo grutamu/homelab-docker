@@ -20,4 +20,5 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /root/homelab-docker:/root/homelab-docker
+      - /root/.ssh:/root/.ssh:ro
       - /etc/localtime:/etc/localtime:ro
