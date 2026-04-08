@@ -1,0 +1,44 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, docker01]
+    steps:
+      - name: Pull latest
+        run: git -C /root/homelab-docker pull
+
+      - name: Deploy changed stacks
+        run: |
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+
+          # On initial push before SHA is all zeros — deploy everything
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "Initial push — deploying all stacks"
+            /root/homelab-docker/deploy.sh
+            exit 0
+          fi
+
+          CHANGED=$(git -C /root/homelab-docker diff --name-only "$BEFORE" "$AFTER" \
+            | grep -v '^\.' \
+            | cut -d'/' -f1 \
+            | sort -u)
+
+          DEPLOYED=0
+          for stack in $CHANGED; do
+            # Skip the runner itself to avoid self-restart mid-job
+            [ "$stack" = "github-runner" ] && continue
+            if [ -f "/root/homelab-docker/$stack/docker-compose.yaml" ]; then
+              echo "==> Deploying $stack"
+              /root/homelab-docker/deploy.sh "$stack"
+              DEPLOYED=$((DEPLOYED + 1))
+            fi
+          done
+
+          if [ "$DEPLOYED" -eq 0 ]; then
+            echo "No stack changes detected, nothing to deploy."
+          fi

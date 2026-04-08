@@ -1,0 +1,23 @@
+name: github-runner
+services:
+  runner:
+    build: .
+    container_name: github_runner
+    restart: unless-stopped
+    # host networking required so deploy.sh can reach 1Password Connect at localhost:7070
+    network_mode: host
+    environment:
+      REPO_URL: https://github.com/grutamu/homelab-docker
+      RUNNER_NAME: docker01
+      RUNNER_LABELS: self-hosted,docker01
+      RUNNER_SCOPE: repo
+      RUN_AS_ROOT: "true"
+      # Injected from 1Password via op run
+      ACCESS_TOKEN:
+      # Passed through from host environment (/etc/profile.d/1password.sh)
+      OP_CONNECT_HOST:
+      OP_CONNECT_TOKEN:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/homelab-docker:/root/homelab-docker
+      - /etc/localtime:/etc/localtime:ro
