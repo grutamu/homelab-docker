@@ -16,8 +16,8 @@ groups:
       absent(container_last_seen{name="prometheus"}) or
       absent(container_last_seen{name="grafana"}) or
       absent(container_last_seen{name="immich_server"}) or
-      absent(container_last_seen{name="paperless-ngx"}) or
-      absent(container_last_seen{name="netbox"})
+      absent(container_last_seen{name="paperless-webserver-1"}) or
+      absent(container_last_seen{name="netbox-server"})
     for: 2m
     labels:
       severity: critical
