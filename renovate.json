@@ -11,27 +11,44 @@
   "prHourlyLimit": 0,
   "prConcurrentLimit": 10,
   "labels": ["renovate"],
+  "automerge": true,
+  "automergeType": "pr",
   "enabledManagers": ["docker-compose"],
   "docker-compose": {
     "fileMatch": ["(^|/)docker-compose\\.ya?ml$"]
   },
   "packageRules": [
     {
+      "description": "Never automerge major versions",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Require manual review for pocket-id (auth provider — outage locks out all services)",
+      "matchFileNames": ["pocket-id/**"],
+      "groupName": "pocket-id stack",
+      "automerge": false
+    },
+    {
+      "description": "Require manual review for immich (postgres DB migrations can be irreversible)",
+      "matchFileNames": ["immich/**"],
+      "groupName": "immich stack",
+      "automerge": false
+    },
+    {
+      "description": "Require manual review for traefik majors (gateway — outage takes down everything)",
+      "matchFileNames": ["traefik/**"],
+      "groupName": "traefik stack"
+    },
+    {
       "description": "Group all monitoring stack updates",
       "matchFileNames": ["monitoring/**"],
-      "groupName": "monitoring stack",
-      "automerge": true,
-      "automergeType": "pr"
+      "groupName": "monitoring stack"
     },
     {
       "description": "Group all mediaserver stack updates",
       "matchFileNames": ["mediaserver/**"],
       "groupName": "mediaserver stack"
-    },
-    {
-      "description": "Group all immich updates",
-      "matchFileNames": ["immich/**"],
-      "groupName": "immich stack"
     },
     {
       "description": "Group all paperless updates",
@@ -49,46 +66,9 @@
       "groupName": "frigate stack"
     },
     {
-      "description": "Group traefik stack updates",
-      "matchFileNames": ["traefik/**"],
-      "groupName": "traefik stack"
-    },
-    {
       "description": "Group 1Password Connect updates",
       "matchFileNames": ["1password/**"],
-      "groupName": "1password stack",
-      "automerge": true,
-      "automergeType": "pr"
-    },
-    {
-      "description": "Automerge minor/patch for low-risk services",
-      "matchFileNames": [
-        "audiobookshelf/**",
-        "mealie/**",
-        "calibre-web/**",
-        "shelfarr/**",
-        "portainer/**",
-        "backup/**",
-        "adguard-sync/**"
-      ],
-      "matchUpdateTypes": ["minor", "patch", "digest"],
-      "automerge": true,
-      "automergeType": "pr"
-    },
-    {
-      "description": "Require manual review for pocket-id (auth provider)",
-      "matchFileNames": ["pocket-id/**"],
-      "groupName": "pocket-id stack",
-      "automerge": false
-    },
-    {
-      "description": "Pin postgres and redis to minor versions only",
-      "matchPackageNames": [
-        "docker.io/library/postgres",
-        "docker.io/library/redis"
-      ],
-      "allowedVersions": "!/^[0-9]+$/",
-      "groupName": "database images"
+      "groupName": "1password stack"
     },
     {
       "description": "Ignore digest-only updates for latest-tagged images",
@@ -97,7 +77,7 @@
       "enabled": false
     },
     {
-      "description": "Ignore stable/release pseudo-tags (Frigate, Immich)",
+      "description": "Ignore stable/release pseudo-tags (Frigate)",
       "matchCurrentValue": "/^(stable|release)$/",
       "enabled": false
     }
