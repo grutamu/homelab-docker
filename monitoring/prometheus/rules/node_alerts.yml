@@ -29,7 +29,7 @@ groups:
       description: "Disk usage is > 85%\n  VALUE = {{ $value }}%\n  LABELS: {{ $labels }}"
 
   - alert: NFSMountError
-    expr: node_filesystem_device_error{fstype=~"nfs4?",mountpoint=~"/var/lib/docker/volumes/.*"} == 1
+    expr: node_filesystem_device_error{fstype=~"nfs4?",mountpoint=~"/var/lib/docker/volumes/.*",device_error!="permission denied"} == 1
     for: 1m
     labels:
       severity: critical
@@ -37,7 +37,6 @@ groups:
       summary: "NFS mount error ({{ $labels.mountpoint }})"
       description: "NFS mount {{ $labels.mountpoint }} is reporting a device error — TrueNAS may be unreachable"
 
-  # Add this to your alert rules file
   - alert: UnusualMemoryGrowth
     expr: deriv(node_memory_MemAvailable_bytes[30m]) < -10 * 1024 * 1024
     for: 10m

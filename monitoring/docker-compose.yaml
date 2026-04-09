@@ -4,6 +4,8 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     restart: unless-stopped
+    extra_hosts:
+      - "node-exporter:host-gateway"
     command:
       - --config.file=/etc/prometheus/prometheus.yaml
       - '--storage.tsdb.path=/prometheus'
@@ -22,6 +24,9 @@ services:
     image: prom/node-exporter:latest
     container_name: node-exporter
     restart: unless-stopped
+    # host networking required so node-exporter shares the host's network namespace
+    # and can statfs() NFS mounts established by the host NFS client
+    network_mode: host
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
@@ -31,8 +36,6 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
-    networks:
-      - proxy
     
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
