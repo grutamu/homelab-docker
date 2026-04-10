@@ -41,7 +41,7 @@ git pull
 if [ $# -eq 1 ]; then
     deploy "$1"
 else
-    for stack in traefik monitoring pocket-id 1password \
+    for stack in traefik infra monitoring pocket-id 1password \
                  mediaserver immich paperless frigate netbox \
                  audiobookshelf mealie portainer shelfarr \
                  calibre-web backup adguard-sync; do

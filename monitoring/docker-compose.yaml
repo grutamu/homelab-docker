@@ -1,7 +1,7 @@
 ---
 services:
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.11.1
     container_name: prometheus
     restart: unless-stopped
     extra_hosts:
@@ -21,7 +21,7 @@ services:
       - proxy
 
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v1.11.1
     container_name: node-exporter
     restart: unless-stopped
     # host networking required so node-exporter shares the host's network namespace
@@ -38,7 +38,7 @@ services:
       - /:/rootfs:ro
     
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
     container_name: cadvisor
     restart: unless-stopped
     volumes:
@@ -52,7 +52,7 @@ services:
       - proxy
     
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:12.4.2
     container_name: grafana
     restart: unless-stopped
     user: "472"
@@ -74,7 +74,7 @@ services:
       - proxy
 
   alertmanager:
-    image: prom/alertmanager:latest
+    image: prom/alertmanager:v0.32.0
     container_name: alertmanager
     restart: unless-stopped
     volumes:
@@ -93,7 +93,7 @@ services:
       - proxy
 
   alertmanager-discord:
-    image: benjojo/alertmanager-discord:latest
+    image: benjojo/alertmanager-discord@sha256:7d27cd8494b269fe592cf6a9d7f6bdf14ac628bba34c381dc43cf533eaa95158
     container_name: alertmanager-discord
     restart: unless-stopped
     command: ["-webhook.url", "${DISCORD_WEBHOOK_URL}"]

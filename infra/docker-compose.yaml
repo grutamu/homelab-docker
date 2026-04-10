@@ -1,0 +1,14 @@
+services:
+  cf-tunnel:
+    image: cloudflare/cloudflared:2026.3.0
+    container_name: cf-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

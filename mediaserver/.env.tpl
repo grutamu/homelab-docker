@@ -1,1 +1,0 @@
-TUNNEL_TOKEN=op://docker/mediaserver/TUNNEL_TOKEN

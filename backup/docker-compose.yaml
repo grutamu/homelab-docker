@@ -10,7 +10,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - nfs-backup:/backups
     environment:
-      - TZ=America/Chicago
       - BACKREST_PORT=9898
       - BACKREST_INSTANCE=docker01
       - IMMICH_DB_USER

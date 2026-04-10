@@ -1,15 +1,15 @@
 services:
   calibre-web:
-    image: lscr.io/linuxserver/calibre-web:latest
+    image: lscr.io/linuxserver/calibre-web:0.6.26-ls377
     container_name: calibre-web
     restart: unless-stopped
     volumes:
       - /docker-data/calibre-web:/config
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
       - DOCKER_MODS=linuxserver/mods:universal-calibre  # enables ebook conversion
     labels:
       - "traefik.enable=true"

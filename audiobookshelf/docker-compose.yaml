@@ -1,16 +1,16 @@
 services:
   audiobookshelf:
-    image: ghcr.io/advplyr/audiobookshelf:latest
+    image: ghcr.io/advplyr/audiobookshelf:2.33.1
     container_name: audiobookshelf
     restart: unless-stopped
     volumes:
       - /docker-data/audiobookshelf/config:/config
       - /docker-data/audiobookshelf/metadata:/metadata
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.audiobookshelf.rule=Host(`audiobookshelf.calzone.zone`)"

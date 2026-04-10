@@ -1,15 +1,15 @@
 services:
   sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:latest
+    image: lscr.io/linuxserver/sabnzbd:4.5.5-ls248
     container_name: sabnzbd
     restart: unless-stopped
     volumes:
       - /docker-data/sabnzbd:/config
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.calzone.zone`)"
@@ -20,24 +20,8 @@ services:
     networks:
       - proxy
 
-  watchtower:
-    image: nickfedor/watchtower:latest
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --cleanup
-  
-  cf-tunnel:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-    networks:
-      - proxy
-
   plex:
-    image: lscr.io/linuxserver/plex:latest
+    image: lscr.io/linuxserver/plex:1.43.1.10576-06378bdcd-ls300
     container_name: plex
     restart: unless-stopped
 # Add Configurations for GPU Hardware Rendering Here:
@@ -46,10 +30,10 @@ services:
     volumes:
       - /docker-data/plex:/config
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
       - VERSION=latest
     ports:
       - "32400:32400"
@@ -57,16 +41,16 @@ services:
       - proxy
 
   radarr:
-    image: lscr.io/linuxserver/radarr:latest
+    image: lscr.io/linuxserver/radarr:6.1.1.10360-ls298
     container_name: radarr
     restart: unless-stopped
     volumes:
       - /docker-data/radarr:/config
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.radarr.rule=Host(`radarr.calzone.zone`)"
@@ -78,16 +62,16 @@ services:
       - proxy
 
   radarr-4k:
-    image: lscr.io/linuxserver/radarr:latest
+    image: lscr.io/linuxserver/radarr:6.1.1.10360-ls298
     container_name: radarr-4k
     restart: unless-stopped
     volumes:
       - /docker-data/radarr-4k:/config
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.radarr-4k.rule=Host(`radarr-4k.calzone.zone`)"
@@ -99,16 +83,16 @@ services:
       - proxy
 
   sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
+    image: lscr.io/linuxserver/sonarr:4.0.17.2952-ls306
     container_name: sonarr
     restart: unless-stopped
     volumes:
       - /docker-data/sonarr:/config
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.sonarr.rule=Host(`sonarr.calzone.zone`)"
@@ -120,15 +104,15 @@ services:
       - proxy
 
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
+    image: lscr.io/linuxserver/prowlarr:2.3.5.5327-ls141
     container_name: prowlarr
     restart: unless-stopped
     volumes:
       - /docker-data/prowlarr:/config
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.calzone.zone`)"
@@ -140,14 +124,14 @@ services:
       - proxy
 
   seerr:
-    image: ghcr.io/seerr-team/seerr:latest
+    image: ghcr.io/seerr-team/seerr:v3.1.0
     init: true
     container_name: seerr
     restart: unless-stopped
     volumes:
       - /docker-data/seerr:/app/config
+      - /etc/localtime:/etc/localtime:ro
     environment:
-      - TZ=America/Chicago
       - LOG_LEVEL=debug
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
@@ -165,27 +149,26 @@ services:
       - proxy
 
   recyclarr:
-    image: ghcr.io/recyclarr/recyclarr
+    image: ghcr.io/recyclarr/recyclarr:8.3.2
     container_name: recyclarr
     restart: unless-stopped
     volumes:
       - /docker-data/recyclarr:/config
-    environment:
-      - TZ=America/Chicago
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - proxy
 
   bazarr:
-    image: lscr.io/linuxserver/bazarr:latest
+    image: lscr.io/linuxserver/bazarr:v1.5.6-ls343
     container_name: bazarr
     restart: unless-stopped
     volumes:
       - /docker-data/bazarr:/config
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.bazarr.rule=Host(`bazarr.calzone.zone`)"
@@ -197,15 +180,15 @@ services:
       - proxy
 
   tautulli:
-    image: lscr.io/linuxserver/tautulli:latest
+    image: lscr.io/linuxserver/tautulli:v2.17.0-ls223
     container_name: tautulli
     restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
     volumes:
       - /docker-data/tautulli:/config
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tautulli.rule=Host(`tautulli.calzone.zone`)"
@@ -216,14 +199,14 @@ services:
       - proxy
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr:latest # or jorenn92/maintainerr:latest
+    image: ghcr.io/maintainerr/maintainerr@sha256:6d454b8a5dc5eaeec869d60d0e6da4d1e9fca13f102aa6914421a714a158f2c0
     container_name: maintainerr
     restart: unless-stopped
     user: 1000:1000
     volumes:
       - /docker-data/maintainerr:/opt/data
-    environment:
-      - TZ=America/Chicago
+      - /etc/localtime:/etc/localtime:ro
+#    environment:
 #      - BASE_PATH=/maintainerr # uncomment if you're serving maintainerr from a subdirectory
 #      - UI_HOSTNAME=:: # uncomment if you want to listen on IPv6 instead (default 0.0.0.0)
 #      - UI_PORT=6247 # uncomment to change the UI port (default 6246). Useful if you're on a network where the port is already in use

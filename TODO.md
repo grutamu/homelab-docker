@@ -42,15 +42,17 @@
 
 ## Docker Deployment Improvements
 
-- [ ] **Pin image versions** — Replace `:latest` tags with specific versions (e.g. `radarr:5.14.0`). Keeps a known-good version in git for rollbacks. Watchtower will still handle updates.
+- [x] **Pin image versions** — Pinned all `:latest` tags to running versions (semver where available, digest for maintainerr/shelfarr/alertmanager-discord). Watchtower will still handle updates.
 
-- [ ] **Control Watchtower scope** — Run Watchtower with `--label-enable` so updates are opt-in. Add `com.centurylinklabs.watchtower.enable=true` to services you want updated, and keep databases/stateful services out.
+- [x] **Remove Watchtower** — Removed entirely; Renovate + deploy.sh handle image updates via git, making Watchtower redundant and harmful (causes drift between git and running state).
 
-- [ ] **Move Watchtower and cf-tunnel out of `mediaserver`** — Both are infrastructure. Move to the `traefik` stack or a dedicated `infra` stack.
+- [x] **Move cf-tunnel out of `mediaserver`** — Moved to dedicated `infra` stack. `mediaserver/.env.tpl` removed (no secrets remain in that stack).
+
+- [ ] **Rename 1Password item for cf-tunnel** — `infra/.env.tpl` still references `op://docker/mediaserver/TUNNEL_TOKEN`. Rename the 1Password item from "mediaserver" to "infra" and update the reference.
 
 - [ ] **Add healthchecks to databases and use `condition: service_healthy`** — Postgres and Redis containers lack healthchecks, so `depends_on` doesn't actually wait for readiness. Add `pg_isready` / `redis-cli ping` healthchecks and update `depends_on` conditions.
 
-- [ ] **Remove redundant `TZ` env vars** — `/etc/localtime` is already bind-mounted on most services. Pick one approach and apply it consistently.
+- [x] **Remove redundant `TZ` env vars** — Standardized on `/etc/localtime:/etc/localtime:ro` bind mount. Removed `TZ=` from all services and added localtime mount where missing.
 
 ## Done
 

@@ -1,15 +1,15 @@
 services:
   shelfarr:
-    image: ghcr.io/pedro-revez-silva/shelfarr:latest
+    image: ghcr.io/pedro-revez-silva/shelfarr@sha256:2a6b51fb5656d7a2f73369b0180eb834a0aeb2df43c19a565e88aef39c5897b0
     container_name: shelfarr
     restart: unless-stopped
     volumes:
       - /docker-data/shelfarr/data:/rails/storage
       - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
       - SOLID_QUEUE_IN_PUMA=1
     labels:
       - "traefik.enable=true"

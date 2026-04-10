@@ -32,11 +32,10 @@ services:
       
   netbox-server:
     container_name: netbox-server
-    image: lscr.io/linuxserver/netbox:latest
+    image: lscr.io/linuxserver/netbox:v4.5.7-ls343
     environment:
       PGID: "1000"
       PUID: "1000"
-      TZ: Etc/UTC
       SUPERUSER_EMAIL:
       SUPERUSER_PASSWORD:
       ALLOWED_HOST: netbox.calzone.zone
@@ -50,6 +49,7 @@ services:
     restart: unless-stopped
     volumes:
       - /docker-data/netbox/config:/config
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       - netbox-postgres
       - netbox-redis
