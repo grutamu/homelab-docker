@@ -149,7 +149,7 @@ services:
       - proxy
 
   recyclarr:
-    image: ghcr.io/recyclarr/recyclarr:8.3.2
+    image: ghcr.io/recyclarr/recyclarr:8.5.1
     container_name: recyclarr
     restart: unless-stopped
     volumes:
@@ -199,7 +199,7 @@ services:
       - proxy
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr@sha256:6d454b8a5dc5eaeec869d60d0e6da4d1e9fca13f102aa6914421a714a158f2c0
+    image: ghcr.io/maintainerr/maintainerr@sha256:32c6809db67edd04c2b92dc52cbec470d8912646f54c6f61c5f0f6144e9e4227
     container_name: maintainerr
     restart: unless-stopped
     user: 1000:1000
