@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":dependencyDashboard",
     ":semanticCommits",
     "docker:enableMajor"
@@ -15,7 +15,9 @@
   "automergeType": "pr",
   "enabledManagers": ["docker-compose"],
   "docker-compose": {
-    "fileMatch": ["(^|/)docker-compose\\.ya?ml$"]
+    "managerFilePatterns": [
+      "/(^|/)docker-compose\\.ya?ml$/"
+    ]
   },
   "packageRules": [
     {
