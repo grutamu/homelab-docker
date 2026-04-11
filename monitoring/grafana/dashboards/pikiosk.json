@@ -67,20 +67,17 @@
       "targets": [{"expr": "pikiosk_arm_frequency_hz{device=\"pikiosk\"}", "instant": true}]
     },
     {
-      "title": "Stream URL",
+      "title": "Uptime",
       "type": "stat",
       "gridPos": {"h": 4, "w": 5, "x": 19, "y": 0},
       "fieldConfig": {
         "defaults": {
-          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}]},
-          "color": {"mode": "fixed", "fixedColor": "blue"}
+          "unit": "s",
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}]},
+          "color": {"mode": "fixed", "fixedColor": "green"}
         }
       },
-      "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"]},
-        "textMode": "name"
-      },
-      "targets": [{"expr": "pikiosk_stream_info{device=\"pikiosk\"}", "instant": true, "legendFormat": "{{url}}"}]
+      "targets": [{"expr": "time() - node_boot_time_seconds{instance=\"100.86.212.93:9100\"}", "instant": true}]
     },
     {
       "title": "CPU Temperature Over Time",
