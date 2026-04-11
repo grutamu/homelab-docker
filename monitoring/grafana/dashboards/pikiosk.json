@@ -167,7 +167,7 @@
           "color": {"mode": "thresholds"}
         }
       },
-      "targets": [{"expr": "node_network_carrier{device=\"wlan0\", instance=\"100.86.212.93:9100\"}", "instant": true}]
+      "targets": [{"expr": "node_network_carrier{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}", "instant": true}]
     },
     {
       "title": "WiFi Carrier Changes",
@@ -179,7 +179,7 @@
           "color": {"mode": "thresholds"}
         }
       },
-      "targets": [{"expr": "node_network_carrier_changes_total{device=\"wlan0\", instance=\"100.86.212.93:9100\"}", "instant": true}]
+      "targets": [{"expr": "node_network_carrier_changes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}", "instant": true}]
     },
     {
       "title": "WiFi Throughput",
@@ -187,8 +187,8 @@
       "gridPos": {"h": 8, "w": 16, "x": 8, "y": 28},
       "fieldConfig": {"defaults": {"unit": "Bps"}},
       "targets": [
-        {"expr": "irate(node_network_receive_bytes_total{device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX"},
-        {"expr": "irate(node_network_transmit_bytes_total{device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX"}
+        {"expr": "irate(node_network_receive_bytes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX"},
+        {"expr": "irate(node_network_transmit_bytes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX"}
       ]
     },
     {
@@ -201,10 +201,10 @@
         }
       },
       "targets": [
-        {"expr": "irate(node_network_receive_errs_total{device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX Errors"},
-        {"expr": "irate(node_network_transmit_errs_total{device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX Errors"},
-        {"expr": "irate(node_network_receive_drop_total{device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX Drops"},
-        {"expr": "irate(node_network_transmit_drop_total{device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX Drops"}
+        {"expr": "irate(node_network_receive_errs_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX Errors"},
+        {"expr": "irate(node_network_transmit_errs_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX Errors"},
+        {"expr": "irate(node_network_receive_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX Drops"},
+        {"expr": "irate(node_network_transmit_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX Drops"}
       ]
     }
   ]
