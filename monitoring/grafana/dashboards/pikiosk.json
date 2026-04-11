@@ -132,7 +132,7 @@
           "max": 209715200,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 157286400}, {"color": "red", "value": 188743680}]
+            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 199229440}, {"color": "red", "value": 207618048}]
           },
           "color": {"mode": "thresholds"}
         }
@@ -161,7 +161,7 @@
           "unit": "bytes",
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 157286400}, {"color": "red", "value": 188743680}]
+            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 199229440}, {"color": "red", "value": 207618048}]
           },
           "custom": {
             "thresholdsStyle": {"mode": "line"}
