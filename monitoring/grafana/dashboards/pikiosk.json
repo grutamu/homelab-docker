@@ -5,7 +5,7 @@
   "refresh": "1m",
   "panels": [
     {
-      "title": "Chromium Running",
+      "title": "MPV Running",
       "type": "stat",
       "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
       "fieldConfig": {
@@ -17,27 +17,12 @@
           "color": {"mode": "thresholds"}
         }
       },
-      "targets": [{"expr": "pikiosk_chromium_running{device=\"pikiosk\"}", "instant": true}]
-    },
-    {
-      "title": "HTTP Server Up",
-      "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {"type": "value", "options": {"0": {"text": "Down", "color": "red"}, "1": {"text": "Up", "color": "green"}}}
-          ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": 0}, {"color": "green", "value": 1}]},
-          "color": {"mode": "thresholds"}
-        }
-      },
-      "targets": [{"expr": "pikiosk_http_server_up{device=\"pikiosk\"}", "instant": true}]
+      "targets": [{"expr": "pikiosk_mpv_running{device=\"pikiosk\"}", "instant": true}]
     },
     {
       "title": "Throttle Status",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -53,7 +38,7 @@
     {
       "title": "CPU Temperature",
       "type": "gauge",
-      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "gridPos": {"h": 4, "w": 6, "x": 8, "y": 0},
       "fieldConfig": {
         "defaults": {
           "unit": "celsius",
@@ -71,7 +56,7 @@
     {
       "title": "ARM Frequency",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "gridPos": {"h": 4, "w": 5, "x": 14, "y": 0},
       "fieldConfig": {
         "defaults": {
           "unit": "hertz",
@@ -80,6 +65,20 @@
         }
       },
       "targets": [{"expr": "pikiosk_arm_frequency_hz{device=\"pikiosk\"}", "instant": true}]
+    },
+    {
+      "title": "Stream URL",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 5, "x": 19, "y": 0},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"1": {"text": "configured", "color": "blue"}}}],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"fields": "/^url$/"}},
+      "targets": [{"expr": "pikiosk_stream_info{device=\"pikiosk\"}", "instant": true, "legendFormat": "{{url}}"}]
     },
     {
       "title": "CPU Temperature Over Time",
