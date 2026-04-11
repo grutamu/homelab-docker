@@ -124,7 +124,7 @@
     {
       "title": "MPV RSS Memory",
       "type": "gauge",
-      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 20},
+      "gridPos": {"h": 4, "w": 5, "x": 0, "y": 20},
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
@@ -140,9 +140,22 @@
       "targets": [{"expr": "pikiosk_mpv_rss_bytes{device=\"pikiosk\"}", "instant": true}]
     },
     {
+      "title": "Watchdog Restarts",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 5, "x": 5, "y": 20},
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 1}, {"color": "red", "value": 3}]},
+          "color": {"mode": "thresholds"},
+          "noValue": "0"
+        }
+      },
+      "targets": [{"expr": "pikiosk_watchdog_restarts_total{device=\"pikiosk\"}", "instant": true}]
+    },
+    {
       "title": "MPV RSS Memory Over Time",
       "type": "timeseries",
-      "gridPos": {"h": 4, "w": 18, "x": 6, "y": 20},
+      "gridPos": {"h": 4, "w": 14, "x": 10, "y": 20},
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
