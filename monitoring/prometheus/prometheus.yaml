@@ -34,3 +34,9 @@ scrape_configs:
     scrape_interval: 15s
     static_configs:
       - targets: ['traefik:8080']
+
+  - job_name: pikiosk
+    static_configs:
+      - targets: ['100.86.212.93:9100']
+        labels:
+          device: pikiosk
