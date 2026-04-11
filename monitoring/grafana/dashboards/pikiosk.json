@@ -72,12 +72,14 @@
       "gridPos": {"h": 4, "w": 5, "x": 19, "y": 0},
       "fieldConfig": {
         "defaults": {
-          "mappings": [{"type": "value", "options": {"1": {"text": "configured", "color": "blue"}}}],
           "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}]},
-          "color": {"mode": "thresholds"}
+          "color": {"mode": "fixed", "fixedColor": "blue"}
         }
       },
-      "options": {"reduceOptions": {"fields": "/^url$/"}},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "textMode": "name"
+      },
       "targets": [{"expr": "pikiosk_stream_info{device=\"pikiosk\"}", "instant": true, "legendFormat": "{{url}}"}]
     },
     {
