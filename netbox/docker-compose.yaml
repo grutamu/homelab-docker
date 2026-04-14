@@ -2,7 +2,7 @@
 services:
   netbox-postgres:
     container_name: netbox-postgres
-    image: postgres:16.13-alpine
+    image: postgres:18.3-alpine
     environment:
       POSTGRES_DB: netbox
       POSTGRES_USER: netbox
@@ -20,7 +20,7 @@ services:
      
   netbox-redis:
     container_name: netbox-redis
-    image: redis:7-alpine
+    image: redis:8-alpine
     restart: unless-stopped
     command: redis-server
     healthcheck:
