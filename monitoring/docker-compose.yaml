@@ -1,7 +1,7 @@
 ---
 services:
   prometheus:
-    image: prom/prometheus:v3.11.1
+    image: prom/prometheus:v3.11.2
     container_name: prometheus
     restart: unless-stopped
     extra_hosts:
@@ -52,7 +52,7 @@ services:
       - proxy
     
   grafana:
-    image: grafana/grafana:12.4.2
+    image: grafana/grafana:12.4.3
     container_name: grafana
     restart: unless-stopped
     user: "472"
