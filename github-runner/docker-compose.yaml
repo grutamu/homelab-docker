@@ -12,6 +12,9 @@ services:
       RUNNER_LABELS: self-hosted,docker01
       RUNNER_SCOPE: repo
       RUN_AS_ROOT: "true"
+      # One-shot runners: after each job, runner self-deregisters and exits.
+      # Combined with clean-state.sh, the next restart starts from clean state.
+      EPHEMERAL: "true"
       # Injected from 1Password via op run
       ACCESS_TOKEN:
       # Passed through from host environment (/etc/profile.d/1password.sh)

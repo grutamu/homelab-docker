@@ -8,3 +8,9 @@ RUN curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
     apt-get update && \
     apt-get install -y 1password-cli && \
     rm -rf /var/lib/apt/lists/*
+
+COPY clean-state.sh /usr/local/bin/clean-state.sh
+RUN chmod +x /usr/local/bin/clean-state.sh
+
+ENTRYPOINT ["/usr/local/bin/clean-state.sh"]
+CMD ["./bin/Runner.Listener", "run", "--startuptype", "service"]
