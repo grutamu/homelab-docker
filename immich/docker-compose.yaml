@@ -39,7 +39,6 @@ services:
       DB_PASSWORD:
       DB_USERNAME:
       DB_DATABASE_NAME: immich
-      IMMICH_LOG_LEVEL: debug
     restart: always
     healthcheck:
       disable: false
