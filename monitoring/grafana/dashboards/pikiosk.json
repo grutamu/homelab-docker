@@ -1,11 +1,11 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 1,
+  "version": 2,
   "refresh": "1m",
   "panels": [
     {
-      "title": "MPV Running",
+      "title": "Kiosk Player Running",
       "type": "stat",
       "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
       "fieldConfig": {
@@ -17,7 +17,7 @@
           "color": {"mode": "thresholds"}
         }
       },
-      "targets": [{"expr": "pikiosk_mpv_running{device=\"pikiosk\"}", "instant": true}]
+      "targets": [{"expr": "clamp_max(pikiosk_cog_running{device=\"pikiosk\"} + pikiosk_mpv_running{device=\"pikiosk\"}, 1)", "instant": true}]
     },
     {
       "title": "Throttle Status",
@@ -119,22 +119,22 @@
       ]
     },
     {
-      "title": "MPV RSS Memory",
+      "title": "Cog RSS Memory",
       "type": "gauge",
       "gridPos": {"h": 4, "w": 5, "x": 0, "y": 20},
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
           "min": 0,
-          "max": 209715200,
+          "max": 314572800,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 199229440}, {"color": "red", "value": 207618048}]
+            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 209715200}, {"color": "red", "value": 251658240}]
           },
           "color": {"mode": "thresholds"}
         }
       },
-      "targets": [{"expr": "pikiosk_mpv_rss_bytes{device=\"pikiosk\"}", "instant": true}]
+      "targets": [{"expr": "pikiosk_cog_rss_bytes{device=\"pikiosk\"}", "instant": true}]
     },
     {
       "title": "Watchdog Restarts",
@@ -150,7 +150,7 @@
       "targets": [{"expr": "pikiosk_watchdog_restarts_total{device=\"pikiosk\"}", "instant": true}]
     },
     {
-      "title": "MPV RSS Memory Over Time",
+      "title": "Player RSS Memory Over Time",
       "type": "timeseries",
       "gridPos": {"h": 4, "w": 14, "x": 10, "y": 20},
       "fieldConfig": {
@@ -158,14 +158,17 @@
           "unit": "bytes",
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 199229440}, {"color": "red", "value": 207618048}]
+            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 209715200}, {"color": "red", "value": 251658240}]
           },
           "custom": {
             "thresholdsStyle": {"mode": "line"}
           }
         }
       },
-      "targets": [{"expr": "pikiosk_mpv_rss_bytes{device=\"pikiosk\"}", "legendFormat": "RSS Memory"}]
+      "targets": [
+        {"expr": "pikiosk_cog_rss_bytes{device=\"pikiosk\"}", "legendFormat": "Cog (Immich)"},
+        {"expr": "pikiosk_mpv_rss_bytes{device=\"pikiosk\"}", "legendFormat": "MPV (YouTube)"}
+      ]
     },
     {
       "title": "WiFi Signal Strength",
