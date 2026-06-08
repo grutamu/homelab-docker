@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 2,
+  "version": 3,
   "refresh": "1m",
   "panels": [
     {
@@ -254,6 +254,64 @@
         {"expr": "irate(node_network_transmit_errs_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX Errors"},
         {"expr": "irate(node_network_receive_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX Drops"},
         {"expr": "irate(node_network_transmit_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX Drops"}
+      ]
+    },
+    {
+      "title": "V3D Clock",
+      "type": "stat",
+      "description": "Current V3D (3D engine) clock. vc4 has no hardware utilization counter; clock frequency is the best proxy for GPU activity.",
+      "gridPos": {"h": 4, "w": 5, "x": 0, "y": 44},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "hertz",
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}, {"color": "green", "value": 250000000}, {"color": "yellow", "value": 400000000}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "targets": [{"expr": "pikiosk_v3d_frequency_hz{device=\"pikiosk\"}", "instant": true}]
+    },
+    {
+      "title": "GPU Memory Used",
+      "type": "gauge",
+      "description": "reloc + malloc as a fraction of the firmware-allocated gpu_mem split (64 MB on this Pi).",
+      "gridPos": {"h": 4, "w": 5, "x": 5, "y": 44},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "max": 67108864,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 50331648}, {"color": "red", "value": 60817408}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "targets": [{"expr": "pikiosk_gpu_mem_reloc_bytes{device=\"pikiosk\"} + pikiosk_gpu_mem_malloc_bytes{device=\"pikiosk\"}", "instant": true}]
+    },
+    {
+      "title": "Core Voltage",
+      "type": "stat",
+      "description": "VC4 core supply voltage. Rises under sustained GPU + CPU load.",
+      "gridPos": {"h": 4, "w": 4, "x": 10, "y": 44},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "decimals": 3,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}]},
+          "color": {"mode": "fixed", "fixedColor": "blue"}
+        }
+      },
+      "targets": [{"expr": "pikiosk_core_voltage_volts{device=\"pikiosk\"}", "instant": true}]
+    },
+    {
+      "title": "GPU & Core Clocks Over Time",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 48},
+      "fieldConfig": {
+        "defaults": {"unit": "hertz"}
+      },
+      "targets": [
+        {"expr": "pikiosk_v3d_frequency_hz{device=\"pikiosk\"}", "legendFormat": "V3D (3D engine)"},
+        {"expr": "pikiosk_core_frequency_hz{device=\"pikiosk\"}", "legendFormat": "VC4 Core"},
+        {"expr": "pikiosk_hdmi_frequency_hz{device=\"pikiosk\"}", "legendFormat": "HDMI Pixel"}
       ]
     }
   ]
