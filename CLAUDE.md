@@ -93,7 +93,7 @@ Application data is backed up to TrueNAS (`/mnt/hdd-pool/backups/docker01`) via 
 | Stack | Key Services |
 |-------|-------------|
 | `traefik` | Traefik reverse proxy, Cloudflare tunnel |
-| `monitoring` | Prometheus, Grafana, AlertManager, cAdvisor, Node Exporter |
+| `monitoring` | Prometheus, Grafana, AlertManager, cAdvisor, Node Exporter, Blackbox Exporter |
 | `mediaserver` | Plex, Radarr, Sonarr, Prowlarr, SABnzbd, Bazarr, Seerr, Recyclarr, Tautulli, Maintainerr, Watchtower |
 | `immich` | Immich (photos), PostgreSQL, Redis, ML worker |
 | `frigate` | Frigate NVR (Intel GPU + USB Coral accelerators) |

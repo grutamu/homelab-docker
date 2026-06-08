@@ -26,6 +26,7 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [AlertManager](https://prometheus.io/docs/alerting/latest/alertmanager/) | Alerting |
 | [cAdvisor](https://github.com/google/cadvisor) | Container resource metrics |
 | [Node Exporter](https://github.com/prometheus/node_exporter) | Host system metrics |
+| [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) | HTTP/TCP/ICMP probes for service reachability and TLS cert expiry |
 
 ### Media
 | Service | Description |

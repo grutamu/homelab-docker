@@ -20,7 +20,7 @@
 
 - [x] **Fix AlertManager configuration** — Replaced email placeholder with Discord webhook via alertmanager-discord bridge. Alerts routing to Discord.
 
-- [ ] **Add blackbox_exporter for HTTP uptime monitoring** — Add HTTP probes for key services (Immich, Paperless, Plex, NetBox, etc.) so a container serving 502s is caught. Add scrape job and alert rules for probe failures.
+- [x] **Add blackbox_exporter for HTTP uptime monitoring** — Added `blackbox_exporter` to monitoring stack with two scrape jobs (`blackbox_http` for strict 200, `blackbox_http_redirect_ok` for pocket-id-auth-protected services that 302 to login). 23 targets probed. Alert rules: ServiceProbeDown, ServiceProbeSlow, TLSCertExpiringSoon, TLSCertExpired. Plex skipped (not behind Traefik); add separate job if needed.
 
 - [x] **Scrape Traefik Prometheus metrics** — Enabled `metrics: prometheus: {}` in traefik.yml, added scrape job targeting `traefik:8080`.
 

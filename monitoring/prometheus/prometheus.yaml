@@ -53,7 +53,6 @@ scrape_configs:
           - https://audiobookshelf.calzone.zone/healthcheck
           - https://grafana.calzone.zone/api/health
           - https://requests.calzone.zone/api/v1/status
-          - http://traefik:8080/ping
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
