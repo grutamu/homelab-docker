@@ -1,0 +1,38 @@
+groups:
+- name: blackbox_alerts
+  rules:
+  - alert: ServiceProbeDown
+    expr: probe_success == 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Service unreachable ({{ $labels.instance }})"
+      description: "Blackbox probe to {{ $labels.instance }} has failed for ≥5m. Check container, traefik routing, and DNS."
+
+  - alert: ServiceProbeSlow
+    expr: probe_duration_seconds > 5
+    for: 15m
+    labels:
+      severity: info
+    annotations:
+      summary: "Service slow ({{ $labels.instance }})"
+      description: "Probe to {{ $labels.instance }} taking {{ $value | humanizeDuration }}"
+
+  - alert: TLSCertExpiringSoon
+    expr: (probe_ssl_earliest_cert_expiry - time() < 14 * 24 * 3600) and probe_ssl_earliest_cert_expiry != 0
+    for: 1h
+    labels:
+      severity: warning
+    annotations:
+      summary: "TLS cert expiring soon ({{ $labels.instance }})"
+      description: "{{ $labels.instance }} cert expires in {{ $value | humanizeDuration }}"
+
+  - alert: TLSCertExpired
+    expr: (probe_ssl_earliest_cert_expiry - time() < 0) and probe_ssl_earliest_cert_expiry != 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "TLS cert EXPIRED ({{ $labels.instance }})"
+      description: "{{ $labels.instance }} certificate has expired."

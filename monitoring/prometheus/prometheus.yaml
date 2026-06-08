@@ -40,3 +40,57 @@ scrape_configs:
       - targets: ['100.86.212.93:9100']
         labels:
           device: pikiosk
+
+  # Blackbox: services with unauthenticated 200 endpoints
+  - job_name: 'blackbox_http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://photos.calzone.zone/api/server/ping
+          - https://mealie.calzone.zone/api/app/about
+          - https://audiobookshelf.calzone.zone/healthcheck
+          - https://grafana.calzone.zone/api/health
+          - https://requests.calzone.zone/api/v1/status
+          - http://traefik:8080/ping
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  # Blackbox: services that return 302 (login redirect or pocket-id-auth)
+  - job_name: 'blackbox_http_redirect_ok'
+    metrics_path: /probe
+    params:
+      module: [http_2xx_or_redirect]
+    static_configs:
+      - targets:
+          - https://paperless.calzone.zone/accounts/login/
+          - https://netbox.calzone.zone/login/
+          - https://auth.calzone.zone/
+          - https://sonarr.calzone.zone/ping
+          - https://radarr.calzone.zone/ping
+          - https://radarr-4k.calzone.zone/ping
+          - https://prowlarr.calzone.zone/ping
+          - https://bazarr.calzone.zone/ping
+          - https://sabnzbd.calzone.zone/
+          - https://frigate.calzone.zone/api/version
+          - https://tautulli.calzone.zone/
+          - https://bookrequests.calzone.zone/
+          - https://books.calzone.zone/
+          - https://alertmanager.calzone.zone/
+          - https://portainer.calzone.zone/
+          - https://backrest.calzone.zone/
+          - https://maintainerr.calzone.zone/
+          - https://traefik-dashboard.calzone.zone/
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
