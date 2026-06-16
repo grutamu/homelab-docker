@@ -1,127 +1,278 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 3,
+  "version": 4,
   "refresh": "1m",
   "panels": [
     {
+      "type": "row",
+      "title": "Status & Health",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
       "title": "Kiosk Player Running",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 0,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {"0": {"text": "Down", "color": "red"}, "1": {"text": "Running", "color": "green"}}}
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Down",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Running",
+                  "color": "green"
+                }
+              }
+            }
           ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": 0}, {"color": "green", "value": 1}]},
-          "color": {"mode": "thresholds"}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "targets": [{"expr": "clamp_max(pikiosk_cog_running{device=\"pikiosk\"} + pikiosk_mpv_running{device=\"pikiosk\"}, 1)", "instant": true}]
+      "targets": [
+        {
+          "expr": "clamp_max(pikiosk_cog_running{device=\"pikiosk\"} + pikiosk_mpv_running{device=\"pikiosk\"}, 1)",
+          "instant": true
+        }
+      ]
     },
     {
       "title": "Throttle Status",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 5,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {"0": {"text": "Healthy", "color": "green"}}},
-            {"type": "range", "options": {"from": 1, "to": 999999999, "result": {"text": "Throttled", "color": "red"}}}
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Healthy",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "range",
+              "options": {
+                "from": 1,
+                "to": 999999999,
+                "result": {
+                  "text": "Throttled",
+                  "color": "red"
+                }
+              }
+            }
           ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "red", "value": 1}]},
-          "color": {"mode": "thresholds"}
-        }
-      },
-      "targets": [{"expr": "pikiosk_throttled_status{device=\"pikiosk\"}", "instant": true}]
-    },
-    {
-      "title": "CPU Temperature",
-      "type": "gauge",
-      "gridPos": {"h": 4, "w": 6, "x": 8, "y": 0},
-      "fieldConfig": {
-        "defaults": {
-          "unit": "celsius",
-          "min": 0,
-          "max": 90,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 60}, {"color": "red", "value": 80}]
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
           },
-          "color": {"mode": "thresholds"}
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "targets": [{"expr": "pikiosk_cpu_temperature_celsius{device=\"pikiosk\"}", "instant": true}]
+      "targets": [
+        {
+          "expr": "pikiosk_throttled_status{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
     },
     {
-      "title": "ARM Frequency",
+      "title": "Watchdog Restarts",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 5, "x": 14, "y": 0},
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 10,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "hertz",
-          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}]},
-          "color": {"mode": "thresholds"}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
         }
       },
-      "targets": [{"expr": "pikiosk_arm_frequency_hz{device=\"pikiosk\"}", "instant": true}]
+      "targets": [
+        {
+          "expr": "pikiosk_watchdog_restarts_total{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "WiFi Link",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 14,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Down",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Up",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "node_network_carrier{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}",
+          "instant": true
+        }
+      ]
     },
     {
       "title": "Uptime",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 5, "x": 19, "y": 0},
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "s",
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}]},
-          "color": {"mode": "fixed", "fixedColor": "green"}
-        }
-      },
-      "targets": [{"expr": "time() - node_boot_time_seconds{instance=\"100.86.212.93:9100\"}", "instant": true}]
-    },
-    {
-      "title": "CPU Temperature Over Time",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-      "fieldConfig": {
-        "defaults": {
-          "unit": "celsius",
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 60}, {"color": "red", "value": 80}]
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
           }
         }
       },
-      "targets": [{"expr": "pikiosk_cpu_temperature_celsius{device=\"pikiosk\"}", "legendFormat": "Temperature"}]
-    },
-    {
-      "title": "ARM Frequency Over Time",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-      "fieldConfig": {"defaults": {"unit": "hertz"}},
-      "targets": [{"expr": "pikiosk_arm_frequency_hz{device=\"pikiosk\"}", "legendFormat": "ARM Frequency"}]
-    },
-    {
-      "title": "CPU Usage",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
-      "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100}},
-      "targets": [{"expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{device=\"pikiosk\", mode=\"idle\"}[5m])) * 100)", "legendFormat": "CPU %"}]
-    },
-    {
-      "title": "Memory Usage",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
-      "fieldConfig": {"defaults": {"unit": "bytes"}},
       "targets": [
-        {"expr": "node_memory_MemTotal_bytes{device=\"pikiosk\"} - node_memory_MemAvailable_bytes{device=\"pikiosk\"}", "legendFormat": "Used"},
-        {"expr": "node_memory_MemTotal_bytes{device=\"pikiosk\"}", "legendFormat": "Total"}
+        {
+          "expr": "time() - node_boot_time_seconds{instance=\"100.86.212.93:9100\"}",
+          "instant": true
+        }
       ]
+    },
+    {
+      "type": "row",
+      "title": "Memory",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "panels": []
     },
     {
       "title": "Cog RSS Memory",
       "type": "gauge",
-      "gridPos": {"h": 4, "w": 5, "x": 0, "y": 20},
+      "description": "Full cog browser stack (cog + WPEWebProcess + WPENetworkProcess). The pikiosk-metrics watchdog restarts it above 180 MB; the pikiosk-player cgroup hard-caps the tree at 300 MB (gauge max).",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 6
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
@@ -129,51 +280,460 @@
           "max": 314572800,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 209715200}, {"color": "red", "value": 251658240}]
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 157286400
+              },
+              {
+                "color": "red",
+                "value": 188743680
+              }
+            ]
           },
-          "color": {"mode": "thresholds"}
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "targets": [{"expr": "pikiosk_cog_rss_bytes{device=\"pikiosk\"}", "instant": true}]
-    },
-    {
-      "title": "Watchdog Restarts",
-      "type": "stat",
-      "gridPos": {"h": 4, "w": 5, "x": 5, "y": 20},
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 1}, {"color": "red", "value": 3}]},
-          "color": {"mode": "thresholds"},
-          "noValue": "0"
+      "targets": [
+        {
+          "expr": "pikiosk_cog_rss_bytes{device=\"pikiosk\"}",
+          "instant": true
         }
-      },
-      "targets": [{"expr": "pikiosk_watchdog_restarts_total{device=\"pikiosk\"}", "instant": true}]
+      ]
     },
     {
       "title": "Player RSS Memory Over Time",
       "type": "timeseries",
-      "gridPos": {"h": 4, "w": 14, "x": 10, "y": 20},
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 6
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 209715200}, {"color": "red", "value": 251658240}]
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 157286400
+              },
+              {
+                "color": "red",
+                "value": 188743680
+              }
+            ]
           },
           "custom": {
-            "thresholdsStyle": {"mode": "line"}
+            "thresholdsStyle": {
+              "mode": "line"
+            }
           }
         }
       },
       "targets": [
-        {"expr": "pikiosk_cog_rss_bytes{device=\"pikiosk\"}", "legendFormat": "Cog (Immich)"},
-        {"expr": "pikiosk_mpv_rss_bytes{device=\"pikiosk\"}", "legendFormat": "MPV (YouTube)"}
+        {
+          "expr": "pikiosk_cog_rss_bytes{device=\"pikiosk\"}",
+          "legendFormat": "Cog (Immich)"
+        },
+        {
+          "expr": "pikiosk_mpv_rss_bytes{device=\"pikiosk\"}",
+          "legendFormat": "MPV (YouTube)"
+        }
+      ],
+      "description": "RSS of the cog browser stack (immich mode) and mpv (youtube mode). Red line = 180 MB cog watchdog trigger; mpv recycles at 200 MB."
+    },
+    {
+      "title": "Memory Usage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal_bytes{device=\"pikiosk\"} - node_memory_MemAvailable_bytes{device=\"pikiosk\"}",
+          "legendFormat": "Used"
+        },
+        {
+          "expr": "node_memory_MemTotal_bytes{device=\"pikiosk\"}",
+          "legendFormat": "Total"
+        }
       ]
+    },
+    {
+      "type": "row",
+      "title": "CPU & Thermal",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "panels": []
+    },
+    {
+      "title": "CPU Temperature",
+      "type": "gauge",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "min": 0,
+          "max": 90,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_cpu_temperature_celsius{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "CPU Temperature Over Time",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_cpu_temperature_celsius{device=\"pikiosk\"}",
+          "legendFormat": "Temperature"
+        }
+      ]
+    },
+    {
+      "title": "ARM Frequency",
+      "type": "stat",
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 30
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "hertz",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": 0
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_arm_frequency_hz{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 7,
+        "w": 9,
+        "x": 6,
+        "y": 30
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{device=\"pikiosk\", mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU %"
+        }
+      ]
+    },
+    {
+      "title": "ARM Frequency Over Time",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 7,
+        "w": 9,
+        "x": 15,
+        "y": 30
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "hertz"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_arm_frequency_hz{device=\"pikiosk\"}",
+          "legendFormat": "ARM Frequency"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "GPU",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "panels": []
+    },
+    {
+      "title": "V3D Clock",
+      "type": "stat",
+      "description": "Current V3D (3D engine) clock. vc4 has no hardware utilization counter; clock frequency is the best proxy for GPU activity.",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 38
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "hertz",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 250000000
+              },
+              {
+                "color": "yellow",
+                "value": 400000000
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_v3d_frequency_hz{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "GPU Memory Used",
+      "type": "gauge",
+      "description": "reloc + malloc as a fraction of the firmware-allocated gpu_mem split (64 MB on this Pi).",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 38
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "max": 67108864,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 50331648
+              },
+              {
+                "color": "red",
+                "value": 60817408
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_gpu_mem_reloc_bytes{device=\"pikiosk\"} + pikiosk_gpu_mem_malloc_bytes{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Core Voltage",
+      "type": "stat",
+      "description": "VC4 core supply voltage. Rises under sustained GPU + CPU load.",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 38
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": 0
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_core_voltage_volts{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "GPU & Core Clocks Over Time",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "hertz"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_v3d_frequency_hz{device=\"pikiosk\"}",
+          "legendFormat": "V3D (3D engine)"
+        },
+        {
+          "expr": "pikiosk_core_frequency_hz{device=\"pikiosk\"}",
+          "legendFormat": "VC4 Core"
+        },
+        {
+          "expr": "pikiosk_hdmi_frequency_hz{device=\"pikiosk\"}",
+          "legendFormat": "HDMI Pixel"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Network / WiFi",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 50
+      },
+      "panels": []
     },
     {
       "title": "WiFi Signal Strength",
       "type": "gauge",
-      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 24},
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 51
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "dBm",
@@ -181,137 +741,179 @@
           "max": -30,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "red", "value": -90}, {"color": "yellow", "value": -70}, {"color": "green", "value": -60}]
+            "steps": [
+              {
+                "color": "red",
+                "value": -90
+              },
+              {
+                "color": "yellow",
+                "value": -70
+              },
+              {
+                "color": "green",
+                "value": -60
+              }
+            ]
           },
-          "color": {"mode": "thresholds"}
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "targets": [{"expr": "pikiosk_wifi_signal_dbm{device=\"pikiosk\"}", "instant": true}]
+      "targets": [
+        {
+          "expr": "pikiosk_wifi_signal_dbm{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
     },
     {
       "title": "WiFi Signal Over Time",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 24},
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 51
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "dBm",
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "red", "value": -90}, {"color": "yellow", "value": -70}, {"color": "green", "value": -60}]
+            "steps": [
+              {
+                "color": "red",
+                "value": -90
+              },
+              {
+                "color": "yellow",
+                "value": -70
+              },
+              {
+                "color": "green",
+                "value": -60
+              }
+            ]
           }
         }
       },
-      "targets": [{"expr": "pikiosk_wifi_signal_dbm{device=\"pikiosk\"}", "legendFormat": "Signal (dBm)"}]
-    },
-    {
-      "title": "WiFi Link",
-      "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 32},
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {"type": "value", "options": {"0": {"text": "Down", "color": "red"}, "1": {"text": "Up", "color": "green"}}}
-          ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": 0}, {"color": "green", "value": 1}]},
-          "color": {"mode": "thresholds"}
+      "targets": [
+        {
+          "expr": "pikiosk_wifi_signal_dbm{device=\"pikiosk\"}",
+          "legendFormat": "Signal (dBm)"
         }
-      },
-      "targets": [{"expr": "node_network_carrier{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}", "instant": true}]
+      ]
     },
     {
       "title": "WiFi Carrier Changes",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 28},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 59
+      },
       "fieldConfig": {
         "defaults": {
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 2}, {"color": "red", "value": 5}]},
-          "color": {"mode": "thresholds"}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "targets": [{"expr": "node_network_carrier_changes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}", "instant": true}]
+      "targets": [
+        {
+          "expr": "node_network_carrier_changes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}",
+          "instant": true
+        }
+      ]
     },
     {
       "title": "WiFi Throughput",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 32},
-      "fieldConfig": {"defaults": {"unit": "Bps"}},
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 8,
+        "y": 59
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        }
+      },
       "targets": [
-        {"expr": "irate(node_network_receive_bytes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX"},
-        {"expr": "irate(node_network_transmit_bytes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX"}
+        {
+          "expr": "irate(node_network_receive_bytes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])",
+          "legendFormat": "RX"
+        },
+        {
+          "expr": "irate(node_network_transmit_bytes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])",
+          "legendFormat": "TX"
+        }
       ]
     },
     {
       "title": "WiFi Errors & Drops",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 36},
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 66
+      },
       "fieldConfig": {
         "defaults": {
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "red", "value": 1}]}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
         }
       },
       "targets": [
-        {"expr": "irate(node_network_receive_errs_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX Errors"},
-        {"expr": "irate(node_network_transmit_errs_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX Errors"},
-        {"expr": "irate(node_network_receive_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "RX Drops"},
-        {"expr": "irate(node_network_transmit_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])", "legendFormat": "TX Drops"}
-      ]
-    },
-    {
-      "title": "V3D Clock",
-      "type": "stat",
-      "description": "Current V3D (3D engine) clock. vc4 has no hardware utilization counter; clock frequency is the best proxy for GPU activity.",
-      "gridPos": {"h": 4, "w": 5, "x": 0, "y": 44},
-      "fieldConfig": {
-        "defaults": {
-          "unit": "hertz",
-          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}, {"color": "green", "value": 250000000}, {"color": "yellow", "value": 400000000}]},
-          "color": {"mode": "thresholds"}
+        {
+          "expr": "irate(node_network_receive_errs_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])",
+          "legendFormat": "RX Errors"
+        },
+        {
+          "expr": "irate(node_network_transmit_errs_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])",
+          "legendFormat": "TX Errors"
+        },
+        {
+          "expr": "irate(node_network_receive_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])",
+          "legendFormat": "RX Drops"
+        },
+        {
+          "expr": "irate(node_network_transmit_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])",
+          "legendFormat": "TX Drops"
         }
-      },
-      "targets": [{"expr": "pikiosk_v3d_frequency_hz{device=\"pikiosk\"}", "instant": true}]
-    },
-    {
-      "title": "GPU Memory Used",
-      "type": "gauge",
-      "description": "reloc + malloc as a fraction of the firmware-allocated gpu_mem split (64 MB on this Pi).",
-      "gridPos": {"h": 4, "w": 5, "x": 5, "y": 44},
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "min": 0,
-          "max": 67108864,
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 50331648}, {"color": "red", "value": 60817408}]},
-          "color": {"mode": "thresholds"}
-        }
-      },
-      "targets": [{"expr": "pikiosk_gpu_mem_reloc_bytes{device=\"pikiosk\"} + pikiosk_gpu_mem_malloc_bytes{device=\"pikiosk\"}", "instant": true}]
-    },
-    {
-      "title": "Core Voltage",
-      "type": "stat",
-      "description": "VC4 core supply voltage. Rises under sustained GPU + CPU load.",
-      "gridPos": {"h": 4, "w": 4, "x": 10, "y": 44},
-      "fieldConfig": {
-        "defaults": {
-          "unit": "volt",
-          "decimals": 3,
-          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}]},
-          "color": {"mode": "fixed", "fixedColor": "blue"}
-        }
-      },
-      "targets": [{"expr": "pikiosk_core_voltage_volts{device=\"pikiosk\"}", "instant": true}]
-    },
-    {
-      "title": "GPU & Core Clocks Over Time",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 48},
-      "fieldConfig": {
-        "defaults": {"unit": "hertz"}
-      },
-      "targets": [
-        {"expr": "pikiosk_v3d_frequency_hz{device=\"pikiosk\"}", "legendFormat": "V3D (3D engine)"},
-        {"expr": "pikiosk_core_frequency_hz{device=\"pikiosk\"}", "legendFormat": "VC4 Core"},
-        {"expr": "pikiosk_hdmi_frequency_hz{device=\"pikiosk\"}", "legendFormat": "HDMI Pixel"}
       ]
     }
   ]
