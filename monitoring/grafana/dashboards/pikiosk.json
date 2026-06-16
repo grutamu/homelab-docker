@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 5,
+  "version": 6,
   "refresh": "1m",
   "panels": [
     {
@@ -266,7 +266,7 @@
     {
       "title": "Cog RSS Memory",
       "type": "gauge",
-      "description": "Full cog browser stack (cog + WPEWebProcess + WPENetworkProcess). The pikiosk-metrics watchdog restarts it above 180 MB; the pikiosk-player cgroup hard-caps the tree at 300 MB (gauge max).",
+      "description": "Full cog browser stack (cog + WPEWebProcess + WPENetworkProcess). The pikiosk-metrics watchdog restarts it above 250 MB; the pikiosk-player cgroup hard-caps the tree at 300 MB (gauge max).",
       "gridPos": {
         "h": 8,
         "w": 6,
@@ -287,11 +287,11 @@
               },
               {
                 "color": "yellow",
-                "value": 157286400
+                "value": 209715200
               },
               {
                 "color": "red",
-                "value": 188743680
+                "value": 262144000
               }
             ]
           },
@@ -328,11 +328,11 @@
               },
               {
                 "color": "yellow",
-                "value": 157286400
+                "value": 209715200
               },
               {
                 "color": "red",
-                "value": 188743680
+                "value": 262144000
               }
             ]
           },
