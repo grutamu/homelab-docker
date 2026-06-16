@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 4,
+  "version": 5,
   "refresh": "1m",
   "panels": [
     {
@@ -565,10 +565,10 @@
     {
       "title": "V3D Clock",
       "type": "stat",
-      "description": "Current V3D (3D engine) clock. vc4 has no hardware utilization counter; clock frequency is the best proxy for GPU activity.",
+      "description": "V3D (3D engine) clock. Pinned at ~300 MHz under the vc4 KMS driver — it does NOT scale with GPU load, so it is not a utilization signal. The Pi gates GPU blocks on/off rather than changing frequency. For real activity see Video Decode (H264), ARM frequency, core voltage.",
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 38
       },
@@ -581,19 +581,12 @@
               {
                 "color": "blue",
                 "value": 0
-              },
-              {
-                "color": "green",
-                "value": 250000000
-              },
-              {
-                "color": "yellow",
-                "value": 400000000
               }
             ]
           },
           "color": {
-            "mode": "thresholds"
+            "mode": "fixed",
+            "fixedColor": "blue"
           }
         }
       },
@@ -605,13 +598,62 @@
       ]
     },
     {
+      "title": "Video Decode (H264)",
+      "type": "stat",
+      "description": "H.264 hardware decode clock. 0 = idle; ~300 MHz = actively decoding video (youtube/mpv mode). The real GPU-activity signal on vc4 — unlike V3D, which is pinned at 300 MHz.",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 38
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "hertz",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Idle",
+                  "color": "blue"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_h264_frequency_hz{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
       "title": "GPU Memory Used",
       "type": "gauge",
       "description": "reloc + malloc as a fraction of the firmware-allocated gpu_mem split (64 MB on this Pi).",
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 38
       },
       "fieldConfig": {
@@ -654,8 +696,8 @@
       "description": "VC4 core supply voltage. Rises under sustained GPU + CPU load.",
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 38
       },
       "fieldConfig": {
@@ -710,6 +752,10 @@
         {
           "expr": "pikiosk_hdmi_frequency_hz{device=\"pikiosk\"}",
           "legendFormat": "HDMI Pixel"
+        },
+        {
+          "expr": "pikiosk_h264_frequency_hz{device=\"pikiosk\"}",
+          "legendFormat": "H264 Decode"
         }
       ]
     },
