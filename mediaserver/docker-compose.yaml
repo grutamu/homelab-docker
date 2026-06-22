@@ -199,7 +199,7 @@ services:
       - proxy
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr@sha256:738e530f0a5e0ab9b75b9c721582b79655ae60c5ae2903b2d40c60bc29bed102
+    image: ghcr.io/maintainerr/maintainerr@sha256:dcfd3f0862c31fced3a28ad2ae58c232a53d786b8c5b062cfc986570da8cb89f
     container_name: maintainerr
     restart: unless-stopped
     user: 1000:1000
