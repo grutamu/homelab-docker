@@ -773,6 +773,7 @@
     },
     {
       "title": "WiFi Signal Strength",
+      "description": "WiFi RSSI health on industry-standard bands (MetaGeek/Cisco): green >= -67 dBm = good (reliable voice/video), yellow -70 to -67 = fair (web/email), orange -80 to -70 = poor, red < -80 = unusable. Less negative is better; e.g. -54 dBm is a strong signal.",
       "type": "gauge",
       "gridPos": {
         "h": 8,
@@ -793,12 +794,16 @@
                 "value": -90
               },
               {
+                "color": "orange",
+                "value": -80
+              },
+              {
                 "color": "yellow",
                 "value": -70
               },
               {
                 "color": "green",
-                "value": -60
+                "value": -67
               }
             ]
           },
@@ -834,12 +839,16 @@
                 "value": -90
               },
               {
+                "color": "orange",
+                "value": -80
+              },
+              {
                 "color": "yellow",
                 "value": -70
               },
               {
                 "color": "green",
-                "value": -60
+                "value": -67
               }
             ]
           }
