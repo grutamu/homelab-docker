@@ -823,7 +823,7 @@
     {
       "title": "WiFi Signal Strength",
       "description": "WiFi RSSI health on industry-standard bands (MetaGeek/Cisco): green >= -67 dBm = good (reliable voice/video), yellow -70 to -67 = fair (web/email), orange -80 to -70 = poor, red < -80 = unusable. Less negative is better; e.g. -54 dBm is a strong signal.",
-      "type": "gauge",
+      "type": "stat",
       "gridPos": {
         "h": 8,
         "w": 8,
@@ -866,7 +866,8 @@
           "expr": "pikiosk_wifi_signal_dbm{device=\"pikiosk\"}",
           "instant": true
         }
-      ]
+      ],
+      "options": {}
     },
     {
       "title": "WiFi Signal Over Time",
