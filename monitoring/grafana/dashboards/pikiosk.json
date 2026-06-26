@@ -341,7 +341,52 @@
               "mode": "line"
             }
           }
-        }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Watchdog restart"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "restarts"
+              },
+              {
+                "id": "custom.axisSoftMin",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 50
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
@@ -351,9 +396,13 @@
         {
           "expr": "pikiosk_mpv_rss_bytes{device=\"pikiosk\"}",
           "legendFormat": "MPV (YouTube)"
+        },
+        {
+          "expr": "increase(pikiosk_watchdog_restarts_total{device=\"pikiosk\"}[$__interval])",
+          "legendFormat": "Watchdog restart"
         }
       ],
-      "description": "RSS of the cog browser stack (immich mode) and mpv (youtube mode). Red line = 180 MB cog watchdog trigger; mpv recycles at 200 MB."
+      "description": "RSS of the cog browser stack (immich mode) and mpv (youtube mode). Horizontal red line = 250 MB cog watchdog trigger (yellow = 200 MB); mpv recycles at 200 MB. Orange bars (right axis) mark watchdog restarts (increase of pikiosk_watchdog_restarts_total) - watch a series climb to its limit, get killed, and a bar appear."
     },
     {
       "title": "Memory Usage",
