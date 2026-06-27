@@ -35,7 +35,11 @@ services:
     networks:
       - paperless
   db:
-    image: docker.io/library/postgres:18
+    # Pinned to major 17 to match the on-disk data dir (PG_VERSION=17).
+    # A major bump (e.g. 18) requires a pg_dump/restore migration — bumping
+    # this tag and recreating would break the DB. Renovate major updates for
+    # postgres are disabled in renovate.json.
+    image: docker.io/library/postgres:17
     restart: unless-stopped
     volumes:
       - /docker-data/paperless/pgdata:/var/lib/postgresql/data
