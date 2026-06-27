@@ -44,7 +44,6 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [Maintainerr](https://github.com/jorenn92/Maintainerr) | Automated media collection cleanup |
 | [Watchtower](https://containrrr.dev/watchtower) | Automatic container image updates |
 | [Audiobookshelf](https://audiobookshelf.org) | Audiobook and podcast server |
-| [Calibre-Web](https://github.com/janeczku/calibre-web) | Ebook library management and reader |
 
 ### Surveillance
 | Service | Description |
