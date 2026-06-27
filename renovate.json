@@ -26,6 +26,13 @@
       "automerge": false
     },
     {
+      "description": "Postgres major upgrades require a manual pg_dump/restore migration — recreating on a new major breaks the data dir. Don't propose them.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|/)postgres$/"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "Require manual review for pocket-id (auth provider — outage locks out all services)",
       "matchFileNames": ["pocket-id/**"],
       "groupName": "pocket-id stack",
