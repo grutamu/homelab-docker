@@ -103,7 +103,6 @@ Application data is backed up to TrueNAS (`/mnt/hdd-pool/backups/docker01`) via 
 | `audiobookshelf` | Audiobookshelf audiobook/podcast server |
 | `mealie` | Mealie recipe manager |
 | `shelfarr` | Shelfarr book request interface |
-| `calibre-web` | Calibre-Web ebook library |
 | `portainer` | Portainer Docker UI |
 | `1password` | 1Password Connect API + Sync |
 | `backup` | Backrest (Restic UI) — backs up to TrueNAS NFS |

@@ -44,7 +44,7 @@ else
     for stack in traefik infra monitoring pocket-id 1password \
                  mediaserver immich paperless frigate netbox \
                  audiobookshelf mealie portainer shelfarr \
-                 calibre-web backup adguard-sync; do
+                 backup adguard-sync; do
         deploy "$stack"
     done
 fi
