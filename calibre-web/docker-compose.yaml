@@ -1,11 +1,15 @@
 services:
   calibre-web:
-    image: lscr.io/linuxserver/calibre-web:0.6.26-ls377
+    image: lscr.io/linuxserver/calibre-web:0.6.26
     container_name: calibre-web
     restart: unless-stopped
     volumes:
       - /docker-data/calibre-web:/config
-      - nfs-media:/media
+      - type: volume
+        source: nfs-media
+        target: /books
+        volume:
+          subpath: media/ebooks
       - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=1000
