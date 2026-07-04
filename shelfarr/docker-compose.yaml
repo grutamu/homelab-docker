@@ -1,6 +1,6 @@
 services:
   shelfarr:
-    image: ghcr.io/pedro-revez-silva/shelfarr@sha256:f13fa21abc277b6e5cbb73117d01a8a42508b3acac8a3399ef8fd99184f6d34f
+    image: ghcr.io/pedro-revez-silva/shelfarr@sha256:5d66ca24711d9030b4b2e2d1a7fa040feab66919111d16a30df39d22a89bedb9
     container_name: shelfarr
     restart: unless-stopped
     volumes:
