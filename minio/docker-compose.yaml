@@ -17,12 +17,14 @@ services:
       - "traefik.http.routers.minio.rule=Host(`s3.calzone.zone`)"
       - "traefik.http.routers.minio.entrypoints=https"
       - "traefik.http.routers.minio.tls=true"
+      - "traefik.http.routers.minio.service=minio"
       - "traefik.http.services.minio.loadbalancer.server.port=9000"
       # Web console
       - "traefik.http.routers.minio-console.rule=Host(`minio.calzone.zone`)"
       - "traefik.http.routers.minio-console.entrypoints=https"
       - "traefik.http.routers.minio-console.tls=true"
       - "traefik.http.routers.minio-console.middlewares=pocket-id-auth@file"
+      - "traefik.http.routers.minio-console.service=minio-console"
       - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
     networks:
       - proxy
