@@ -1,7 +1,7 @@
 ---
 services:
   prometheus:
-    image: prom/prometheus:v3.13.0
+    image: prom/prometheus:v3.13.1
     container_name: prometheus
     restart: unless-stopped
     extra_hosts:
@@ -21,7 +21,7 @@ services:
       - proxy
 
   node-exporter:
-    image: prom/node-exporter:v1.11.1
+    image: prom/node-exporter:v1.12.0
     container_name: node-exporter
     restart: unless-stopped
     # host networking required so node-exporter shares the host's network namespace
