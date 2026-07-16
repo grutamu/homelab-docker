@@ -1,6 +1,6 @@
 services:
   sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:4.5.5-ls248
+    image: lscr.io/linuxserver/sabnzbd:5.0.4
     container_name: sabnzbd
     restart: unless-stopped
     volumes:
@@ -21,7 +21,7 @@ services:
       - proxy
 
   plex:
-    image: lscr.io/linuxserver/plex:1.43.1.10576-06378bdcd-ls300
+    image: lscr.io/linuxserver/plex:1.43.3
     container_name: plex
     restart: unless-stopped
 # Add Configurations for GPU Hardware Rendering Here:
@@ -41,7 +41,7 @@ services:
       - proxy
 
   radarr:
-    image: lscr.io/linuxserver/radarr:6.1.1.10360-ls298
+    image: lscr.io/linuxserver/radarr:6.3.0
     container_name: radarr
     restart: unless-stopped
     volumes:
@@ -62,7 +62,7 @@ services:
       - proxy
 
   radarr-4k:
-    image: lscr.io/linuxserver/radarr:6.1.1.10360-ls298
+    image: lscr.io/linuxserver/radarr:6.3.0
     container_name: radarr-4k
     restart: unless-stopped
     volumes:
@@ -104,7 +104,7 @@ services:
       - proxy
 
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:2.3.5.5327-ls141
+    image: lscr.io/linuxserver/prowlarr:2.4.0
     container_name: prowlarr
     restart: unless-stopped
     volumes:
@@ -159,7 +159,7 @@ services:
       - proxy
 
   bazarr:
-    image: lscr.io/linuxserver/bazarr:v1.5.6-ls343
+    image: lscr.io/linuxserver/bazarr:1.6.0
     container_name: bazarr
     restart: unless-stopped
     volumes:
@@ -180,7 +180,7 @@ services:
       - proxy
 
   tautulli:
-    image: lscr.io/linuxserver/tautulli:v2.17.0-ls223
+    image: lscr.io/linuxserver/tautulli:2.17.2
     container_name: tautulli
     restart: unless-stopped
     environment:
@@ -199,7 +199,7 @@ services:
       - proxy
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr@sha256:95e429451ea45380430d260450ab301eed9ce91fbcba5f94cf8507bd0bac0d08
+    image: ghcr.io/maintainerr/maintainerr:3.13.0
     container_name: maintainerr
     restart: unless-stopped
     user: 1000:1000

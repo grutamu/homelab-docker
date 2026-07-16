@@ -93,7 +93,7 @@ services:
       - proxy
 
   alertmanager-discord:
-    image: benjojo/alertmanager-discord@sha256:7d27cd8494b269fe592cf6a9d7f6bdf14ac628bba34c381dc43cf533eaa95158
+    image: benjojo/alertmanager-discord:latest
     container_name: alertmanager-discord
     restart: unless-stopped
     command: ["-webhook.url", "${DISCORD_WEBHOOK_URL}"]
