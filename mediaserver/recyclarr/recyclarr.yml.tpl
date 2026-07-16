@@ -57,3 +57,30 @@ radarr:
             - cc444569854e9de0b084ab2b8b1532b2  # Black and White Editions
             - e6886871085226c3da1830830146846c  # Generated Dynamic HDR
             - bfd8eb01832d646a0a89c4deb46f8564  # Upscaled
+
+  sqp-1-2160p:
+    base_url: http://radarr-4k:7878
+    api_key: op://docker/recyclarr/RADARR_4K_API_KEY
+
+    quality_definition:
+      type: sqp-streaming
+
+    quality_profiles:
+      - trash_id: 5128baeb2b081b72126bc8482b2a86a0  # [SQP] SQP-1 (2160p)
+        # Carried over from the pre-migration config (top-tier indexer setup)
+        min_format_score: 10
+        reset_unmatched_scores:
+          enabled: true
+
+    custom_format_groups:
+      add:
+        - trash_id: 15b1cf0b6f1a1493856a4355907affee  # [Unwanted] Unwanted Formats SQP
+          select:
+            - b6832f586342ef70d9c128d40c07b872  # Bad Dual Groups
+            - cc444569854e9de0b084ab2b8b1532b2  # Black and White Editions
+            - e6886871085226c3da1830830146846c  # Generated Dynamic HDR
+            - bfd8eb01832d646a0a89c4deb46f8564  # Upscaled
+        # Block all SDR releases (carried over from the pre-migration config)
+        - trash_id: 47f0d69750de9e16855915fa73bb7b08  # [Optional] SDR
+          select:
+            - 9c38ebb7384dada637be8899efa68e6f  # SDR
