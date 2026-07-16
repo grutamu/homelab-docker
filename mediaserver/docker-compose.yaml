@@ -155,7 +155,9 @@ services:
     volumes:
       - /docker-data/recyclarr:/config
       # Config is managed in git; deploy.sh injects secrets into this file
-      - ./recyclarr/recyclarr.yml:/config/recyclarr.yml:ro
+      - type: bind
+        source: ./recyclarr/recyclarr.yml
+        target: /config/recyclarr.yml
       - /etc/localtime:/etc/localtime:ro
     networks:
       - proxy
