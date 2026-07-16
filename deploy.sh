@@ -31,6 +31,9 @@ deploy() {
     elif [ "$stack" = "mediaserver" ]; then
         op inject -i "$REPO/mediaserver/recyclarr/recyclarr.yml.tpl" \
                   -o "$REPO/mediaserver/recyclarr/recyclarr.yml" -f
+        # recyclarr runs as uid 1000; op inject writes 0600 root, so hand
+        # the resolved config to the container user (still not world-readable)
+        chown 1000:1000 "$REPO/mediaserver/recyclarr/recyclarr.yml"
         docker compose -f "$compose" up -d
     elif [ -f "$env_tpl" ]; then
         op run --env-file="$env_tpl" -- docker compose -f "$compose" up -d
