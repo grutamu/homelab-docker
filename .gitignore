@@ -19,6 +19,9 @@ acme.json
 # Frigate resolved config (contains camera credentials)
 frigate/config/config.yml
 
+# Recyclarr resolved config (contains Sonarr/Radarr API keys)
+mediaserver/recyclarr/recyclarr.yml
+
 # macOS
 .DS_Store
 

@@ -28,6 +28,10 @@ deploy() {
         op inject -i "$REPO/frigate/config/config.yml.tpl" \
                   -o "$REPO/frigate/config/config.yml" -f
         docker compose -f "$compose" up -d
+    elif [ "$stack" = "mediaserver" ]; then
+        op inject -i "$REPO/mediaserver/recyclarr/recyclarr.yml.tpl" \
+                  -o "$REPO/mediaserver/recyclarr/recyclarr.yml" -f
+        docker compose -f "$compose" up -d
     elif [ -f "$env_tpl" ]; then
         op run --env-file="$env_tpl" -- docker compose -f "$compose" up -d
     else

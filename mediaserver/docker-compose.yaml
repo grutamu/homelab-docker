@@ -154,6 +154,8 @@ services:
     restart: unless-stopped
     volumes:
       - /docker-data/recyclarr:/config
+      # Config is managed in git; deploy.sh injects secrets into this file
+      - ./recyclarr/recyclarr.yml:/config/recyclarr.yml:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
       - proxy
