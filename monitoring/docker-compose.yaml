@@ -21,7 +21,7 @@ services:
       - proxy
 
   node-exporter:
-    image: prom/node-exporter:v1.12.0
+    image: prom/node-exporter:v1.12.1
     container_name: node-exporter
     restart: unless-stopped
     # host networking required so node-exporter shares the host's network namespace
