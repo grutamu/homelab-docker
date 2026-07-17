@@ -35,6 +35,62 @@ loki.source.docker "containers" {
   forward_to    = [loki.write.default.receiver]
 }
 
+// docker01 host logs (systemd journal)
+
+discovery.relabel "journal" {
+  targets = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+}
+
+loki.source.journal "host" {
+  path          = "/var/log/journal"
+  relabel_rules = discovery.relabel.journal.rules
+  labels        = { host = "docker01", job = "journal" }
+  max_age       = "12h"
+  forward_to    = [loki.write.default.receiver]
+}
+
+// Syslog receiver for the rest of the environment (Proxmox, TrueNAS,
+// UDM Pro, AdGuard host, ...). TCP expects RFC5424; UDP expects RFC3164,
+// which is what most appliances send by default.
+
+discovery.relabel "syslog" {
+  targets = []
+
+  rule {
+    source_labels = ["__syslog_message_hostname"]
+    target_label  = "host"
+  }
+
+  rule {
+    source_labels = ["__syslog_message_app_name"]
+    target_label  = "app"
+  }
+}
+
+loki.source.syslog "network" {
+  listener {
+    address       = "0.0.0.0:1514"
+    protocol      = "tcp"
+    syslog_format = "rfc5424"
+    labels        = { job = "syslog" }
+  }
+
+  listener {
+    address       = "0.0.0.0:1514"
+    protocol      = "udp"
+    syslog_format = "rfc3164"
+    labels        = { job = "syslog" }
+  }
+
+  relabel_rules = discovery.relabel.syslog.rules
+  forward_to    = [loki.write.default.receiver]
+}
+
 loki.write "default" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
