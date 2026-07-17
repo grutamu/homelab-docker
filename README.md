@@ -28,7 +28,7 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [Node Exporter](https://github.com/prometheus/node_exporter) | Host system metrics |
 | [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) | HTTP/TCP/ICMP probes for service reachability and TLS cert expiry |
 | [Loki](https://grafana.com/oss/loki/) | Log aggregation — 30-day retention, queryable from Grafana |
-| [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector/) | Ships all container logs to Loki, labelled by container/service/stack |
+| [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector/) | Ships container logs, host journald, and network syslog (port 1514) to Loki — see [docs/logging.md](./docs/logging.md) |
 
 ### Media
 | Service | Description |
