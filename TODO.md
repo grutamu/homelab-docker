@@ -34,7 +34,7 @@
 
 - [x] **Add "container absent" alerts for critical services** — CriticalContainerDown alert using `absent(container_last_seen{name="..."})` for traefik, prometheus, grafana, immich_server, paperless-ngx, netbox.
 
-- [ ] **Add Loki + Promtail for log aggregation** — Ship Docker logs into Grafana via Loki. Completes metrics+logs observability. Configure Loki as a Grafana datasource.
+- [x] **Add Loki + Alloy for log aggregation** — Loki (30d retention, filesystem storage) + Alloy shipping all container logs via the Docker API, labelled by container/service/stack. Loki provisioned as a Grafana datasource. Used Alloy instead of Promtail (Promtail is EOL).
 
 - [ ] **Add backup freshness alert** — Alert if last successful Backrest backup is older than 24h. Options: cron script exposing a Prometheus metric, or Backrest webhook updating a heartbeat endpoint.
 

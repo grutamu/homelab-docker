@@ -27,6 +27,8 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [cAdvisor](https://github.com/google/cadvisor) | Container resource metrics |
 | [Node Exporter](https://github.com/prometheus/node_exporter) | Host system metrics |
 | [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) | HTTP/TCP/ICMP probes for service reachability and TLS cert expiry |
+| [Loki](https://grafana.com/oss/loki/) | Log aggregation — 30-day retention, queryable from Grafana |
+| [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector/) | Ships all container logs to Loki, labelled by container/service/stack |
 
 ### Media
 | Service | Description |

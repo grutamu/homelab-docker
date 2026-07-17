@@ -111,9 +111,38 @@ services:
     networks:
       - proxy
 
+  loki:
+    image: grafana/loki:3.7.3
+    container_name: loki
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+    networks:
+      - proxy
+
+  alloy:
+    image: grafana/alloy:v1.17.1
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy-data:/var/lib/alloy/data
+    networks:
+      - proxy
+
 networks:
   proxy:
     external: true
 
 volumes:
   prometheus-data:
+  loki-data:
+  alloy-data:
