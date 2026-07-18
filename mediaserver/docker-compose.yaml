@@ -203,7 +203,7 @@ services:
       - proxy
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr:3.17.1
+    image: ghcr.io/maintainerr/maintainerr:3.18.0
     container_name: maintainerr
     restart: unless-stopped
     user: 1000:1000
