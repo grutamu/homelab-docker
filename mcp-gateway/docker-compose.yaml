@@ -59,11 +59,11 @@ services:
       # those vars entirely, so first-run setup is done in the UI. Revisit when
       # a release after v2.4.22 ships it.
 
-      # Upstream MCP server credentials. MetaMCP spawns stdio servers as child
-      # processes, so these are visible to them without storing secrets in the
-      # MetaMCP database. HTTP upstreams still take their token in the UI.
-      NETBOX_URL: https://netbox.calzone.zone/
-      NETBOX_TOKEN:
+      # No upstream MCP server credentials here. Each server carries its own
+      # in its env field in the MetaMCP UI, stored in MetaMCP's Postgres (which
+      # the Backrest pre-backup hook dumps). Note the tradeoff: stdio servers
+      # all run in this one container, so a credential put here would be
+      # readable by every other server, not just its own.
 
       # Lets a server registered against localhost resolve to the host.
       TRANSFORM_LOCALHOST_TO_DOCKER_INTERNAL: "true"

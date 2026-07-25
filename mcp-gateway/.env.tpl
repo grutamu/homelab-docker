@@ -2,4 +2,3 @@ POSTGRES_PASSWORD=op://docker/metamcp/POSTGRES_PASSWORD
 BETTER_AUTH_SECRET=op://docker/metamcp/BETTER_AUTH_SECRET
 OIDC_CLIENT_ID=op://docker/metamcp/OIDC_CLIENT_ID
 OIDC_CLIENT_SECRET=op://docker/metamcp/OIDC_CLIENT_SECRET
-NETBOX_TOKEN=op://docker/netbox-mcp/API_TOKEN

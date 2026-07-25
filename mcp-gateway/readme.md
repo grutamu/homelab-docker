@@ -81,11 +81,13 @@ This is the existing add-on endpoint, moved off the per-client config.
 
 Command `uvx`, args
 `--from git+https://github.com/netboxlabs/netbox-mcp-server netbox-mcp-server`.
-`NETBOX_URL` / `NETBOX_TOKEN` are already on the container from 1Password.
+Set `NETBOX_URL` and `NETBOX_TOKEN` in the server's own env field in the UI.
 
-> Verify token inheritance after the first deploy — if the spawned server can't
-> see `NETBOX_TOKEN`, MetaMCP isn't forwarding the parent environment to stdio
-> children, and the value has to be set in the server's own env field in the UI.
+Upstream credentials deliberately do not go in this stack's `.env.tpl`. Every
+stdio server shares this one container's environment, so a token placed there
+is readable by all of them — per-server env keeps each one's blast radius to
+itself. The cost is that those secrets live in MetaMCP's Postgres rather than
+in 1Password, which is why that DB is in the backup set.
 
 ### Vetted candidates
 
