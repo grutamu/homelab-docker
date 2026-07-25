@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 9,
+  "version": 10,
   "refresh": "1m",
   "panels": [
     {
@@ -916,6 +916,7 @@
     {
       "title": "WiFi Carrier Changes",
       "type": "stat",
+      "description": "wlan0 link drops within the dashboard's selected time range (not the all-time total) — change the time picker to rescope it. This is the most direct read on the BCM43430 instability: hang clusters correlate with drop churn, and a boot that dropped 12x in 31min preceded one of the June reboots. Sustained red here is the early warning that precedes a netwatch escalation.",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -924,6 +925,7 @@
       },
       "fieldConfig": {
         "defaults": {
+          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -948,7 +950,7 @@
       },
       "targets": [
         {
-          "expr": "node_network_carrier_changes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}",
+          "expr": "round(increase(node_network_carrier_changes_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[$__range]))",
           "instant": true
         }
       ]
