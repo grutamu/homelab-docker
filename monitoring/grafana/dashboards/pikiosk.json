@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 8,
+  "version": 9,
   "refresh": "1m",
   "panels": [
     {
@@ -1177,7 +1177,7 @@
     {
       "title": "Watchdog Reboots",
       "type": "stat",
-      "description": "Total reboots triggered by the network watchdog (persisted across reboots). Distinct from Watchdog Restarts, which counts cog/mpv memory recycles. Rate-limited to 1/hour, max 3 per 6h.",
+      "description": "Reboots triggered by the network watchdog within the dashboard's selected time range (not the all-time total) — change the time picker to rescope it. Distinct from Watchdog Restarts, which counts cog/mpv memory recycles. Rate-limited to 1/hour, and it gives up entirely after 3 in 6h — so a value pinned at 3 alongside Needs Attention means rebooting has stopped working.",
       "gridPos": {
         "h": 4,
         "w": 5,
@@ -1186,6 +1186,7 @@
       },
       "fieldConfig": {
         "defaults": {
+          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1211,7 +1212,7 @@
       },
       "targets": [
         {
-          "expr": "pikiosk_net_watchdog_actions_total{device=\"pikiosk\", tier=\"reboot\"}",
+          "expr": "round(increase(pikiosk_net_watchdog_actions_total{device=\"pikiosk\", tier=\"reboot\"}[$__range]))",
           "instant": true
         }
       ]
