@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 11,
+  "version": 12,
   "refresh": "1m",
   "panels": [
     {
@@ -1352,7 +1352,7 @@
     {
       "title": "WiFi & Watchdog Events",
       "type": "logs",
-      "description": "Curated view of the BCM43430 fault. The signatures to look for: 'brcmf_sdio_isr: failed backplane access' and 'mmc1: Got command interrupt' are the SDIO wedge itself; repeated wpa_supplicant/carrier lines are the drop churn that has historically preceded a hang. pikiosk-netwatch lines show the recovery ladder firing. NOTE: logs ship over the network, so the wedge itself will be MISSING here — this shows the run-up, and the persistent journal plus /var/lib/systemd/pstore on the Pi hold the moment of death.",
+      "description": "Curated view of the BCM43430 fault. The signatures to look for: 'brcmf_sdio_isr: failed backplane access' and 'mmc1: Got command interrupt' are the SDIO wedge itself; repeated wpa_supplicant/carrier lines are the drop churn that has historically preceded a hang. pikiosk-netwatch lines show the recovery ladder firing. NOTE: logs ship over the network, so the wedge itself will be MISSING here — this shows the run-up, and the persistent journal plus /var/lib/systemd/pstore on the Pi hold the moment of death. CRON is excluded at the selector: cron logs the netwatch invocation every minute, which the regex would otherwise match ~1440x/day and bury the real events. netwatch's own messages use the pikiosk-netwatch tag, so they survive the exclusion.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -1380,7 +1380,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{host=\"pikiosk\"} |~ \"(?i)brcmfmac|backplane|mmc1|wpa_supplicant|netwatch|carrier|deauth|disconnect\"",
+          "expr": "{host=\"pikiosk\", app!=\"CRON\"} |~ \"(?i)brcmfmac|backplane|mmc1|wpa_supplicant|netwatch|carrier|deauth|disconnect\"",
           "queryType": "range"
         }
       ]
