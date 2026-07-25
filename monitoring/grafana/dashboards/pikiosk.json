@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 7,
+  "version": 8,
   "refresh": "1m",
   "panels": [
     {
@@ -128,6 +128,7 @@
     {
       "title": "Watchdog Restarts",
       "type": "stat",
+      "description": "cog/mpv memory-watchdog restarts within the dashboard's selected time range (not the all-time total) — change the time picker to rescope it. round(increase(...)) is used so counter resets are handled and the result stays a whole number.",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -136,6 +137,7 @@
       },
       "fieldConfig": {
         "defaults": {
+          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -161,7 +163,7 @@
       },
       "targets": [
         {
-          "expr": "pikiosk_watchdog_restarts_total{device=\"pikiosk\"}",
+          "expr": "round(increase(pikiosk_watchdog_restarts_total{device=\"pikiosk\"}[$__range]))",
           "instant": true
         }
       ]
