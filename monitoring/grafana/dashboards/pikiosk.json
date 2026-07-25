@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 12,
+  "version": 13,
   "refresh": "1m",
   "panels": [
     {
@@ -1418,6 +1418,210 @@
           },
           "expr": "{host=\"pikiosk\"}",
           "queryType": "range"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "SD Card",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 105
+      },
+      "panels": []
+    },
+    {
+      "title": "Card",
+      "type": "stat",
+      "description": "Card identity straight from the mmc sysfs registers. This one is a SanDisk (manfid 0x03) SE16G manufactured 04/2017 — old enough that age alone is a failure risk independent of write wear. If the serial changes, the card was swapped and the wear counter below should be reset (delete /var/lib/node_exporter/pikiosk_sd_written_sectors_*).",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 106
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_sd_card_info{device=\"pikiosk\"}",
+          "instant": true,
+          "legendFormat": "{{name}} · mfd {{manufactured}}"
+        }
+      ],
+      "options": {
+        "textMode": "name",
+        "graphMode": "none"
+      }
+    },
+    {
+      "title": "Written (tracked)",
+      "type": "stat",
+      "description": "Cumulative bytes written since wear tracking began on 2026-07-25 — NOT the card's lifetime total, which is unknowable on a card that has been in service since well before counting started. Accumulated across reboots, because the kernel's /sys/block/mmcblk0/stat counter resets to zero on every boot. CAVEAT: this counts HOST-visible writes. The card's controller does its own wear levelling and write amplification, typically 2-5x on consumer cards, so real NAND wear is higher than shown. Consumer SD cards publish no endurance rating, so the 1000 P/E cycle figure is an assumption, not a spec. Treat this as an order-of-magnitude tool for spotting a runaway writer, not a warranty.",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 6,
+        "y": 106
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_sd_written_bytes_total{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Writes / Day",
+      "type": "stat",
+      "description": "Current write rate extrapolated to a day, averaged over 6h. This is the number that actually matters day to day: a healthy appliance kiosk should sit in the tens of MB, and a sudden jump to GB/day means something started writing in a loop — that is what to alert on. CAVEAT: this counts HOST-visible writes. The card's controller does its own wear levelling and write amplification, typically 2-5x on consumer cards, so real NAND wear is higher than shown. Consumer SD cards publish no endurance rating, so the 1000 P/E cycle figure is an assumption, not a spec. Treat this as an order-of-magnitude tool for spotting a runaway writer, not a warranty.",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 10,
+        "y": 106
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(pikiosk_sd_written_bytes_total{device=\"pikiosk\"}[6h]) * 86400",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Full-Card Writes",
+      "type": "stat",
+      "description": "Bytes written divided by card capacity — i.e. how many times the whole card has been overwritten since tracking began. This is the closest host-side proxy for P/E cycles consumed, assuming a write amplification of 1 (optimistic). CAVEAT: this counts HOST-visible writes. The card's controller does its own wear levelling and write amplification, typically 2-5x on consumer cards, so real NAND wear is higher than shown. Consumer SD cards publish no endurance rating, so the 1000 P/E cycle figure is an assumption, not a spec. Treat this as an order-of-magnitude tool for spotting a runaway writer, not a warranty.",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 14,
+        "y": 106
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 800
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_sd_written_bytes_total{device=\"pikiosk\"} / pikiosk_sd_capacity_bytes{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Projected Life",
+      "type": "stat",
+      "description": "Time to reach 1000 full-card writes at the current 24h write rate, rendered as a duration. Deliberately crude: it assumes a 1000 P/E cycle budget and write amplification of 1, neither of which is knowable for this card. Useful for the shape of the answer — 'decades' vs 'months' — not the digits. CAVEAT: this counts HOST-visible writes. The card's controller does its own wear levelling and write amplification, typically 2-5x on consumer cards, so real NAND wear is higher than shown. Consumer SD cards publish no endurance rating, so the 1000 P/E cycle figure is an assumption, not a spec. Treat this as an order-of-magnitude tool for spotting a runaway writer, not a warranty.",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 106
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 63072000
+              },
+              {
+                "color": "green",
+                "value": 157680000
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "(1000 * pikiosk_sd_capacity_bytes{device=\"pikiosk\"}) / clamp_min(rate(pikiosk_sd_written_bytes_total{device=\"pikiosk\"}[24h]), 1)",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "SD Write Rate Over Time",
+      "type": "timeseries",
+      "description": "Daily-equivalent write rate. Flat and low is the healthy shape. Step changes are what to look for: they mean a new writer appeared — a service logging in a loop, a runaway cache, or journald reverting to disk-heavy settings. This is the panel that catches the thing that kills the card years early. CAVEAT: this counts HOST-visible writes. The card's controller does its own wear levelling and write amplification, typically 2-5x on consumer cards, so real NAND wear is higher than shown. Consumer SD cards publish no endurance rating, so the 1000 P/E cycle figure is an assumption, not a spec. Treat this as an order-of-magnitude tool for spotting a runaway writer, not a warranty.",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 110
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(pikiosk_sd_written_bytes_total{device=\"pikiosk\"}[1h]) * 86400",
+          "legendFormat": "Writes/day"
         }
       ]
     }
