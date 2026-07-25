@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 6,
+  "version": 7,
   "refresh": "1m",
   "panels": [
     {
@@ -1018,6 +1018,317 @@
         {
           "expr": "irate(node_network_transmit_drop_total{exported_device=\"wlan0\", instance=\"100.86.212.93:9100\"}[5m])",
           "legendFormat": "TX Drops"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Network Watchdog",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 73
+      },
+      "panels": []
+    },
+    {
+      "title": "Gateway Reachable",
+      "type": "stat",
+      "description": "Whether the default gateway answered pikiosk-netwatch's last check. This is the watchdog's trigger signal — Immich is deliberately NOT used, so a NAS outage can't reboot the kiosk. NOTE: node_exporter binds to the Tailscale IP, so when this goes down the scrape dies with it and you see a GAP, not a 0. Treat gaps here as outages.",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 0,
+        "y": 74
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Down",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Up",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_net_up{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Escalation Level",
+      "type": "stat",
+      "description": "Consecutive failed network checks, one per minute. Recovery tiers fire at 2 (wpa_cli reassociate), 4 (link down/up + wpa_supplicant restart), 6 (brcmfmac driver reload), 8 (reboot). Keep in sync with the thresholds in scripts/pikiosk-netwatch.sh.",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 5,
+        "y": 74
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "orange",
+                "value": 6
+              },
+              {
+                "color": "red",
+                "value": 8
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_net_consecutive_failures{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Immich Reachable",
+      "type": "stat",
+      "description": "Observed only — never triggers recovery. Lets you tell 'the kiosk lost the network' (Gateway Reachable also down) from 'Immich went away' (gateway fine, this down). Shows Not configured until IMMICH_URL is set in /etc/pikiosk-netwatch.conf.",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 9,
+        "y": 74
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Not configured",
+                  "color": "text"
+                },
+                "0": {
+                  "text": "Down",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Up",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "noValue": "Not configured"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_net_immich_reachable{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Watchdog Reboots",
+      "type": "stat",
+      "description": "Total reboots triggered by the network watchdog (persisted across reboots). Distinct from Watchdog Restarts, which counts cog/mpv memory recycles. Rate-limited to 1/hour, max 3 per 6h.",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 14,
+        "y": 74
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_net_watchdog_actions_total{device=\"pikiosk\", tier=\"reboot\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Needs Attention",
+      "type": "stat",
+      "description": "1 when the watchdog wanted to reboot but was blocked by its own rate limit — i.e. rebooting is not fixing the problem (dead AP, failed radio, router down). This is the 'stop waiting, go look at it' signal.",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 74
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OK",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "Manual fix needed",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "OK"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_net_watchdog_reboot_suppressed{device=\"pikiosk\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Network Reachability Over Time",
+      "type": "timeseries",
+      "description": "Gaps mean the Pi was unreachable (node_exporter listens on the Tailscale IP, so a network loss stops the scrape). The netwatch counters below are written to disk during an outage and explain the gap once the box is back.",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 78
+      },
+      "fieldConfig": {
+        "defaults": {
+          "min": -1,
+          "max": 1.2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_net_up{device=\"pikiosk\"}",
+          "legendFormat": "Gateway"
+        },
+        {
+          "expr": "pikiosk_net_wifi_associated{device=\"pikiosk\"}",
+          "legendFormat": "WiFi Associated"
+        },
+        {
+          "expr": "pikiosk_net_immich_reachable{device=\"pikiosk\"}",
+          "legendFormat": "Immich"
+        }
+      ]
+    },
+    {
+      "title": "Escalation & Recovery Actions",
+      "type": "timeseries",
+      "description": "Consecutive failure count against the recovery actions it triggered. A sawtooth up to 2-4 that resets means the cheap tiers are fixing it; repeatedly reaching 8 means only reboots are working and the wifi firmware fault is back.",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 78
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "pikiosk_net_consecutive_failures{device=\"pikiosk\"}",
+          "legendFormat": "Consecutive Failures"
+        },
+        {
+          "expr": "increase(pikiosk_net_watchdog_actions_total{device=\"pikiosk\"}[15m])",
+          "legendFormat": "{{tier}}"
         }
       ]
     }
