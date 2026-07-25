@@ -1,7 +1,7 @@
 {
   "title": "Pi Kiosk",
   "uid": "pikiosk",
-  "version": 10,
+  "version": 11,
   "refresh": "1m",
   "panels": [
     {
@@ -1334,6 +1334,90 @@
         {
           "expr": "increase(pikiosk_net_watchdog_actions_total{device=\"pikiosk\"}[15m])",
           "legendFormat": "{{tier}}"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Logs",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 85
+      },
+      "panels": []
+    },
+    {
+      "title": "WiFi & Watchdog Events",
+      "type": "logs",
+      "description": "Curated view of the BCM43430 fault. The signatures to look for: 'brcmf_sdio_isr: failed backplane access' and 'mmc1: Got command interrupt' are the SDIO wedge itself; repeated wpa_supplicant/carrier lines are the drop churn that has historically preceded a hang. pikiosk-netwatch lines show the recovery ladder firing. NOTE: logs ship over the network, so the wedge itself will be MISSING here — this shows the run-up, and the persistent journal plus /var/lib/systemd/pstore on the Pi hold the moment of death.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 86
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{host=\"pikiosk\"} |~ \"(?i)brcmfmac|backplane|mmc1|wpa_supplicant|netwatch|carrier|deauth|disconnect\"",
+          "queryType": "range"
+        }
+      ]
+    },
+    {
+      "title": "All Kiosk Logs",
+      "type": "logs",
+      "description": "Everything the Pi's journal forwards, via rsyslog -> Alloy syslog intake (192.168.99.41:1514) -> Loki. The host label is set to 'pikiosk' by rsyslog to match the Prometheus device label; the box's actual hostname is still DietPi. Loki retention is 30 days.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 95
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{host=\"pikiosk\"}",
+          "queryType": "range"
         }
       ]
     }

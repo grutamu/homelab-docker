@@ -10,6 +10,7 @@ All logs flow into Loki (`monitoring` stack) and are queryable from Grafana
 | Every Docker container on docker01 | Alloy via Docker API | `container`, `service`, `stack`, `host=docker01` |
 | docker01 host (systemd journal) | Alloy `loki.source.journal` | `job=journal`, `unit`, `host=docker01` |
 | Non-Docker hosts (syslog) | Alloy syslog listener on `192.168.99.41:1514` | `job=syslog`, `host`, `app` |
+| Pi Kiosk (`pikiosk`, IoT VLAN) | rsyslog forwarder → same syslog listener | `job=syslog`, `host=pikiosk`, `app` |
 
 Notes:
 - Container streams only appear in Loki after the container emits its first
@@ -46,6 +47,47 @@ systemctl restart rsyslog
 
 (`@` = UDP/RFC3164. Use `@@` for TCP, which requires RFC5424 — add
 `;RSYSLOG_SyslogProtocol23Format` template suffix in that case.)
+
+### Pi Kiosk (`pikiosk`, `192.168.2.70` on the IoT VLAN)
+
+DietPi keeps a persistent journal and had no syslog daemon at all. rsyslog is
+installed purely as a **forwarder** — the `& stop` suppresses Debian's default
+local file rules, because journald already holds the persistent local copy and
+duplicating it into `/var/log` only costs SD wear. Footprint is ~3.7 MB RSS,
+which matters on a 512 MB box already budgeted around a 250 MB browser
+watchdog.
+
+```bash
+apt install -y rsyslog
+cat > /etc/rsyslog.d/90-loki.conf <<'EOF'
+global(localHostname="pikiosk")
+*.* @192.168.99.41:1514
+& stop
+EOF
+
+# journald only writes to /dev/log when this is on; systemd defaults it off,
+# so without this rsyslog forwards nothing.
+mkdir -p /etc/systemd/journald.conf.d
+printf '[Journal]\nForwardToSyslog=yes\n' \
+  > /etc/systemd/journald.conf.d/10-forward-to-syslog.conf
+
+systemctl restart systemd-journald rsyslog
+```
+
+Two things worth knowing:
+
+- The hostname is overridden to `pikiosk` so the Loki `host` label matches the
+  Prometheus `device="pikiosk"` label. The box's actual hostname is `DietPi`.
+- rsyslog logs `STOP is followed by unreachable statements` on every start.
+  That warning is the `& stop` working as intended — the distro's local file
+  rules are deliberately unreachable.
+- No UDM firewall rule was needed: the IoT VLAN already reaches
+  `192.168.99.41:1514` (verified on both TCP and UDP).
+
+**Blind spot:** logs ship over the network, so a wifi wedge — the exact fault
+the kiosk suffers from — stops shipping. Loki captures the run-up, not the
+moment of death; for that, use the persistent journal and
+`/var/lib/systemd/pstore` on the Pi itself.
 
 ### TrueNAS SCALE (`192.168.99.10`)
 
