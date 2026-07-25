@@ -31,6 +31,15 @@ services:
       NODE_ENV: production
       LOG_LEVEL: info
 
+      # The entrypoint gates startup on `pg_isready -h $POSTGRES_HOST -p
+      # $POSTGRES_PORT -U $POSTGRES_USER`, so these are required even though
+      # the app itself only reads DATABASE_URL. Omitting them hangs the
+      # container in "PostgreSQL is not ready" forever.
+      POSTGRES_HOST: metamcp-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: metamcp
+      POSTGRES_DB: metamcp
+      POSTGRES_PASSWORD:
       DATABASE_URL: postgresql://metamcp:${POSTGRES_PASSWORD}@metamcp-postgres:5432/metamcp
 
       APP_URL: https://mcp.calzone.zone

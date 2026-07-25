@@ -35,6 +35,14 @@ jobs:
             | cut -d'/' -f1 \
             | sort -u)
 
+          # backup attaches to other stacks' Docker networks as external, so
+          # those stacks must be up first. sort -u is alphabetical, which put
+          # backup ahead of mcp-gateway and failed the deploy. Pin it last.
+          CHANGED=$(
+            printf '%s\n' $CHANGED | grep -vx backup || true
+            printf '%s\n' $CHANGED | grep -x backup || true
+          )
+
           DEPLOYED=0
           for stack in $CHANGED; do
             # Skip the runner itself to avoid self-restart mid-job
