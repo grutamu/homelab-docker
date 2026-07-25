@@ -107,6 +107,7 @@ Application data is backed up to TrueNAS (`/mnt/hdd-pool/backups/docker01`) via 
 | `1password` | 1Password Connect API + Sync |
 | `backup` | Backrest (Restic UI) — backs up to TrueNAS NFS |
 | `adguard-sync` | Auto-creates AdGuard DNS rewrites from Docker labels |
+| `mcp-gateway` | MetaMCP — aggregates homelab MCP servers behind one endpoint (see `mcp-gateway/readme.md`) |
 
 ### Conventions
 - All containers use `restart: unless-stopped` (or `always`)

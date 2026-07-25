@@ -1,0 +1,103 @@
+---
+services:
+  metamcp-postgres:
+    container_name: metamcp-postgres
+    # Pinned to major 16 to match the on-disk data dir (PG_VERSION=16).
+    # A major bump requires a pg_dump/restore migration — bumping this tag
+    # and recreating would break the DB. Renovate major updates for
+    # postgres are disabled in renovate.json.
+    image: postgres:16.14-alpine
+    environment:
+      POSTGRES_DB: metamcp
+      POSTGRES_USER: metamcp
+      POSTGRES_PASSWORD:
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "metamcp", "-U", "metamcp"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    volumes:
+      - /docker-data/metamcp/postgres:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - metamcp
+
+  metamcp:
+    container_name: metamcp
+    image: ghcr.io/metatool-ai/metamcp:2.4.22
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+
+      DATABASE_URL: postgresql://metamcp:${POSTGRES_PASSWORD}@metamcp-postgres:5432/metamcp
+
+      APP_URL: https://mcp.calzone.zone
+      NEXT_PUBLIC_APP_URL: https://mcp.calzone.zone
+      BETTER_AUTH_SECRET:
+
+      # SSO via Pocket-ID. Redirect URI to register in Pocket-ID:
+      #   https://mcp.calzone.zone/api/auth/oauth2/callback/oidc
+      OIDC_CLIENT_ID:
+      OIDC_CLIENT_SECRET:
+      OIDC_DISCOVERY_URL: https://auth.calzone.zone/.well-known/openid-configuration
+      OIDC_SCOPES: openid email profile
+      OIDC_PKCE: "true"
+
+      # Bootstrap runs on every start and is idempotent. It seeds the break-glass
+      # local admin (Pocket-ID outage would otherwise lock us out of the gateway),
+      # plus the namespace and endpoint that Claude connects to.
+      BOOTSTRAP_ENABLE: "true"
+      BOOTSTRAP_FAIL_HARD: "false"
+      BOOTSTRAP_USER_EMAIL:
+      BOOTSTRAP_USER_NAME: Admin
+      BOOTSTRAP_USER_PASSWORD:
+      BOOTSTRAP_RECREATE_USER: "false"
+      BOOTSTRAP_DELETE_OTHER_USERS: "false"
+      BOOTSTRAP_PRESERVE_API_KEYS: "true"
+      BOOTSTRAP_DISABLE_REGISTRATION_UI: "true"
+      BOOTSTRAP_API_KEYS: '[{"name":"claude","is_public":false}]'
+      BOOTSTRAP_NAMESPACES: '[{"name":"homelab","description":"Homelab MCP servers","is_public":false,"update":true}]'
+      BOOTSTRAP_ENDPOINTS: '[{"name":"homelab","description":"Aggregated homelab tools","namespace":"homelab","enable_auth":true,"enable_auth_query":false,"enable_auth_oauth":false,"is_public":false,"update":true}]'
+
+      # Upstream MCP server credentials. MetaMCP spawns stdio servers as child
+      # processes, so these are visible to them without storing secrets in the
+      # MetaMCP database. HTTP upstreams still take their token in the UI.
+      NETBOX_URL: https://netbox.calzone.zone/
+      NETBOX_TOKEN:
+
+      # Lets a server registered against localhost resolve to the host.
+      TRANSFORM_LOCALHOST_TO_DOCKER_INTERNAL: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Named volume, not a bind mount: the container runs as uid 1001 and a
+      # root-owned host dir would break npx/uvx caching for stdio servers.
+      # Regenerable, so it deliberately sits outside the backed-up /docker-data.
+      - metamcp-cache:/home/nextjs/.cache
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      metamcp-postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.metamcp.rule=Host(`mcp.calzone.zone`)"
+      - "traefik.http.routers.metamcp.entrypoints=https"
+      - "traefik.http.routers.metamcp.tls=true"
+      # Deliberately NOT behind pocket-id-auth@file: MCP clients cannot follow
+      # the forward-auth browser redirect. MetaMCP authenticates the UI itself
+      # via OIDC against Pocket-ID, and /metamcp/* endpoints via API key.
+      - "traefik.http.services.metamcp.loadbalancer.server.port=12008"
+    networks:
+      - proxy
+      - metamcp
+
+volumes:
+  metamcp-cache:
+
+networks:
+  proxy:
+    external: true
+  metamcp:
