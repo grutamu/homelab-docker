@@ -54,21 +54,10 @@ services:
       OIDC_SCOPES: openid email profile
       OIDC_PKCE: "true"
 
-      # Bootstrap runs on every start and is idempotent. It seeds the break-glass
-      # local admin (Pocket-ID outage would otherwise lock us out of the gateway),
-      # plus the namespace and endpoint that Claude connects to.
-      BOOTSTRAP_ENABLE: "true"
-      BOOTSTRAP_FAIL_HARD: "false"
-      BOOTSTRAP_USER_EMAIL:
-      BOOTSTRAP_USER_NAME: Admin
-      BOOTSTRAP_USER_PASSWORD:
-      BOOTSTRAP_RECREATE_USER: "false"
-      BOOTSTRAP_DELETE_OTHER_USERS: "false"
-      BOOTSTRAP_PRESERVE_API_KEYS: "true"
-      BOOTSTRAP_DISABLE_REGISTRATION_UI: "true"
-      BOOTSTRAP_API_KEYS: '[{"name":"claude","is_public":false}]'
-      BOOTSTRAP_NAMESPACES: '[{"name":"homelab","description":"Homelab MCP servers","is_public":false,"update":true}]'
-      BOOTSTRAP_ENDPOINTS: '[{"name":"homelab","description":"Aggregated homelab tools","namespace":"homelab","enable_auth":true,"enable_auth_query":false,"enable_auth_oauth":false,"is_public":false,"update":true}]'
+      # No BOOTSTRAP_* here on purpose. Declarative bootstrap (users, API keys,
+      # namespaces, endpoints) exists only on upstream main — v2.4.22 ignores
+      # those vars entirely, so first-run setup is done in the UI. Revisit when
+      # a release after v2.4.22 ships it.
 
       # Upstream MCP server credentials. MetaMCP spawns stdio servers as child
       # processes, so these are visible to them without storing secrets in the

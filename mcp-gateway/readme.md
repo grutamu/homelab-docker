@@ -25,9 +25,9 @@ The image is built on `ghcr.io/astral-sh/uv:debian` with Node 20, so `uvx` and
 ## First-time setup
 
 1. Create the `metamcp` item in the `docker` 1Password vault with fields:
-   `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`),
-   `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `BOOTSTRAP_USER_EMAIL`,
-   `BOOTSTRAP_USER_PASSWORD`.
+   `POSTGRES_PASSWORD` (alphanumeric only — it is interpolated into
+   `DATABASE_URL`), `BETTER_AUTH_SECRET` (`openssl rand -base64 32`),
+   `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`.
 
 2. Register an OIDC client in Pocket-ID with callback URL
    `https://mcp.calzone.zone/api/auth/oauth2/callback/oidc`, and put its
@@ -45,7 +45,13 @@ The image is built on `ghcr.io/astral-sh/uv:debian` with Node 20, so `uvx` and
    ssh root@docker01 'bash -l -c "/root/homelab-docker/deploy.sh mcp-gateway"'
    ```
 
-5. Log in, open **API Keys**, and copy the bootstrapped `claude` key.
+5. Sign in at `https://mcp.calzone.zone` via Pocket-ID — the first login
+   creates the account. Then create, in order: a namespace `homelab`, an
+   endpoint `homelab` bound to it with API-key auth on, and an API key.
+
+   There is no declarative bootstrap on v2.4.22 (see the compose comment), so
+   this is manual and lives only in MetaMCP's Postgres — which is why the
+   Backrest pre-backup hook dumps that DB.
 
 ## Connecting Claude Code
 
@@ -81,20 +87,33 @@ Command `uvx`, args
 > see `NETBOX_TOKEN`, MetaMCP isn't forwarding the parent environment to stdio
 > children, and the value has to be set in the server's own env field in the UI.
 
-### Others worth adding
+### Vetted candidates
 
-Verified as real, actively maintained projects — each still needs its own token
-in 1Password before wiring up:
+Checked 2026-07-25 for maintenance, license, publication channel, and blast
+radius. An MCP server here runs with whatever token you give it, so scope the
+token to the least the tools actually need.
 
-| Service | Server |
-|---------|--------|
-| Grafana | [`grafana/mcp-grafana`](https://github.com/grafana/mcp-grafana) — official; run as its own container in streamable-http mode and register as an HTTP upstream |
-| Portainer | [`portainer/portainer-mcp`](https://github.com/portainer/portainer-mcp) — official |
+**Cleared:**
 
-Paperless, Immich, Frigate, Plex and the *arr suite all have community MCP
-servers of varying quality. Vet each one before pointing it at a service that
-holds real data — an MCP server registered here runs with whatever token you
-give it.
+| Service | Server | Why |
+|---------|--------|-----|
+| Grafana | [`grafana/mcp-grafana`](https://github.com/grafana/mcp-grafana) | Official, 3.3k★, Apache-2.0, updated daily. Official `mcp/grafana` image — run as its own container in streamable-http mode, register as an HTTP upstream |
+| NetBox | [`netboxlabs/netbox-mcp-server`](https://github.com/netboxlabs/netbox-mcp-server) | Official, Apache-2.0, read-only by design. Not on PyPI — install from git |
+| UniFi | [`sirkirby/unifi-mcp`](https://github.com/sirkirby/unifi-mcp) | 570★, MIT, active. Publishes `unifi-network-mcp` / `unifi-protect-mcp` to PyPI |
+| TrueNAS | [`truenas/truenas-mcp`](https://github.com/truenas/truenas-mcp) | Official TrueNAS org, GPL-3.0, active, dry-run mode on writes. Not on PyPI — install from git |
+
+**Cleared with caution:**
+
+| Service | Server | Caveat |
+|---------|--------|--------|
+| Proxmox | [`RekklesNA/ProxmoxMCP-Plus`](https://github.com/RekklesNA/ProxmoxMCP-Plus) | 348★, MIT, active, on PyPI as `proxmox-mcp-plus`. Individual maintainer, not Proxmox official, and the tools start/stop/delete VMs. Use a scoped PVE user, not root@pam |
+
+**Rejected:**
+
+| Server | Reason |
+|--------|--------|
+| [`shaktech786/arr-suite-mcp-server`](https://github.com/shaktech786/arr-suite-mcp-server) | 7★/8 forks, no commits since 2025-11-08, sole release v1.0.0. Effectively unmaintained, and it would hold Plex plus every *arr key |
+| [`nloui/paperless-mcp`](https://github.com/nloui/paperless-mcp) | No license at all — no grant of rights to use it. Unmaintained since 2025-11-11. Its documented `npx paperless-mcp` install is dead: the npm package was **unpublished** two minutes after publication in Dec 2024, so that name is an unclaimed supply-chain slot, not the project |
 
 ## Notes
 
