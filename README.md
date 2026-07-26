@@ -12,7 +12,6 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [1Password Connect](https://developer.1password.com/docs/connect) | Local secrets API — serves credentials to `op` CLI at deploy time |
 | [AdGuard Home](https://adguard.com/en/adguard-home/overview.html) | DNS server with ad blocking (`192.168.99.5`) |
 | [adguard-sync](./adguard-sync/) | Watches Docker events and auto-creates AdGuard CNAME rewrites for Traefik-labelled containers |
-| [MetaMCP](./mcp-gateway/) | MCP gateway — aggregates every homelab MCP server behind one endpoint for Claude |
 
 ### Authentication
 | Service | Description |
@@ -142,6 +141,5 @@ Application data in `/docker-data/` is backed up to TrueNAS (`/mnt/hdd-pool/back
 | `immich` | `immich_postgres` |
 | `netbox` | `netbox-postgres` |
 | `paperless` | `paperless-db-1` |
-| `metamcp` | `metamcp-postgres` |
 
 TrueNAS then syncs the backup share to Backblaze B2. Plex is excluded from backups (rebuilable metadata).

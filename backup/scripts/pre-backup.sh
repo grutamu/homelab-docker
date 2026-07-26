@@ -19,9 +19,4 @@ PGPASSWORD="$PAPERLESS_DB_PASSWORD" pg_dump \
   -h paperless-db-1 -U paperless paperless \
   > "$DUMP_DIR/paperless.sql"
 
-echo "[pre-backup] Dumping metamcp..."
-PGPASSWORD="$METAMCP_DB_PASSWORD" pg_dump \
-  -h metamcp-postgres -U metamcp metamcp \
-  > "$DUMP_DIR/metamcp.sql"
-
 echo "[pre-backup] Done."

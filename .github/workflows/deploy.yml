@@ -36,8 +36,8 @@ jobs:
             | sort -u)
 
           # backup attaches to other stacks' Docker networks as external, so
-          # those stacks must be up first. sort -u is alphabetical, which put
-          # backup ahead of mcp-gateway and failed the deploy. Pin it last.
+          # those stacks must be up first. sort -u is alphabetical, which can
+          # put backup ahead of a stack it depends on. Pin it last.
           CHANGED=$(
             printf '%s\n' $CHANGED | grep -vx backup || true
             printf '%s\n' $CHANGED | grep -x backup || true

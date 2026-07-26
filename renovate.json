@@ -70,12 +70,6 @@
       "groupName": "netbox stack"
     },
     {
-      "description": "Require manual review for mcp-gateway (MetaMCP tags lag main; endpoint config lives in its DB)",
-      "matchFileNames": ["mcp-gateway/**"],
-      "groupName": "mcp-gateway stack",
-      "automerge": false
-    },
-    {
       "description": "Group all frigate updates",
       "matchFileNames": ["frigate/**"],
       "groupName": "frigate stack"
