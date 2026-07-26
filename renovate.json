@@ -80,9 +80,14 @@
       "groupName": "1password stack"
     },
     {
-      "description": "Ignore digest-only updates for latest-tagged images",
+      "description": "Shelfarr ships ~2 releases/day — batch into a single monthly PR instead of one per weekend run",
+      "matchFileNames": ["shelfarr/**"],
+      "groupName": "shelfarr stack",
+      "schedule": ["before 6am on the first day of the month"]
+    },
+    {
+      "description": "Never open digest-only PRs — upstream image rebuilds create constant churn with no version change. All images are pinned to real tags.",
       "matchUpdateTypes": ["digest"],
-      "matchCurrentValue": "latest",
       "enabled": false
     },
     {
