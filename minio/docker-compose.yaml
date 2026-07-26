@@ -34,7 +34,7 @@ volumes:
     driver_opts:
       type: "nfs"
       o: "addr=truenas.calzone.zone,nolock,soft,nfsvers=4"
-      device: ":/mnt/hdd-pool/backups/minio"
+      device: ":/mnt/hdd-pool/apps/minio"
 
 networks:
   proxy:
