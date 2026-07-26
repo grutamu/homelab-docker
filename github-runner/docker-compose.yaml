@@ -16,7 +16,9 @@ services:
       # mode cycled the runner out from under burst-queued jobs, marking them
       # cancelled (e.g. missed audiobookshelf bumps). clean-state.sh still wipes
       # stale state on container start.
-      EPHEMERAL: "false"
+      #
+      # Do NOT set EPHEMERAL here. The upstream entrypoint tests `-n "$EPHEMERAL"`,
+      # so ANY value — including "false" — enables ephemeral mode. It must be unset.
       # Injected from 1Password via op run
       ACCESS_TOKEN:
       # Passed through from host environment (/etc/profile.d/1password.sh)
