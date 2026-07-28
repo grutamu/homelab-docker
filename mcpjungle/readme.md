@@ -42,7 +42,7 @@ this the way it fronts the other services.
 1. Create the `mcpjungle` item in the `docker` 1Password vault with fields:
    `POSTGRES_PASSWORD` (`openssl rand -base64 32`), plus every field listed in
    `.env.register.tpl` — that includes the upstream hosts and ports, not just
-   the tokens.
+   the tokens. `ADMIN_TOKEN` is added in step 4.
 
 2. Rotate the Proxmox API token first. MetaMCP wrote `claude@pam!mcp-token`
    into its container logs in plaintext; that value is burned. The UniFi
@@ -63,7 +63,12 @@ this the way it fronts the other services.
    mcpjungle --registry https://mcp.calzone.zone init-server
    ```
 
-   Store that token in 1Password — there is no way to reprint it.
+   Store it as the `ADMIN_TOKEN` field on the `mcpjungle` item — there is no
+   way to reprint it, and `register-servers.py` reads it from there:
+
+   ```bash
+   op item edit mcpjungle --vault docker "ADMIN_TOKEN[password]=<token>"
+   ```
 
 5. Reload Prometheus. `deploy.sh` runs `docker compose up -d`, which only
    recreates a container when its *compose* config changes — editing the
@@ -91,19 +96,37 @@ the CLI resolves from its own environment at registration time and hands to the
 server for per-server storage. The committed configs record only the package
 and its shape, never where the backends live or how to reach them.
 
+Use `register-servers.py`. It resolves every placeholder from 1Password and
+registers each server, so **rotating a credential is: update the 1Password
+field, re-run the script.** No committed file changes, no per-server commands.
+
 ```bash
-op run --env-file=.env.register.tpl -- \
-  mcpjungle register -c ./servers/home-assistant.json
-
-op run --env-file=.env.register.tpl -- \
-  mcpjungle register -c ./servers/proxmox.json
-
-op run --env-file=.env.register.tpl -- \
-  mcpjungle register -c ./servers/unifi.json
+./register-servers.py              # all of them
+./register-servers.py proxmox      # just one, by file basename
+./register-servers.py --dry-run    # resolve and validate, change nothing
 ```
 
-Register them **one at a time**, checking `docker stats mcpjungle` between each.
-The failure mode being guarded against here is a slow leak, not a fast crash.
+It needs `ADMIN_TOKEN` in the `mcpjungle` 1Password item (or
+`MCPJUNGLE_ADMIN_TOKEN` in the environment), and `op` — either the desktop
+integration on a workstation or Connect on docker01 under `bash -l`. Connect is
+read-only, which is all this needs. `--dry-run` touches neither 1Password
+writes nor the gateway, so it is the safe way to check a config edit.
+
+Registration is delete-then-create, because MCPJungle has no update endpoint.
+That means **a re-register briefly removes a server's tools**, and any client
+mid-call against it will fail. Servers are processed independently, so one bad
+credential doesn't block the others; the exit code is non-zero if any failed.
+
+The script never prints secrets, and deliberately reports only names, status
+codes and tool counts — see the note below about the API echoing env. Don't
+"improve" it by dumping response bodies.
+
+The equivalent by hand, if you want a single server without the script:
+
+```bash
+op run --env-file=.env.register.tpl -- \
+  mcpjungle register --force -c ./servers/proxmox.json
+```
 
 Upstream values deliberately do not go in this stack's `.env.tpl`. Every stdio
 server inherits the gateway container's environment, so anything placed there is
