@@ -65,17 +65,22 @@ this the way it fronts the other services.
 
    Store that token in 1Password — there is no way to reprint it.
 
-5. Confirm the two monitoring endpoints answer **without** auth, since
-   `monitoring/prometheus/prometheus.yaml` scrapes them anonymously. Enterprise
-   mode gates the API, and whether it also gates these is not documented:
+5. Reload Prometheus. `deploy.sh` runs `docker compose up -d`, which only
+   recreates a container when its *compose* config changes — editing the
+   bind-mounted `prometheus.yaml` alone leaves Prometheus running the old
+   config, so a new scrape target silently never appears. Prometheus runs with
+   `--web.enable-lifecycle`, so:
 
    ```bash
-   ssh root@docker01 'curl -s -o /dev/null -w "%{http_code}\n" \
-     http://localhost:8080/health http://localhost:8080/metrics'
+   ssh root@docker01 'docker exec prometheus wget -q --post-data="" -O- \
+     http://localhost:9090/-/reload'
    ```
 
-   Two `200`s and you're done. A `401` on either means dropping that target —
-   otherwise it alerts forever on a service that is actually healthy.
+   Verified on 2026-07-28: both the `mcpjungle` scrape and the blackbox probe
+   of `/health` answer **without** auth and report `up`. The container
+   publishes no host ports (Traefik-only), so check from inside the network —
+   `docker exec prometheus wget -qS -O /dev/null http://mcpjungle:8080/metrics`
+   — not from `localhost:8080` on the host, which is unreachable by design.
 
 ## Registering servers
 
