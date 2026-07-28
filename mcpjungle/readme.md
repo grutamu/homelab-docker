@@ -109,6 +109,13 @@ Upstream values deliberately do not go in this stack's `.env.tpl`. Every stdio
 server inherits the gateway container's environment, so anything placed there is
 readable by all of them — per-server env keeps each one's blast radius to itself.
 
+`POST /api/v0/servers` **echoes the registered `env` back in its response body
+in plaintext**, secrets included. Unlike MetaMCP this stays out of the container
+logs — verified 2026-07-28, nothing reaches Loki — so the exposure is limited to
+whoever holds the admin token. Still: don't paste registration responses into
+tickets, chat or transcripts, and redact before sharing. The `mcpjungle register`
+CLI prints a tool list rather than the env, so prefer it over raw curl.
+
 ### Notes on the individual servers
 
 - **Home Assistant** (`ha-mcp`) talks to the HA REST API with a long-lived
