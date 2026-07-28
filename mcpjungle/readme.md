@@ -148,8 +148,24 @@ CLI prints a tool list rather than the env, so prefer it over raw curl.
   despite `session_mode: stateless` — so this server is not as stateless as the
   setting implies. One sidecar is fine inside the 2g cap; watch that it stays
   at one rather than accumulating per call.
-- **Proxmox** (`proxmox-mcp-plus`) has tools that start, stop and delete VMs.
-  Scope `claude@pam` to the least those tools actually need. It points at
+- **Proxmox** (`proxmox-mcp-plus`) has tools that start, stop and delete VMs,
+  and the token is **deliberately left at full Administrator** (decided
+  2026-07-28). `claude@pam` is in the `admins` group, which holds
+  `Administrator` on `/` with propagation, and `mcp-token` has
+  `privsep: 0` — so the token inherits all 47 privileges, including
+  `VM.Allocate`, `Sys.Modify` and `Permissions.Modify`, and never expires.
+  Every tool is live: `delete_vm`, `delete_container`, `restore_backup`,
+  `rollback_snapshot`, `execute_vm_command`.
+
+  To scope it down later, the role is not the hard part — `PVEAuditor` is the
+  built-in read-only role (`Datastore.Audit, Mapping.Audit, Pool.Audit,
+  SDN.Audit, Sys.Audit, VM.Audit, VM.GuestAgent.Audit`) and covers every read
+  tool here. The part that actually matters is setting `privsep=1` on the
+  token first; while it is 0, granting the token a role changes nothing,
+  because it simply inherits the user's rights. With privsep on, effective
+  rights are the intersection of user and token permissions.
+
+  It points at
   `proxmox.calzone.zone:443` — the Traefik file-provider route — rather than
   `192.168.10.10:8006` directly. 0.5.10 hard-refuses `verify_ssl=false` unless
   `PROXMOX_DEV_MODE=true`, and Proxmox serves a self-signed cert on 8006, so
