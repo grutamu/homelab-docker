@@ -29,3 +29,10 @@ PROXMOX_TOKEN_VALUE=op://docker/mcpjungle/PROXMOX_TOKEN_VALUE
 UNIFI_HOST=op://docker/mcpjungle/UNIFI_HOST
 UNIFI_USERNAME=op://docker/mcpjungle/UNIFI_USERNAME
 UNIFI_PASSWORD=op://docker/mcpjungle/UNIFI_PASSWORD
+
+# Grafana. URL is the container name on the proxy network, not the Traefik
+# hostname — mcpjungle sits on that network, so this skips the proxy hop and
+# removes a dependency on Traefik being up. Token belongs to a Viewer-role
+# service account (see readme.md), not the admin user.
+GRAFANA_URL=op://docker/mcpjungle/GRAFANA_URL
+GRAFANA_SERVICE_ACCOUNT_TOKEN=op://docker/mcpjungle/GRAFANA_SERVICE_ACCOUNT_TOKEN

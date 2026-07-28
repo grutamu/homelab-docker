@@ -159,6 +159,19 @@ CLI prints a tool list rather than the env, so prefer it over raw curl.
   Cost: the server now depends on Traefik being up.
 - **UniFi** (`unifi-network-mcp`) needs a dedicated local admin account without
   MFA, not Ubiquiti SSO credentials.
+- **Grafana** (`mcp-grafana`) is Grafana's official server. It is a Go binary,
+  but it publishes platform wheels to PyPI that bundle it, and upstream
+  recommends `uvx` — so it runs in-container like the rest, with no sidecar
+  container or custom image. Read-only on two independent levels: the
+  `mcp-grafana` service account is Viewer role, and `--disable-write` drops the
+  write tools (52 remain, all read). To allow dashboard edits later, remove the
+  flag *and* raise the account to Editor; the default tool set already excludes
+  `admin`. `GRAFANA_URL` is the container name `http://grafana:3000`, not the
+  Traefik hostname — mcpjungle shares the `proxy` network with Grafana, so this
+  skips the proxy hop and survives Traefik being down. (Contrast Proxmox, which
+  deliberately *does* route via Traefik; there the driver was TLS verification
+  against a self-signed cert, which doesn't apply on an internal network.)
+  Recreate the account with `scripts/grafana-service-account.sh`.
 
 Both stdio servers are pinned to an exact PyPI version rather than `@latest`.
 `@latest` re-resolves on every cold start, which makes the tool surface change
