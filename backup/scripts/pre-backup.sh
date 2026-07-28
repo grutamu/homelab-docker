@@ -19,4 +19,9 @@ PGPASSWORD="$PAPERLESS_DB_PASSWORD" pg_dump \
   -h paperless-db-1 -U paperless paperless \
   > "$DUMP_DIR/paperless.sql"
 
+echo "[pre-backup] Dumping mcpjungle..."
+PGPASSWORD="$MCPJUNGLE_DB_PASSWORD" pg_dump \
+  -h mcpjungle-postgres -U mcpjungle mcpjungle \
+  > "$DUMP_DIR/mcpjungle.sql"
+
 echo "[pre-backup] Done."

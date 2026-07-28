@@ -86,6 +86,12 @@
       "schedule": ["before 6am on the first day of the month"]
     },
     {
+      "description": "Require manual review for mcpjungle. It spawns upstream MCP servers as child processes with credentials, and its predecessor leaked subprocesses badly enough to OOM the host — bumps get eyes on them. Note the image tag carries a -stdio suffix Renovate must preserve; the plain tag cannot spawn stdio servers at all.",
+      "matchFileNames": ["mcpjungle/**"],
+      "groupName": "mcpjungle stack",
+      "automerge": false
+    },
+    {
       "description": "Never open digest-only PRs — upstream image rebuilds create constant churn with no version change. All images are pinned to real tags.",
       "matchUpdateTypes": ["digest"],
       "enabled": false

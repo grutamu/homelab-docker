@@ -1,0 +1,12 @@
+{
+  "name": "home_assistant",
+  "transport": "stdio",
+  "description": "Home Assistant — entity state, service calls, automations",
+  "command": "uvx",
+  "args": ["ha-mcp==7.14.2"],
+  "session_mode": "stateless",
+  "env": {
+    "HOMEASSISTANT_URL": "${HOMEASSISTANT_URL}",
+    "HOMEASSISTANT_TOKEN": "${HOMEASSISTANT_TOKEN}"
+  }
+}

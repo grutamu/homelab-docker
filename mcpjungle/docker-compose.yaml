@@ -1,0 +1,107 @@
+---
+services:
+  mcpjungle-postgres:
+    container_name: mcpjungle-postgres
+    # Fresh data dir, so this starts on 17. A major bump later requires a
+    # pg_dump/restore migration — bumping this tag and recreating would break
+    # the DB. Renovate major updates for postgres are disabled in renovate.json.
+    image: postgres:17.10-alpine
+    environment:
+      POSTGRES_DB: mcpjungle
+      POSTGRES_USER: mcpjungle
+      POSTGRES_PASSWORD:
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "mcpjungle", "-U", "mcpjungle"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    volumes:
+      # Named volume, not a /docker-data bind mount like the other stacks.
+      # That puts the data dir outside Backrest's file-level sweep, so the
+      # pre-backup pg_dump is the *only* copy of this DB — see readme.md.
+      - mcpjungle-postgres-data:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - mcpjungle
+
+  mcpjungle:
+    container_name: mcpjungle
+    # The `-stdio` variant bundles node/npx/uvx. The plain tag is the binary
+    # only and cannot spawn stdio upstream servers at all.
+    image: ghcr.io/mcpjungle/mcpjungle:0.4.5-stdio
+    restart: unless-stopped
+    # Hard cap, and the main reason this stack looks the way it does. stdio
+    # upstreams are spawned as child processes of this container, so they
+    # share its cgroup — a leaking server now hits this limit instead of
+    # taking the whole host down (MetaMCP, 2026-07-25).
+    mem_limit: 2g
+    environment:
+      # DSN is assembled from these parts rather than passed as DATABASE_URL,
+      # so the password never has to survive URL-escaping. MCPJungle only uses
+      # POSTGRES_* when DATABASE_URL is unset — don't add it back.
+      POSTGRES_HOST: mcpjungle-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: mcpjungle
+      POSTGRES_DB: mcpjungle
+      POSTGRES_PASSWORD:
+
+      # enterprise: gateway auth is enforced and each client gets an explicit
+      # allow-list of upstream servers. Needs a one-time `mcpjungle init-server`
+      # (see readme.md). Trade-off: the dashboard UI is development-mode only,
+      # so all management here is CLI/API.
+      SERVER_MODE: enterprise
+
+      # Prometheus scrapes /metrics — see monitoring/prometheus/prometheus.yaml.
+      # This is already the enterprise-mode default; set explicitly so a mode
+      # change doesn't silently drop the target.
+      OTEL_ENABLED: "true"
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=homelab
+
+      # First registration of a uvx/npx server downloads the package, which
+      # blows well past the 30s default and aborts the registration.
+      MCP_SERVER_INIT_REQ_TIMEOUT_SEC: "120"
+
+      # Reap idle stateful sessions. The default (-1) holds them open until the
+      # process exits, which is the exact shape of the leak that killed the
+      # last gateway. Only applies to servers registered "session_mode":
+      # "stateful" — the configs in servers/ are all stateless.
+      SESSION_IDLE_TIMEOUT_SEC: "300"
+
+      # Image sets no HOME and runs as root; uv and npm need one for their caches.
+      HOME: /root
+    volumes:
+      # uv/npm package caches. Named volumes rather than bind mounts under
+      # /docker-data: they're fully regenerable, so they deliberately sit
+      # outside the backup set.
+      - mcpjungle-uv-cache:/root/.cache
+      - mcpjungle-npm-cache:/root/.npm
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      mcpjungle-postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # Two networks — without this Traefik can pick the internal one and
+      # return a gateway timeout.
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.mcpjungle.rule=Host(`mcp.calzone.zone`)"
+      - "traefik.http.routers.mcpjungle.entrypoints=https"
+      - "traefik.http.routers.mcpjungle.tls=true"
+      # Deliberately not behind pocket-id-auth@file: MCP clients can't complete
+      # a forward-auth browser redirect. Enterprise mode authenticates them
+      # with per-client bearer tokens instead.
+      - "traefik.http.services.mcpjungle.loadbalancer.server.port=8080"
+    networks:
+      - proxy
+      - mcpjungle
+
+volumes:
+  mcpjungle-postgres-data:
+  mcpjungle-uv-cache:
+  mcpjungle-npm-cache:
+
+networks:
+  proxy:
+    external: true
+  mcpjungle:

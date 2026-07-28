@@ -35,6 +35,13 @@ scrape_configs:
     static_configs:
       - targets: ['traefik:8080']
 
+  # MCPJungle exposes OTel metrics at /metrics in enterprise mode. Reachable
+  # by container name because both it and Prometheus sit on the proxy network.
+  - job_name: 'mcpjungle'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['mcpjungle:8080']
+
   - job_name: pikiosk
     static_configs:
       - targets: ['100.86.212.93:9100']
@@ -53,6 +60,7 @@ scrape_configs:
           - https://audiobookshelf.calzone.zone/healthcheck
           - https://grafana.calzone.zone/api/health
           - https://requests.calzone.zone/api/v1/status
+          - https://mcp.calzone.zone/health
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

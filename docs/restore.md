@@ -52,6 +52,10 @@ docker exec -i netbox-postgres psql -U netbox netbox < /tmp/netbox.sql
 # Paperless
 docker exec -i paperless-db-1 psql -U paperless paperless < /tmp/paperless.sql
 
+# MCPJungle — note this stack keeps Postgres on a named volume, so this dump
+# is the only backup of it. There is no /docker-data data dir to fall back on.
+docker exec -i mcpjungle-postgres psql -U mcpjungle mcpjungle < /tmp/mcpjungle.sql
+
 # Restart the app
 docker compose -f /root/homelab-docker/[stack]/docker-compose.yaml start [app-service]
 ```
@@ -127,6 +131,9 @@ docker exec -i netbox-postgres psql -U netbox netbox < /docker-data/db-dumps/net
 
 bash -l -c "/root/homelab-docker/deploy.sh paperless"
 docker exec -i paperless-db-1 psql -U paperless paperless < /docker-data/db-dumps/paperless.sql
+
+# MCPJungle
+docker exec -i mcpjungle-postgres psql -U mcpjungle mcpjungle < /docker-data/db-dumps/mcpjungle.sql
 
 # Deploy everything
 bash -l -c "/root/homelab-docker/deploy.sh"
