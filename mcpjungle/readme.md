@@ -113,9 +113,20 @@ readable by all of them — per-server env keeps each one's blast radius to itse
 
 - **Home Assistant** (`ha-mcp`) talks to the HA REST API with a long-lived
   access token, minted on the HA user profile page. It is not the old add-on
-  endpoint that carried its token in the URL path.
+  endpoint that carried its token in the URL path. Note it spawns a persistent
+  `ha_mcp.stdio_settings_sidecar` process (~83 MB) that outlives the tool call
+  despite `session_mode: stateless` — so this server is not as stateless as the
+  setting implies. One sidecar is fine inside the 2g cap; watch that it stays
+  at one rather than accumulating per call.
 - **Proxmox** (`proxmox-mcp-plus`) has tools that start, stop and delete VMs.
-  Scope `claude@pam` to the least those tools actually need.
+  Scope `claude@pam` to the least those tools actually need. It points at
+  `proxmox.calzone.zone:443` — the Traefik file-provider route — rather than
+  `192.168.10.10:8006` directly. 0.5.10 hard-refuses `verify_ssl=false` unless
+  `PROXMOX_DEV_MODE=true`, and Proxmox serves a self-signed cert on 8006, so
+  going direct means turning TLS verification off. Traefik already absorbs the
+  self-signed backend via `serversTransport: proxmox-insecure` and presents a
+  real Let's Encrypt cert, so this path verifies properly with no override.
+  Cost: the server now depends on Traefik being up.
 - **UniFi** (`unifi-network-mcp`) needs a dedicated local admin account without
   MFA, not Ubiquiti SSO credentials.
 
@@ -158,6 +169,10 @@ here are load-bearing for that, not incidental:
 
 - `mem_limit: 2g` — stdio children share the container's cgroup, so this caps
   the whole process tree. docker01 has no per-container limits otherwise.
+- `init: true` — tini as PID 1, reaping orphaned children. MCPJungle as PID 1
+  does not `wait()` on them: a `[uv] <defunct>` zombie per registration was
+  observed on 2026-07-28. Zombies cost no memory but do consume PIDs, so this
+  is the same unbounded-accumulation failure by another route.
 - `SESSION_IDLE_TIMEOUT_SEC=300` — the default is `-1`, meaning stateful
   sessions live until the process exits. That's the shape of the MetaMCP leak.
 - `session_mode: stateless` in every config in `servers/` — a process per tool

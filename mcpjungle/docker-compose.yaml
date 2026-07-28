@@ -31,6 +31,13 @@ services:
     # only and cannot spawn stdio upstream servers at all.
     image: ghcr.io/mcpjungle/mcpjungle:0.4.5-stdio
     restart: unless-stopped
+    # Run tini as PID 1 so orphaned stdio children get reaped. Without this,
+    # mcpjungle itself is PID 1, and a Go process that doesn't wait() on
+    # SIGCHLD leaves zombies behind — observed on 2026-07-28, one `[uv]
+    # <defunct>` per registration. Zombies hold no memory but do hold PIDs,
+    # so unbounded accumulation is the same class of failure that killed
+    # MetaMCP, just via a different resource.
+    init: true
     # Hard cap, and the main reason this stack looks the way it does. stdio
     # upstreams are spawned as child processes of this container, so they
     # share its cgroup — a leaking server now hits this limit instead of
