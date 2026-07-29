@@ -148,6 +148,31 @@ CLI prints a tool list rather than the env, so prefer it over raw curl.
   despite `session_mode: stateless` — so this server is not as stateless as the
   setting implies. One sidecar is fine inside the 2g cap; watch that it stays
   at one rather than accumulating per call.
+
+  It also carries `ENABLE_STRICT_MANDATORY_BPS=false`, because ha-mcp's strict
+  best-practices gate is **unsatisfiable behind any gateway that runs stdio
+  servers per call**. That gate makes the six write tools
+  (`ha_config_set_automation` / `_script` / `_scene` / `_helper` /
+  `_dashboard` / `_yaml`) reject any call without an acknowledgment key read
+  from `ha_get_skill_guide`. The key is
+  `sha256(per-process random salt + hour bucket)` — `strict_bps.py` seeds it
+  with `_ACK_KEY_SALT = secrets.token_hex(8)` at module import. Under
+  `session_mode: stateless` every tool call spawns a fresh `uvx ha-mcp` with a
+  new salt, so the key the read process publishes is never valid in the write
+  process that follows. 100% failure, no caller-side recovery: the block error
+  says the key expired and to re-read, which just mints another dead key.
+  Confirmed 2026-07-28 — five reads inside one hour returned five distinct
+  keys. Note this is *not* a session-propagation problem; pinning client
+  sessions to one upstream would not fix it, because the process is what's
+  ephemeral. Switching this server to `stateful` would, but that trades away
+  the process-per-call bound that this stack treats as load-bearing (below),
+  on the one server already known to leak a sidecar.
+
+  Only the hard gate is off. The parent `ENABLE_MANDATORY_BPS` stays at its
+  default `true`, so writes still return the canonical best-practice reference
+  files inline — the guidance survives, only the handshake is dropped. Revisit
+  if upstream derives the salt deterministically (e.g. from the HA token)
+  instead of per process.
 - **Proxmox** (`proxmox-mcp-plus`) has tools that start, stop and delete VMs,
   and the token is **deliberately left at full Administrator** (decided
   2026-07-28). `claude@pam` is in the `admins` group, which holds
