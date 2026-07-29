@@ -1,0 +1,16 @@
+{
+  "name": "netbox",
+  "transport": "stdio",
+  "description": "NetBox — IPAM/DCIM source of truth: devices, IPs, prefixes, VLANs, racks, circuits",
+  "command": "uvx",
+  "args": [
+    "--from",
+    "git+https://github.com/netboxlabs/netbox-mcp-server@v1.2.1",
+    "netbox-mcp-server"
+  ],
+  "session_mode": "stateless",
+  "env": {
+    "NETBOX_URL": "${NETBOX_URL}",
+    "NETBOX_TOKEN": "${NETBOX_TOKEN}"
+  }
+}

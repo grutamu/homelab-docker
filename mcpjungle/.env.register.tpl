@@ -36,3 +36,10 @@ UNIFI_PASSWORD=op://docker/mcpjungle/UNIFI_PASSWORD
 # service account (see readme.md), not the admin user.
 GRAFANA_URL=op://docker/mcpjungle/GRAFANA_URL
 GRAFANA_SERVICE_ACCOUNT_TOKEN=op://docker/mcpjungle/GRAFANA_SERVICE_ACCOUNT_TOKEN
+
+# NetBox. Unlike Grafana this must go through Traefik: netbox-server enforces
+# ALLOWED_HOST=netbox.calzone.zone and returns 400 for a container-name Host
+# header, even though it does sit on the proxy network. Token must be created
+# in the NetBox UI with "Write enabled" unchecked.
+NETBOX_URL=op://docker/mcpjungle/NETBOX_URL
+NETBOX_TOKEN=op://docker/mcpjungle/NETBOX_TOKEN
