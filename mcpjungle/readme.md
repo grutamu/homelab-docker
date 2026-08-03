@@ -213,17 +213,36 @@ CLI prints a tool list rather than the env, so prefer it over raw curl.
   deliberately *does* route via Traefik; there the driver was TLS verification
   against a self-signed cert, which doesn't apply on an internal network.)
   Recreate the account with `scripts/grafana-service-account.sh`.
+- **AdGuard Home** ([`@samik081/mcp-adguard-home`](https://github.com/Samik081/mcp-adguard-home))
+  is the first `npx` upstream here — everything else is `uvx`. The `-stdio`
+  image bundles node, and `mcpjungle-npm-cache` was already mounted, so nothing
+  structural changed. Registered with `ADGUARD_ACCESS_TIER=read-only`, which
+  registers 29 of its 65 tools and drops every write; `full` would add filter
+  edits, DHCP changes, log clearing and rewrite management.
 
-Both stdio servers are pinned to an exact PyPI version rather than `@latest`.
-`@latest` re-resolves on every cold start, which makes the tool surface change
-without a commit and puts an unreviewed package one upload away from running
-in the container.
+  Two reasons that tier is not just caution. First, **read-only here is one
+  level, not two** — unlike Grafana, where a Viewer service account backstops
+  `--disable-write`. AdGuard has no scoped API tokens: the server authenticates
+  as the admin account, the same one `adguard-sync` uses, so the only thing
+  stopping a write is the server declining to register the tool. Nothing at the
+  AdGuard end would refuse one. Second, the `rewrites` category would collide
+  with `adguard-sync`, which owns CNAME rewrites off Docker events — a model
+  editing them by hand is writing state another process reconciles.
 
-Also cleared during the 2026-07-25 vetting pass but not registered here:
-[`netboxlabs/netbox-mcp-server`](https://github.com/netboxlabs/netbox-mcp-server)
-(stdio, install from git — not on PyPI),
-[`grafana/mcp-grafana`](https://github.com/grafana/mcp-grafana) (run as its own
-container in streamable-http mode and register as an HTTP upstream), and
+  `ADGUARD_URL` is `http://192.168.99.5` with no port: AdGuard serves its
+  control API on **80** here, and 3000 is closed. Direct IP rather than the
+  Traefik hostname, same reasoning as Grafana. Upstream tests against AdGuard
+  v0.107.76; this instance runs v0.107.71 and `global_get_status` verified
+  clean on 2026-08-02. It's a small project (3 stars, MIT, single maintainer) —
+  the exact version pin matters more here than elsewhere.
+
+Every stdio server is pinned to an exact PyPI (or npm) version rather than
+`@latest`. `@latest` re-resolves on every cold start, which makes the tool
+surface change without a commit and puts an unreviewed package one upload away
+from running in the container. Renovate only manages `docker-compose` files, so
+these pins are bumped by hand on purpose.
+
+Also cleared during the 2026-07-25 vetting pass but still not registered here:
 [`truenas/truenas-mcp`](https://github.com/truenas/truenas-mcp).
 
 ## Connecting a client

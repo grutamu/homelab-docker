@@ -1,0 +1,14 @@
+{
+  "name": "adguard",
+  "transport": "stdio",
+  "description": "AdGuard Home — DNS filtering status, query log, stats, clients, rewrites (read-only)",
+  "command": "npx",
+  "args": ["-y", "@samik081/mcp-adguard-home@0.8.0"],
+  "session_mode": "stateless",
+  "env": {
+    "ADGUARD_URL": "${ADGUARD_URL}",
+    "ADGUARD_USERNAME": "${ADGUARD_USERNAME}",
+    "ADGUARD_PASSWORD": "${ADGUARD_PASSWORD}",
+    "ADGUARD_ACCESS_TIER": "read-only"
+  }
+}

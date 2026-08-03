@@ -37,6 +37,15 @@ UNIFI_PASSWORD=op://docker/mcpjungle/UNIFI_PASSWORD
 GRAFANA_URL=op://docker/mcpjungle/GRAFANA_URL
 GRAFANA_SERVICE_ACCOUNT_TOKEN=op://docker/mcpjungle/GRAFANA_SERVICE_ACCOUNT_TOKEN
 
+# AdGuard Home. Same admin account adguard-sync uses (there under the `adguard`
+# item as ADGUARD_USER) — AdGuard has no scoped API tokens, so there is nothing
+# narrower to hand this. Copied here rather than referenced so every mcpjungle
+# upstream credential stays on one item; rotating the AdGuard password means
+# updating both items.
+ADGUARD_URL= op://docker/mcpjungle/ADGUARD_URL
+ADGUARD_USERNAME= op://docker/mcpjungle/ADGUARD_USERNAME
+ADGUARD_PASSWORD= op://docker/mcpjungle/ADGUARD_PASSWORD
+
 # NetBox. Unlike Grafana this must go through Traefik: netbox-server enforces
 # ALLOWED_HOST=netbox.calzone.zone and returns 400 for a container-name Host
 # header, even though it does sit on the proxy network. Token must be created
