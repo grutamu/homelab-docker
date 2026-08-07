@@ -49,6 +49,26 @@ container would never come up. Hermes ships a `self_hosted` OIDC provider, so
 it authenticates against pocket-id directly. Same SSO as everything else, one
 login instead of two, and the edge middleware is redundant.
 
+### DNS: the hostname collides with a real machine
+
+`hermes.calzone.zone` resolves **differently depending on which resolver you
+ask**, because the GPU box is itself named `hermes`:
+
+| Resolver | Answer |
+|---|---|
+| AdGuard (`192.168.99.5`) — normal clients | `docker-01.calzone.zone` → `192.168.99.41` ✓ |
+| UDM (`192.168.99.1`) — what docker01 itself uses | `192.168.1.43` (the GPU box) ✗ |
+
+adguard-sync created the correct rewrite automatically, so browsers on the
+LAN reach the dashboard fine. But docker01's own `resolvectl` points at the
+UDM, not AdGuard, and the UDM answers with the physical host.
+
+Nothing in this stack resolves its own hostname, so it works today. It is
+still a latent trap — renaming the router to `hermes-agent.calzone.zone`
+(matching the container and stack name) would remove the ambiguity. That
+means changing the Traefik rule, `HERMES_DASHBOARD_PUBLIC_URL`, and the
+pocket-id client's callback URL together.
+
 ### One-time pocket-id client
 
 Create in pocket-id at `https://auth.calzone.zone`:
