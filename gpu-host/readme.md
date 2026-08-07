@@ -17,7 +17,10 @@ two exporters live here.
 ## Deploy
 
 Not managed by `deploy.sh` — that script runs on docker01 and would deploy this
-to a machine with no GPU. Copy and bring it up on the target host:
+to a machine with no GPU. It is absent from `deploy.sh`'s `STACKS` list, and the
+Deploy workflow deploys only what `deploy.sh --list` reports, so pushes touching
+this directory skip it (the log says so) instead of trying docker01. Copy and
+bring it up on the target host:
 
 ```bash
 ssh zbardwell@gpu-host 'mkdir -p ~/gpu-host-monitoring'

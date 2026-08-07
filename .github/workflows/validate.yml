@@ -1,0 +1,80 @@
+name: Validate
+
+# Renovate automerges image bumps straight to main, and a merge to main
+# auto-deploys. This is the only gate in between: it must stay a required-in-
+# practice check, because without any pull_request workflow at all a branch has
+# zero statuses, GitHub reports its combined state as "pending", and Renovate's
+# automerge waits on a green status that can never arrive.
+on:
+  pull_request:
+
+concurrency:
+  group: validate-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    # The runner is self-hosted, runs as root, and has the Docker socket bound
+    # in. Never run PR code from a fork on it. Renovate's branches live in this
+    # repo, so they satisfy this.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, docker01]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Validate changed stacks
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+
+          CHANGED=$(git diff --name-only "$BASE"...HEAD | cut -d'/' -f1 | sort -u)
+
+          # Validate anything with a compose file, including stacks deploy.sh
+          # does not deploy from this host (gpu-host) — a broken compose file
+          # there is still worth catching before it merges.
+          STACKS=""
+          for stack in $CHANGED; do
+            [ -f "$stack/docker-compose.yaml" ] && STACKS="$STACKS $stack"
+          done
+
+          if [ -z "$STACKS" ]; then
+            echo "No stack changes to validate."
+            exit 0
+          fi
+
+          RC=0
+          for stack in $STACKS; do
+            echo "==> $stack"
+
+            # No stack uses env_file: and none use ${VAR:?}, so schema and
+            # interpolation validate fine with secrets absent — unset vars only
+            # warn. This checks the file parses and the schema is still valid.
+            if ! docker compose -f "$stack/docker-compose.yaml" config -q; then
+              echo "::error::$stack: docker compose config failed"
+              RC=1
+              continue
+            fi
+
+            # Confirm every referenced tag actually resolves in its registry.
+            # This is the check that matters for Renovate: a bump to a tag that
+            # was never published would otherwise merge and break the deploy.
+            for image in $(docker compose -f "$stack/docker-compose.yaml" config --images | sort -u); do
+              # Every image in this repo is pinned to an explicit tag (see the
+              # digest rule in renovate.json), so an untagged name is compose's
+              # generated name for a build: service (github-runner-runner) —
+              # never pushed to a registry, nothing to look up.
+              case "$image" in
+                *:*) ;;
+                *) echo "    -   $image (built locally, skipped)"; continue ;;
+              esac
+              if docker manifest inspect "$image" >/dev/null 2>&1; then
+                echo "    ok  $image"
+              else
+                echo "::error::$stack: image not found in registry: $image"
+                RC=1
+              fi
+            done
+          done
+
+          exit $RC

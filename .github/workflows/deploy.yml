@@ -31,29 +31,30 @@ jobs:
           fi
 
           CHANGED=$(git -C /root/homelab-docker diff --name-only "$BEFORE" "$AFTER" \
-            | grep -v '^\.' \
             | cut -d'/' -f1 \
             | sort -u)
 
-          # backup attaches to other stacks' Docker networks as external, so
-          # those stacks must be up first. sort -u is alphabetical, which can
-          # put backup ahead of a stack it depends on. Pin it last.
-          CHANGED=$(
-            printf '%s\n' $CHANGED | grep -vx backup || true
-            printf '%s\n' $CHANGED | grep -x backup || true
-          )
-
+          # Iterate deploy.sh's stack list rather than the diff. It is the only
+          # source of truth for what runs on this host — a changed directory
+          # that isn't in it (gpu-host targets the RTX 3090 box, github-runner
+          # would restart us mid-job) must not be deployed here. Its order also
+          # handles inter-stack dependencies, so no re-sorting is needed.
           DEPLOYED=0
+          for stack in $(/root/homelab-docker/deploy.sh --list); do
+            printf '%s\n' "$CHANGED" | grep -qx "$stack" || continue
+            echo "==> Deploying $stack"
+            /root/homelab-docker/deploy.sh "$stack"
+            DEPLOYED=$((DEPLOYED + 1))
+          done
+
+          # Say what was passed over, so a stack silently never deploying here
+          # is visible in the log rather than looking like a clean run.
           for stack in $CHANGED; do
-            # Skip the runner itself to avoid self-restart mid-job
-            [ "$stack" = "github-runner" ] && continue
-            if [ -f "/root/homelab-docker/$stack/docker-compose.yaml" ]; then
-              echo "==> Deploying $stack"
-              /root/homelab-docker/deploy.sh "$stack"
-              DEPLOYED=$((DEPLOYED + 1))
-            fi
+            [ -f "/root/homelab-docker/$stack/docker-compose.yaml" ] || continue
+            /root/homelab-docker/deploy.sh --list | grep -qx "$stack" \
+              || echo "--> Skipping $stack (not in deploy.sh's stack list)"
           done
 
           if [ "$DEPLOYED" -eq 0 ]; then
-            echo "No stack changes detected, nothing to deploy."
+            echo "No deployable stack changes detected, nothing to deploy."
           fi
