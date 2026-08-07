@@ -1,7 +1,7 @@
 {
   "title": "GPU Host",
   "uid": "gpu-host",
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -10,13 +10,21 @@
   "timezone": "browser",
   "graphTooltip": 1,
   "tags": ["gpu", "hardware"],
-  "description": "NVIDIA RTX 3090 box (gpu-host / hermes, 192.168.1.43). GPU metrics from nvidia_gpu_exporter :9835, system metrics from node-exporter :9100, both scraped over Tailscale. Panels select on job, not instance.",
+  "description": "NVIDIA RTX 3090 box (gpu-host / hermes, 192.168.1.43). GPU metrics from nvidia_gpu_exporter :9835, system metrics from node-exporter :9100, both scraped over Tailscale. Panels select on job, not instance. Grouped into rows by component; GPU temperature and fan live under Fans & Temps rather than GPU.",
   "panels": [
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Overview",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "panels": []
+    },
     {
       "id": 1,
       "title": "GPU Utilization",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 1},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
@@ -47,7 +55,7 @@
       "id": 2,
       "title": "GPU Temperature",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 1},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
@@ -76,7 +84,7 @@
       "id": 3,
       "title": "VRAM Used",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 1},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
@@ -107,7 +115,7 @@
       "id": 4,
       "title": "GPU Power",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 1},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
@@ -136,7 +144,7 @@
       "id": 5,
       "title": "Host CPU",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
+      "gridPos": {"h": 4, "w": 4, "x": 16, "y": 1},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
@@ -167,7 +175,7 @@
       "id": 6,
       "title": "Host RAM",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 1},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
@@ -196,10 +204,18 @@
     },
 
     {
+      "id": 101,
+      "type": "row",
+      "title": "GPU",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 5},
+      "panels": []
+    },
+    {
       "id": 10,
-      "title": "GPU Utilization",
+      "title": "Utilization",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Compute and memory-bandwidth utilization. Both are ratios, so they share one axis.",
       "options": {
@@ -224,7 +240,7 @@
       "id": 11,
       "title": "VRAM",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "24 GB card. A resident model shows as a flat plateau; total is drawn as a ceiling reference.",
       "options": {
@@ -253,67 +269,35 @@
         {"expr": "nvidia_smi_memory_total_bytes{job=\"gpu-host-gpu\"}", "legendFormat": "total"}
       ]
     },
-
     {
-      "id": 20,
-      "title": "GPU Temperature",
+      "id": 30,
+      "title": "Clocks",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 12},
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 14},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "options": {
-        "tooltip": {"mode": "single", "sort": "none"},
+        "tooltip": {"mode": "multi", "sort": "desc"},
         "legend": {"displayMode": "list", "placement": "bottom", "calcs": []}
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "celsius",
-          "min": 20,
-          "custom": {"lineWidth": 2, "fillOpacity": 10, "showPoints": "never"},
-          "color": {"mode": "thresholds"},
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 75},
-              {"color": "red", "value": 83}
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "targets": [
-        {"expr": "nvidia_smi_temperature_gpu{job=\"gpu-host-gpu\"}", "legendFormat": "core"}
-      ]
-    },
-    {
-      "id": 21,
-      "title": "Fan Speed",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 12},
-      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
-      "description": "Separate from temperature on purpose — percent and celsius on one axis would be a dual-axis chart.",
-      "options": {
-        "tooltip": {"mode": "single", "sort": "none"},
-        "legend": {"displayMode": "list", "placement": "bottom", "calcs": []}
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
+          "unit": "hertz",
           "min": 0,
-          "max": 1,
-          "custom": {"lineWidth": 2, "fillOpacity": 10, "showPoints": "never"}
+          "custom": {"lineWidth": 2, "fillOpacity": 0, "showPoints": "never"}
         },
         "overrides": []
       },
       "targets": [
-        {"expr": "nvidia_smi_fan_speed_ratio{job=\"gpu-host-gpu\"}", "legendFormat": "fan"}
+        {"expr": "nvidia_smi_clocks_current_graphics_clock_hz{job=\"gpu-host-gpu\"}", "legendFormat": "graphics"},
+        {"expr": "nvidia_smi_clocks_current_sm_clock_hz{job=\"gpu-host-gpu\"}", "legendFormat": "sm"},
+        {"expr": "nvidia_smi_clocks_current_memory_clock_hz{job=\"gpu-host-gpu\"}", "legendFormat": "memory"}
       ]
     },
     {
       "id": 22,
       "title": "Power Draw",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 12},
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 14},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Draw against the enforced limit. Sustained contact with the limit line means power-capped, which the throttle panel confirms.",
       "options": {
@@ -341,41 +325,16 @@
         {"expr": "nvidia_smi_enforced_power_limit_watts{job=\"gpu-host-gpu\"}", "legendFormat": "enforced limit"}
       ]
     },
-
-    {
-      "id": 30,
-      "title": "GPU Clocks",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
-      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
-      "options": {
-        "tooltip": {"mode": "multi", "sort": "desc"},
-        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"]}
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "hertz",
-          "min": 0,
-          "custom": {"lineWidth": 2, "fillOpacity": 0, "showPoints": "never"}
-        },
-        "overrides": []
-      },
-      "targets": [
-        {"expr": "nvidia_smi_clocks_current_graphics_clock_hz{job=\"gpu-host-gpu\"}", "legendFormat": "graphics"},
-        {"expr": "nvidia_smi_clocks_current_sm_clock_hz{job=\"gpu-host-gpu\"}", "legendFormat": "sm"},
-        {"expr": "nvidia_smi_clocks_current_memory_clock_hz{job=\"gpu-host-gpu\"}", "legendFormat": "memory"}
-      ]
-    },
     {
       "id": 31,
       "title": "Throttle Reasons",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 14},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
-      "description": "1 = actively throttling for that reason. sw_power_cap riding at 1 under load is normal for a 3090; thermal slowdown is not.",
+      "description": "1 = actively throttling for that reason. sw power cap riding at 1 under load is normal for a 3090; thermal slowdown is not.",
       "options": {
         "tooltip": {"mode": "multi", "sort": "desc"},
-        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["max"]}
+        "legend": {"displayMode": "list", "placement": "bottom", "calcs": []}
       },
       "fieldConfig": {
         "defaults": {
@@ -396,11 +355,20 @@
     },
 
     {
+      "id": 102,
+      "type": "row",
+      "title": "CPU",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+      "panels": []
+    },
+    {
       "id": 40,
-      "title": "Host CPU",
+      "title": "CPU by Mode",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 23},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Stacked across all cores, idle excluded. Total height is overall busy percentage.",
       "options": {
         "tooltip": {"mode": "multi", "sort": "desc"},
         "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"]}
@@ -419,89 +387,10 @@
       ]
     },
     {
-      "id": 41,
-      "title": "Host Memory",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
-      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
-      "options": {
-        "tooltip": {"mode": "multi", "sort": "desc"},
-        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"]}
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "min": 0,
-          "custom": {"lineWidth": 2, "fillOpacity": 8, "showPoints": "never"}
-        },
-        "overrides": [
-          {
-            "matcher": {"id": "byName", "options": "total"},
-            "properties": [
-              {"id": "custom.fillOpacity", "value": 0},
-              {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [8, 6]}}
-            ]
-          }
-        ]
-      },
-      "targets": [
-        {"expr": "node_memory_MemTotal_bytes{job=\"gpu-host-node\"} - node_memory_MemAvailable_bytes{job=\"gpu-host-node\"}", "legendFormat": "used"},
-        {"expr": "node_memory_Cached_bytes{job=\"gpu-host-node\"}", "legendFormat": "cached"},
-        {"expr": "node_memory_MemTotal_bytes{job=\"gpu-host-node\"}", "legendFormat": "total"}
-      ]
-    },
-
-    {
-      "id": 50,
-      "title": "Disk Usage",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 36},
-      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
-      "options": {
-        "tooltip": {"mode": "multi", "sort": "desc"},
-        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull"]}
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "min": 0,
-          "max": 1,
-          "custom": {"lineWidth": 2, "fillOpacity": 8, "showPoints": "never"}
-        },
-        "overrides": []
-      },
-      "targets": [
-        {"expr": "1 - (node_filesystem_avail_bytes{job=\"gpu-host-node\",fstype!~\"tmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{job=\"gpu-host-node\",fstype!~\"tmpfs|overlay|squashfs\"})", "legendFormat": "{{ mountpoint }}"}
-      ]
-    },
-    {
-      "id": 51,
-      "title": "Network I/O",
-      "type": "timeseries",
-      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 36},
-      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
-      "description": "Physical and Tailscale interfaces only; docker bridges excluded.",
-      "options": {
-        "tooltip": {"mode": "multi", "sort": "desc"},
-        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "custom": {"lineWidth": 2, "fillOpacity": 0, "showPoints": "never", "axisSoftMin": 0}
-        },
-        "overrides": []
-      },
-      "targets": [
-        {"expr": "rate(node_network_receive_bytes_total{job=\"gpu-host-node\",device=~\"enp.*|eth.*|tailscale.*\"}[5m])", "legendFormat": "{{ device }} rx"},
-        {"expr": "-rate(node_network_transmit_bytes_total{job=\"gpu-host-node\",device=~\"enp.*|eth.*|tailscale.*\"}[5m])", "legendFormat": "{{ device }} tx"}
-      ]
-    },
-    {
       "id": 52,
       "title": "Load Average",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 36},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 23},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Dashed line is core count — load sustained above it means the run queue is backing up.",
       "options": {
@@ -528,6 +417,252 @@
         {"expr": "node_load5{job=\"gpu-host-node\"}", "legendFormat": "5m"},
         {"expr": "node_load15{job=\"gpu-host-node\"}", "legendFormat": "15m"},
         {"expr": "count(count by(cpu) (node_cpu_seconds_total{job=\"gpu-host-node\"}))", "legendFormat": "cores"}
+      ]
+    },
+
+    {
+      "id": 103,
+      "type": "row",
+      "title": "Memory",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 31},
+      "panels": []
+    },
+    {
+      "id": 41,
+      "title": "Memory",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Used excludes cache and buffers (MemTotal - MemAvailable). Total is drawn as a ceiling reference.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": {"lineWidth": 2, "fillOpacity": 8, "showPoints": "never"}
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "total"},
+            "properties": [
+              {"id": "custom.fillOpacity", "value": 0},
+              {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [8, 6]}}
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {"expr": "node_memory_MemTotal_bytes{job=\"gpu-host-node\"} - node_memory_MemAvailable_bytes{job=\"gpu-host-node\"}", "legendFormat": "used"},
+        {"expr": "node_memory_Cached_bytes{job=\"gpu-host-node\"}", "legendFormat": "cached"},
+        {"expr": "node_memory_Buffers_bytes{job=\"gpu-host-node\"}", "legendFormat": "buffers"},
+        {"expr": "node_memory_MemTotal_bytes{job=\"gpu-host-node\"}", "legendFormat": "total"}
+      ]
+    },
+    {
+      "id": 42,
+      "title": "Swap",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Any sustained swap use on a host serving a 27B model is worth investigating.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "list", "placement": "bottom", "calcs": []}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": {"lineWidth": 2, "fillOpacity": 8, "showPoints": "never"}
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "total"},
+            "properties": [
+              {"id": "custom.fillOpacity", "value": 0},
+              {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [8, 6]}}
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {"expr": "node_memory_SwapTotal_bytes{job=\"gpu-host-node\"} - node_memory_SwapFree_bytes{job=\"gpu-host-node\"}", "legendFormat": "used"},
+        {"expr": "node_memory_SwapTotal_bytes{job=\"gpu-host-node\"}", "legendFormat": "total"}
+      ]
+    },
+
+    {
+      "id": 104,
+      "type": "row",
+      "title": "Disk",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 40},
+      "panels": []
+    },
+    {
+      "id": 50,
+      "title": "Filesystem Usage",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 41},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {"lineWidth": 2, "fillOpacity": 8, "showPoints": "never"}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "1 - (node_filesystem_avail_bytes{job=\"gpu-host-node\",fstype!~\"tmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{job=\"gpu-host-node\",fstype!~\"tmpfs|overlay|squashfs\"})", "legendFormat": "{{ mountpoint }}"}
+      ]
+    },
+    {
+      "id": 53,
+      "title": "Disk I/O",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 41},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Reads above the axis, writes below. Physical devices only.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {"lineWidth": 2, "fillOpacity": 0, "showPoints": "never", "axisSoftMin": 0}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "rate(node_disk_read_bytes_total{job=\"gpu-host-node\",device!~\"loop.*|dm-.*\"}[5m])", "legendFormat": "{{ device }} read"},
+        {"expr": "-rate(node_disk_written_bytes_total{job=\"gpu-host-node\",device!~\"loop.*|dm-.*\"}[5m])", "legendFormat": "{{ device }} write"}
+      ]
+    },
+
+    {
+      "id": 105,
+      "type": "row",
+      "title": "Network",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 49},
+      "panels": []
+    },
+    {
+      "id": 51,
+      "title": "Throughput",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 50},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Receive above the axis, transmit below. Physical and Tailscale interfaces only; docker bridges excluded.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {"lineWidth": 2, "fillOpacity": 0, "showPoints": "never", "axisSoftMin": 0}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "rate(node_network_receive_bytes_total{job=\"gpu-host-node\",device=~\"enp.*|eth.*|tailscale.*\"}[5m])", "legendFormat": "{{ device }} rx"},
+        {"expr": "-rate(node_network_transmit_bytes_total{job=\"gpu-host-node\",device=~\"enp.*|eth.*|tailscale.*\"}[5m])", "legendFormat": "{{ device }} tx"}
+      ]
+    },
+    {
+      "id": 54,
+      "title": "Errors & Drops",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 50},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Flat zero is the expected state. Anything sustained here points at cabling, the NIC, or an overloaded link.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["max"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "min": 0,
+          "custom": {"lineWidth": 2, "fillOpacity": 0, "showPoints": "never"}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "rate(node_network_receive_errs_total{job=\"gpu-host-node\",device=~\"enp.*|eth.*|tailscale.*\"}[5m])", "legendFormat": "{{ device }} rx errs"},
+        {"expr": "rate(node_network_transmit_errs_total{job=\"gpu-host-node\",device=~\"enp.*|eth.*|tailscale.*\"}[5m])", "legendFormat": "{{ device }} tx errs"},
+        {"expr": "rate(node_network_receive_drop_total{job=\"gpu-host-node\",device=~\"enp.*|eth.*|tailscale.*\"}[5m])", "legendFormat": "{{ device }} rx drops"},
+        {"expr": "rate(node_network_transmit_drop_total{job=\"gpu-host-node\",device=~\"enp.*|eth.*|tailscale.*\"}[5m])", "legendFormat": "{{ device }} tx drops"}
+      ]
+    },
+
+    {
+      "id": 106,
+      "type": "row",
+      "title": "Fans & Temps",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 58},
+      "panels": []
+    },
+    {
+      "id": 60,
+      "title": "Temperatures",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 16, "x": 0, "y": 59},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "GPU core, hottest CPU core, and each NVMe drive. coretemp and the NVMe chips report many sensors each, so both are reduced to a max rather than plotting all 27 series.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "min": 20,
+          "custom": {"lineWidth": 2, "fillOpacity": 0, "showPoints": "never"}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "nvidia_smi_temperature_gpu{job=\"gpu-host-gpu\"}", "legendFormat": "gpu"},
+        {"expr": "max(node_hwmon_temp_celsius{job=\"gpu-host-node\",chip=\"platform_coretemp_0\"})", "legendFormat": "cpu (hottest core)"},
+        {"expr": "max by(chip) (node_hwmon_temp_celsius{job=\"gpu-host-node\",chip=~\"nvme.*\"})", "legendFormat": "{{ chip }}"}
+      ]
+    },
+    {
+      "id": 21,
+      "title": "GPU Fan Speed",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 59},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "The only fan on this host that reports. node-exporter finds no hwmon fan RPM sensors, so chassis and CPU fans are not visible. Kept separate from Temperatures because percent and celsius on one axis would be a dual-axis chart.",
+      "options": {
+        "tooltip": {"mode": "single", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom", "calcs": []}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {"lineWidth": 2, "fillOpacity": 10, "showPoints": "never"}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "nvidia_smi_fan_speed_ratio{job=\"gpu-host-gpu\"}", "legendFormat": "gpu fan"}
       ]
     }
   ]
