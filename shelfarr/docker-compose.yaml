@@ -1,6 +1,6 @@
 services:
   shelfarr:
-    image: ghcr.io/pedro-revez-silva/shelfarr:0.39.1
+    image: ghcr.io/pedro-revez-silva/shelfarr:0.39.7
     container_name: shelfarr
     restart: unless-stopped
     volumes:
