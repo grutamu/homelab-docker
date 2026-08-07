@@ -43,7 +43,11 @@ services:
       # straight at pocket-id, which keeps this on the same SSO as every
       # other service instead of a second login.
       HERMES_DASHBOARD_OIDC_ISSUER: https://auth.calzone.zone
-      HERMES_DASHBOARD_OIDC_CLIENT_ID: hermes-dashboard
+      # pocket-id mints its own client ID and does not let you choose one —
+      # the `hermes-dashboard` you see in its UI is only the display name.
+      # This must be the generated UUID: Hermes pins the ID token's `aud`
+      # claim to whatever is set here, so a friendly name fails the exchange.
+      HERMES_DASHBOARD_OIDC_CLIENT_ID: 763e47b3-8ed5-4196-a7c6-4f433dd1263c
       # Needed so the OIDC callback resolves to the public hostname rather
       # than the container's own bind address.
       HERMES_DASHBOARD_PUBLIC_URL: https://hermes.calzone.zone
