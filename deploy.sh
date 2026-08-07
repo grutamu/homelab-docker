@@ -8,12 +8,31 @@
 # Usage:
 #   ./deploy.sh              # pull latest and deploy all stacks
 #   ./deploy.sh <stack>      # pull latest and deploy one stack
+#   ./deploy.sh --list       # print the stack list, one per line, and exit
 #
 # Requires OP_CONNECT_HOST and OP_CONNECT_TOKEN to be set (see /etc/profile.d/1password.sh).
 
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
+
+# Every stack that runs on docker01, in deploy order. This is the single source
+# of truth for "deployable here" — CI reads it via --list. A stack directory
+# absent from this list is never deployed by automation:
+#   gpu-host       exporters for the RTX 3090 box, deployed by hand (see its readme)
+#   github-runner  deploying it would restart the runner mid-job
+#   docs           not a stack
+# Order matters: backup attaches to other stacks' Docker networks as external,
+# so it must come after them.
+STACKS=(traefik infra monitoring pocket-id 1password
+        mediaserver immich paperless frigate netbox
+        audiobookshelf mealie portainer shelfarr
+        minio mcpjungle hermes-agent backup adguard-sync)
+
+if [ "${1:-}" = "--list" ]; then
+    printf '%s\n' "${STACKS[@]}"
+    exit 0
+fi
 
 deploy() {
     local stack=$1
@@ -48,10 +67,7 @@ git pull
 if [ $# -eq 1 ]; then
     deploy "$1"
 else
-    for stack in traefik infra monitoring pocket-id 1password \
-                 mediaserver immich paperless frigate netbox \
-                 audiobookshelf mealie portainer shelfarr \
-                 minio mcpjungle hermes-agent backup adguard-sync; do
+    for stack in "${STACKS[@]}"; do
         deploy "$stack"
     done
 fi
