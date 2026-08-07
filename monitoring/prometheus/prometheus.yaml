@@ -48,6 +48,30 @@ scrape_configs:
         labels:
           device: pikiosk
 
+  # gpu-host — the RTX 3090 box, also known as `hermes`. Scraped over
+  # Tailscale: it sits on 192.168.1.0/24 while docker01 is on 192.168.99.0/24,
+  # and the LAN path depends on inter-VLAN routing that Tailscale does not.
+  # Exporters are defined in gpu-host/docker-compose.yaml, which deploys to
+  # that host, not docker01.
+  # Labelled `host`, not `device` as the pikiosk job above does: node_network_*
+  # and node_disk_* already carry their own `device` label (the interface or
+  # block device). A target label of the same name does not merge — Prometheus
+  # renames the scraped one to `exported_device`, which quietly breaks any
+  # per-interface query. Dashboards select on `job` anyway.
+  - job_name: 'gpu-host-node'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['100.123.167.70:9100']
+        labels:
+          host: gpu-host
+
+  - job_name: 'gpu-host-gpu'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['100.123.167.70:9835']
+        labels:
+          host: gpu-host
+
   # Blackbox: services with unauthenticated 200 endpoints
   - job_name: 'blackbox_http'
     metrics_path: /probe
