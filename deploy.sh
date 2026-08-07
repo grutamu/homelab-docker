@@ -51,7 +51,7 @@ else
     for stack in traefik infra monitoring pocket-id 1password \
                  mediaserver immich paperless frigate netbox \
                  audiobookshelf mealie portainer shelfarr \
-                 minio mcpjungle backup adguard-sync; do
+                 minio mcpjungle hermes-agent backup adguard-sync; do
         deploy "$stack"
     done
 fi
