@@ -12,6 +12,14 @@ services:
     environment:
       - BACKREST_PORT=9898
       - BACKREST_INSTANCE=docker01
+      # The image defaults BACKREST_CONFIG to /config/config.json, and /config
+      # is not a mount — so the config lived in the container's writable layer
+      # and was destroyed the next time the container was recreated. That is
+      # why backups silently stopped after 2026-04-10: the repo and plan
+      # vanished, backrest came back up with an empty config, and only its
+      # default "collect garbage" task was left to schedule. Point it at /data,
+      # which is bind-mounted, so config survives alongside the oplog.
+      - BACKREST_CONFIG=/data/config.json
       - IMMICH_DB_USER
       - IMMICH_DB_PASSWORD
       - NETBOX_DB_PASSWORD
