@@ -56,22 +56,29 @@ jobs:
               continue
             fi
 
-            # Confirm every referenced tag actually resolves in its registry.
+            # Confirm the tags this PR *introduces* resolve in their registry.
             # This is the check that matters for Renovate: a bump to a tag that
             # was never published would otherwise merge and break the deploy.
-            for image in $(docker compose -f "$stack/docker-compose.yaml" config --images | sort -u); do
-              # Every image in this repo is pinned to an explicit tag (see the
-              # digest rule in renovate.json), so an untagged name is compose's
-              # generated name for a build: service (github-runner-runner) —
-              # never pushed to a registry, nothing to look up.
-              case "$image" in
-                *:*) ;;
-                *) echo "    -   $image (built locally, skipped)"; continue ;;
-              esac
-              if docker manifest inspect "$image" >/dev/null 2>&1; then
+            #
+            # Only the added image: lines, not every image in the stack. Docker
+            # Hub allows ~100 anonymous manifest requests per 6h per IP, and
+            # re-checking untouched images across concurrent PRs exhausts that
+            # for no signal — an image already on main was verified when it
+            # landed. Scoping to the diff cut this roughly tenfold.
+            for image in $(git diff "$BASE"...HEAD -- "$stack/docker-compose.yaml" \
+                             | sed -n 's/^+[[:space:]]*image:[[:space:]]*//p' \
+                             | tr -d "\"'" | sort -u); do
+              # An exhausted quota returns a generic failure that is easy to
+              # misread as a missing tag. "Could not verify" is not "does not
+              # exist" — warn, never fail, or a rate limit silently blocks
+              # every automerge.
+              if err=$(docker manifest inspect "$image" 2>&1 >/dev/null); then
                 echo "    ok  $image"
+              elif printf '%s' "$err" | grep -qiE 'toomanyrequests|too many requests|rate limit'; then
+                echo "::warning::$stack: registry rate limit — could not verify $image"
               else
                 echo "::error::$stack: image not found in registry: $image"
+                echo "        $err"
                 RC=1
               fi
             done

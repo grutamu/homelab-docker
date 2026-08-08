@@ -13,6 +13,15 @@
   "labels": ["renovate"],
   "automerge": true,
   "automergeType": "pr",
+  "description": [
+    "rebaseWhen=conflicted, not the default 'auto'. With automerge on, 'auto' means",
+    "'behind-base-branch': every merge to main leaves the other open PRs behind, so",
+    "Renovate force-pushes all of them, re-runs their checks, and blocks automerge",
+    "until each goes green again. Draining a queue of N PRs then costs ~N^2/2",
+    "force-pushes and notifications, and merges one PR per Renovate run. These stacks",
+    "touch disjoint files and never actually conflict, so rebasing buys nothing."
+  ],
+  "rebaseWhen": "conflicted",
   "enabledManagers": ["docker-compose"],
   "docker-compose": {
     "managerFilePatterns": [
