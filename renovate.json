@@ -22,7 +22,7 @@
     "touch disjoint files and never actually conflict, so rebasing buys nothing."
   ],
   "rebaseWhen": "conflicted",
-  "enabledManagers": ["docker-compose"],
+  "enabledManagers": ["docker-compose", "dockerfile"],
   "docker-compose": {
     "managerFilePatterns": [
       "/(^|/)docker-compose\\.ya?ml$/"

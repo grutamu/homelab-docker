@@ -35,11 +35,21 @@ services:
       - "traefik.http.routers.backrest.middlewares=pocket-id-auth@file"
       - "traefik.http.services.backrest.loadbalancer.server.port=9898"
     networks:
-      - proxy
-      - immich_immich
-      - netbox_netbox
-      - paperless_paperless
-      - mcpjungle_mcpjungle
+      proxy:
+        aliases:
+          # Prometheus cannot scrape this container as plain `backrest`. Its
+          # Traefik host label is backrest.calzone.zone, so adguard-sync
+          # publishes a CNAME with the same name as the container; the search
+          # domain resolves `backrest` to the host, where 9898 is not published,
+          # and the scrape is refused. (mcpjungle avoids this only because its
+          # host is mcp.calzone.zone, which doesn't match its container name.)
+          # This alias has no DNS record, so it resolves via Docker's embedded
+          # DNS to the proxy-network address.
+          - backrest-metrics
+      immich_immich:
+      netbox_netbox:
+      paperless_paperless:
+      mcpjungle_mcpjungle:
 
 volumes:
   nfs-backup:

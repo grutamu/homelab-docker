@@ -1,0 +1,61 @@
+groups:
+- name: backup_alerts
+  rules:
+  # The alert that would have caught the 2026-04-10 outage.
+  #
+  # Backrest lost its config (it lived on a path that wasn't bind-mounted), came
+  # back with no repos and no plans, and simply stopped scheduling backups. There
+  # was no failure to alert on, because there was no job — so an error-only alert
+  # is blind to it. This fires on the *absence* of a successful backup series
+  # instead, which is exactly the shape of that failure.
+  #
+  # backrest_tasks_run_total is a process counter, so it resets to absent on
+  # every restart. `for` is longer than the daily backup interval so a restart
+  # followed by the next scheduled run clears it without paging.
+  - alert: BackupNeverRan
+    expr: absent(backrest_tasks_run_total{task_type="backup",status="success"})
+    for: 26h
+    labels:
+      severity: critical
+    annotations:
+      summary: "Backrest has recorded no successful backup"
+      description: "No successful backup task in >26h — this is the shape of a lost plan/repo config, not a failed run. Check that backrest still has a plan: the config lives at /docker-data/backrest/config.json and must be reachable via BACKREST_CONFIG."
+
+  # Plan exists and has succeeded before, but has stopped succeeding.
+  - alert: BackupStale
+    expr: increase(backrest_tasks_run_total{task_type="backup",status="success"}[36h]) == 0
+    for: 1h
+    labels:
+      severity: critical
+    annotations:
+      summary: "No successful backup in 36h ({{ $labels.plan_id }})"
+      description: "Plan {{ $labels.plan_id }} on repo {{ $labels.repo_id }} has not completed a successful backup in 36h."
+
+  - alert: BackupFailed
+    expr: increase(backrest_tasks_run_total{task_type="backup",status!="success"}[2h]) > 0
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Backup failed ({{ $labels.plan_id }})"
+      description: "Plan {{ $labels.plan_id }} recorded a backup with status {{ $labels.status }}. The pre-backup hook is ON_ERROR_FATAL, so a failed pg_dump lands here rather than silently snapshotting stale dumps."
+
+  # Prune and check are the repo's integrity guarantees; both are monthly, so a
+  # 45d window means one missed run is tolerated and two are not.
+  - alert: BackupRepoCheckStale
+    expr: increase(backrest_tasks_run_total{task_type=~"check|prune",status="success"}[45d]) == 0
+    for: 2h
+    labels:
+      severity: warning
+    annotations:
+      summary: "Backrest {{ $labels.task_type }} has not succeeded in 45d ({{ $labels.repo_id }})"
+      description: "Repo integrity task {{ $labels.task_type }} is overdue — restic corruption would go undetected."
+
+  - alert: BackrestDown
+    expr: up{job="backrest"} == 0
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Backrest is not scrapeable"
+      description: "Prometheus cannot scrape backrest-metrics:9898. While this is down the backup alerts above are blind."

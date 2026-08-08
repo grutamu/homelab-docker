@@ -42,6 +42,14 @@ scrape_configs:
     static_configs:
       - targets: ['mcpjungle:8080']
 
+  # Backrest. Scraped via the backrest-metrics network alias, not `backrest` —
+  # the container name collides with the backrest.calzone.zone CNAME that
+  # adguard-sync publishes, which resolves to the host where 9898 isn't
+  # published. See the alias in backup/docker-compose.yaml.
+  - job_name: 'backrest'
+    static_configs:
+      - targets: ['backrest-metrics:9898']
+
   - job_name: pikiosk
     static_configs:
       - targets: ['100.86.212.93:9100']
