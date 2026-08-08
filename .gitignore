@@ -22,6 +22,11 @@ frigate/config/config.yml
 # Recyclarr resolved config (contains Sonarr/Radarr API keys)
 mediaserver/recyclarr/recyclarr.yml
 
+# Deploy marker — per-host state (last SHA docker01 finished deploying),
+# written by the Deploy workflow. Lives here because this directory is the
+# only host path bind-mounted into the runner container.
+.deployed-sha
+
 # macOS
 .DS_Store
 
