@@ -4,9 +4,12 @@ on:
   push:
     branches: [main]
 
-# Serialize deploys. Renovate merges PRs in bursts; without this, queued runs
-# race the single self-hosted runner and get cancelled (dropping the deploy).
-# cancel-in-progress: false => runs queue and execute one at a time.
+# Serialize deploys onto the single self-hosted runner. Note this does NOT
+# guarantee every push gets its own run: GitHub keeps only one *pending* run
+# per group, so in a burst each new run cancels the previously queued one.
+# cancel-in-progress: false only protects the run that is already executing.
+# Losing a run is therefore normal and expected here — the deploy step below
+# is written to recover from it rather than to prevent it.
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -20,15 +23,38 @@ jobs:
 
       - name: Deploy changed stacks
         run: |
-          BEFORE="${{ github.event.before }}"
+          MARKER=/root/.homelab-deployed-sha
           AFTER="${{ github.sha }}"
 
-          # On initial push before SHA is all zeros — deploy everything
-          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            echo "Initial push — deploying all stacks"
+          # Diff from the last SHA this host actually finished deploying, not
+          # from github.event.before. A cancelled or failed run never writes the
+          # marker, so whatever it was carrying is still pending and the next run
+          # picks it up. Using event.before instead silently drops those changes
+          # forever — that is how traefik v3.7.10 landed on main while docker01
+          # kept running v3.7.9.
+          BEFORE=""
+          if [ -f "$MARKER" ]; then
+            CANDIDATE=$(cat "$MARKER")
+            # Ignore a marker that isn't an ancestor of HEAD (force-push, reset,
+            # or a stale file); an invalid range would abort the whole deploy.
+            if git -C /root/homelab-docker merge-base --is-ancestor "$CANDIDATE" "$AFTER" 2>/dev/null; then
+              BEFORE="$CANDIDATE"
+            else
+              echo "Marker $CANDIDATE is not an ancestor of $AFTER — ignoring it."
+            fi
+          fi
+          [ -n "$BEFORE" ] || BEFORE="${{ github.event.before }}"
+
+          # First push, or the before-SHA is the all-zero sentinel: deploy all.
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+             || ! git -C /root/homelab-docker cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "No usable baseline — deploying all stacks"
             /root/homelab-docker/deploy.sh
+            echo "$AFTER" > "$MARKER"
             exit 0
           fi
+
+          echo "Deploying changes from $BEFORE to $AFTER"
 
           CHANGED=$(git -C /root/homelab-docker diff --name-only "$BEFORE" "$AFTER" \
             | cut -d'/' -f1 \
@@ -58,3 +84,9 @@ jobs:
           if [ "$DEPLOYED" -eq 0 ]; then
             echo "No deployable stack changes detected, nothing to deploy."
           fi
+
+          # Only advance the marker once every stack above succeeded. The step
+          # runs under `bash -e`, so a failed deploy.sh aborts before this line
+          # and the range stays pending for the next run to retry.
+          echo "$AFTER" > "$MARKER"
+          echo "Marked $AFTER as deployed."
