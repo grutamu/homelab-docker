@@ -23,7 +23,15 @@ jobs:
 
       - name: Deploy changed stacks
         run: |
-          MARKER=/root/.homelab-deployed-sha
+          # Must live inside /root/homelab-docker: that is the only writable
+          # path bind-mounted from the host into the runner container (see
+          # github-runner/docker-compose.yaml). Anywhere else — /root included —
+          # is the container's own layer, so the marker would be destroyed every
+          # time the runner is recreated (reboot, image bump, clean-state.sh)
+          # and this would quietly fall back to event.before, which is the exact
+          # dropped-deploy bug it exists to prevent. Gitignored; git pull leaves
+          # ignored untracked files alone.
+          MARKER=/root/homelab-docker/.deployed-sha
           AFTER="${{ github.sha }}"
 
           # Diff from the last SHA this host actually finished deploying, not
