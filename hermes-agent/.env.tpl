@@ -18,6 +18,11 @@ MCP_HOMELAB_API_KEY=op://docker/hermes-agent/MCP_HOMELAB_API_KEY
 # so the agent connects and goes live in the home channel on first start.
 DISCORD_BOT_TOKEN=op://docker/hermes-agent/DISCORD_BOT_TOKEN
 
+# GitHub PAT. Injected rather than stored so the dashboard cannot read it back
+# or hand it to the agent as editable state. Scope it to only what the agent
+# actually needs — this is a credential the agent acts with, not just holds.
+GITHUB_TOKEN=op://docker/hermes-agent/GITHUB_TOKEN
+
 # ── Model provider ───────────────────────────────────────────────────────
 # Intentionally absent. config.yaml selects a custom provider, not a hosted
 # API, so there is no key to inject — the endpoint *is* the credential:

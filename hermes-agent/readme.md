@@ -189,7 +189,7 @@ access to anything it used to reach on that box.
 
 ## Secrets
 
-`MCP_HOMELAB_API_KEY` and `DISCORD_BOT_TOKEN` are injected via `op run`
+`MCP_HOMELAB_API_KEY`, `DISCORD_BOT_TOKEN` and `GITHUB_TOKEN` are injected via `op run`
 (`.env.tpl`) rather than left in the data dir's `.env`. Anything in that file
 is listed by `GET /api/env` and editable through the dashboard — and by the
 agent. Injected env vars are neither.
