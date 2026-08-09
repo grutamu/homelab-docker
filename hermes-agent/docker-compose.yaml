@@ -58,6 +58,7 @@ services:
       # dir's .env, which the dashboard can display.
       MCP_HOMELAB_API_KEY:
       DISCORD_BOT_TOKEN:
+      GITHUB_TOKEN:
 
       # The OpenAI-compatible API server (8642) is deliberately off. The
       # dashboard and gateway talk to each other inside the container, so
