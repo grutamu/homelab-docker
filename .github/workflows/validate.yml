@@ -31,8 +31,8 @@ jobs:
           CHANGED=$(git diff --name-only "$BASE"...HEAD | cut -d'/' -f1 | sort -u)
 
           # Validate anything with a compose file, including stacks deploy.sh
-          # does not deploy from this host (gpu-host) — a broken compose file
-          # there is still worth catching before it merges.
+          # does not deploy (github-runner) — a broken compose file there is
+          # still worth catching before it merges.
           STACKS=""
           for stack in $CHANGED; do
             [ -f "$stack/docker-compose.yaml" ] && STACKS="$STACKS $stack"

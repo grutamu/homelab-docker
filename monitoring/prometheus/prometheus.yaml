@@ -51,8 +51,14 @@ scrape_configs:
   # gpu-host — the RTX 3090 box, also known as `hermes`. Scraped over
   # Tailscale: it sits on 192.168.1.0/24 while docker01 is on 192.168.99.0/24,
   # and the LAN path depends on inter-VLAN routing that Tailscale does not.
-  # Exporters are defined in gpu-host/docker-compose.yaml, which deploys to
-  # that host, not docker01.
+  #
+  # The exporters are NOT managed by this repo — it only covers docker01. They
+  # run on that host out of band: prom/node-exporter and
+  # utkuozdemir/nvidia_gpu_exporter, both bound to the Tailscale address rather
+  # than 0.0.0.0 (they are unauthenticated, and that host shares a LAN subnet
+  # with everything else). The GPU exporter needs `capabilities: [gpu, utility]`
+  # — `utility` is what puts nvidia-smi in the container, which it shells out to.
+  # If these targets go down, fix them there; nothing here deploys them.
   # Labelled `host`, not `device` as the pikiosk job above does: node_network_*
   # and node_disk_* already carry their own `device` label (the interface or
   # block device). A target label of the same name does not merge — Prometheus

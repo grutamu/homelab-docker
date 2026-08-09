@@ -19,7 +19,6 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 # Every stack that runs on docker01, in deploy order. This is the single source
 # of truth for "deployable here" — CI reads it via --list. A stack directory
 # absent from this list is never deployed by automation:
-#   gpu-host       exporters for the RTX 3090 box, deployed by hand (see its readme)
 #   github-runner  deploying it would restart the runner mid-job
 #   docs           not a stack
 # Order matters: backup attaches to other stacks' Docker networks as external,

@@ -70,9 +70,9 @@ jobs:
 
           # Iterate deploy.sh's stack list rather than the diff. It is the only
           # source of truth for what runs on this host — a changed directory
-          # that isn't in it (gpu-host targets the RTX 3090 box, github-runner
-          # would restart us mid-job) must not be deployed here. Its order also
-          # handles inter-stack dependencies, so no re-sorting is needed.
+          # that isn't in it (github-runner would restart us mid-job) must not
+          # be deployed here. Its order also handles inter-stack dependencies,
+          # so no re-sorting is needed.
           DEPLOYED=0
           for stack in $(/root/homelab-docker/deploy.sh --list); do
             printf '%s\n' "$CHANGED" | grep -qx "$stack" || continue
