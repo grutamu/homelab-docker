@@ -127,26 +127,33 @@ ssh root@docker01 'docker compose -f /root/homelab-docker/[stack]/docker-compose
 
 ### Bootstrapping a new host
 
-Deploying onto a host that has never run these stacks is different from deploying a change, because two things the running host takes for granted do not exist yet.
+Deploying onto a host that has never run these stacks is different from deploying a change, because several things the running host takes for granted do not exist yet.
+
+Two of the files below are gitignored, so a fresh clone does not have them. Both are bind-mounted, which means that if they are absent Docker silently creates a **directory** in their place and the container fails to start. Create them before the first deploy, not after.
 
 ```bash
 # 1. Clone. Public repo, so HTTPS needs no credentials -- and deploy.sh
 #    runs `git pull`, so the remote must be reachable unauthenticated.
 git clone https://github.com/grutamu/homelab-docker /root/homelab-docker
 
-# 2. Place the Connect credentials. This file is gitignored, so a fresh
-#    clone does not have it. If it is missing, Docker silently creates a
-#    *directory* with that name and Connect fails to start.
+# 2. Place the Connect credentials. 0644 is deliberate: Connect runs as a
+#    non-root user inside the container and has to be able to read the
+#    bind-mounted file.
 #    (Under NixOS this is placed by sops-nix; see grutamu/nix-config.)
 install -m 0644 1password-credentials.json /root/homelab-docker/1password/
 
-# 3. Export the Connect env, then deploy.
+# 3. Create the Let's Encrypt store. Traefik will not write certs into a
+#    directory, and refuses the file outright if it is group/world readable.
+touch /root/homelab-docker/traefik/config/acme.json
+chmod 600 /root/homelab-docker/traefik/config/acme.json
+
+# 4. Export the Connect env, then deploy.
 export OP_CONNECT_HOST=http://localhost:7070
 export OP_CONNECT_TOKEN=...
-./deploy.sh
+/root/homelab-docker/deploy.sh
 ```
 
-`deploy.sh` handles the rest of the ordering itself: `1password` is deployed first and waited on via `/heartbeat` so that `op run` works, then `traefik` creates the `proxy` network that the remaining stacks attach to.
+`deploy.sh` handles the rest of the ordering itself: it creates the `proxy` network if it is missing, then deploys `1password` first and waits on `/heartbeat` so that `op run` works before any stack that needs a secret.
 
 **Application data is not bootstrapped.** `/docker-data/` is restored from backup — see [docs/restore.md](docs/restore.md). Starting the stacks against empty directories gives you twenty apps that come up looking healthy with no data.
 

@@ -27,8 +27,8 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 #              which needs Connect answering on :7070. On a host that is already
 #              running this is invisible -- Connect is up from last time. On a
 #              cold boot, nothing else can deploy until it is live.
-#   traefik    second. It owns the `proxy` network that ten other stacks attach
-#              to as external, so it has to exist before they start.
+#   traefik    second. It owns the `proxy` network that sixteen other stacks
+#              attach to as external, so it has to exist before they start.
 #   backup     last. It attaches to other stacks' networks as external.
 STACKS=(1password traefik infra monitoring pocket-id
         mediaserver immich paperless frigate netbox
@@ -91,7 +91,10 @@ reload_prometheus() {
 # without this, a cold boot races and each subsequent stack fails one by one.
 # On a host where Connect is already up this returns on the first attempt.
 wait_for_connect() {
-    local url="${OP_CONNECT_HOST:-http://localhost:7070}/heartbeat"
+    # Strip any trailing slash: OP_CONNECT_HOST=http://host:7070/ would
+    # otherwise produce //heartbeat, which Connect does not serve.
+    local url="${OP_CONNECT_HOST:-http://localhost:7070}"
+    url="${url%/}/heartbeat"
     local i
     for i in $(seq 1 30); do
         if curl -fsS -o /dev/null "$url" 2>/dev/null; then
@@ -102,6 +105,24 @@ wait_for_connect() {
     done
     echo "1Password Connect never became ready at $url (waited 60s)" >&2
     return 1
+}
+
+# Create the shared ingress network if it is missing. Seventeen stacks attach
+# to `proxy` with `external: true`, so something has to create it before the
+# first one starts -- on a cold host that something was nothing, and the deploy
+# died on stack one with "network proxy declared as external, but could not be
+# found".
+#
+# This lives here rather than as a compose-managed network in traefik because
+# compose will not adopt a network it did not create: the one on docker01 was
+# made by hand in Dec 2024 and carries no compose labels, so declaring it in
+# traefik/docker-compose.yaml fails with "network proxy was found but has
+# incorrect label com.docker.compose.network set to """ until every attached
+# stack is stopped and the network rebuilt. Idempotent create, no downtime.
+ensure_proxy_network() {
+    docker network inspect proxy >/dev/null 2>&1 && return 0
+    echo "==> creating missing \`proxy\` network"
+    docker network create proxy
 }
 
 deploy() {
@@ -148,6 +169,10 @@ deploy() {
 
 cd "$REPO"
 git pull
+
+# Before anything is deployed, so that a single-stack run (`./deploy.sh immich`,
+# which is how CI deploys) works on a cold host too, not just the full loop.
+ensure_proxy_network
 
 if [ $# -eq 1 ]; then
     deploy "$1"

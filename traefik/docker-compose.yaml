@@ -43,22 +43,23 @@ services:
       - "traefik.http.routers.traefik-secure.service=api@internal"
 
 networks:
-  # Traefik owns the shared ingress network.
+  # Stays `external: true` deliberately -- deploy.sh creates it.
   #
-  # Ten other stacks attach to `proxy` with `external: true`, which means
-  # something has to create it first. Until now that something was a
-  # `docker network create proxy` typed by hand in Dec 2024 and recorded
-  # nowhere -- so a rebuilt host would fail on the very first stack with
+  # Seventeen stacks attach to `proxy`, and until recently nothing created it:
+  # it was a `docker network create proxy` typed by hand in Dec 2024 and
+  # recorded nowhere, so a rebuilt host failed on the first stack with
   # "network proxy declared as external, but could not be found".
   #
-  # Defining it here makes a cold boot work, and puts the network next to the
-  # thing that actually defines the ingress.
+  # The obvious fix -- declaring it here as a compose-managed network -- does
+  # not work on a host that is already running. Compose refuses to adopt a
+  # network it did not create:
   #
-  # `name: proxy` pins the real network name. Without it compose would create
-  # `traefik_proxy` and every `external: true` reference elsewhere would miss.
+  #   network proxy was found but has incorrect label
+  #   com.docker.compose.network set to "" (expected: "proxy")
   #
-  # Note: `docker compose down` on this stack now attempts to remove the
-  # network. That fails harmlessly while other stacks are still attached.
+  # The live network has no compose labels, so switching would break every
+  # traefik deploy until all seventeen stacks were stopped and the network
+  # recreated. deploy.sh does an idempotent `docker network create` instead:
+  # cold boot works, warm host is a no-op, no downtime.
   proxy:
-    name: proxy
-    driver: bridge
+    external: true
