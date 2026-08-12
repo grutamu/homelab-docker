@@ -1,0 +1,87 @@
+groups:
+- name: backup_alerts
+  rules:
+  # The alert that would have caught the 2026-04-10 outage.
+  #
+  # Backrest lost its config (it lived on a path that wasn't bind-mounted), came
+  # back with no repos and no plans, and simply stopped scheduling backups. There
+  # was no failure to alert on, because there was no job — so an error-only alert
+  # is blind to it. This fires on the *absence* of a successful backup series
+  # instead, which is exactly the shape of that failure.
+  #
+  # backrest_tasks_run_total is a process counter, so it resets to absent on
+  # every restart. `for` is longer than the daily backup interval so a restart
+  # followed by the next scheduled run clears it without paging.
+  - alert: BackupNeverRan
+    expr: absent(backrest_tasks_run_total{task_type="backup",status="success"})
+    for: 26h
+    labels:
+      severity: critical
+    annotations:
+      summary: "Backrest has recorded no successful backup"
+      description: "No successful backup task in >26h — this is the shape of a lost plan/repo config, not a failed run. Check that backrest still has a plan: the config lives at /docker-data/backrest/config.json and must be reachable via BACKREST_CONFIG."
+
+  # Plan exists and has succeeded before, but has stopped succeeding.
+  - alert: BackupStale
+    expr: increase(backrest_tasks_run_total{task_type="backup",status="success"}[36h]) == 0
+    for: 1h
+    labels:
+      severity: critical
+    annotations:
+      summary: "No successful backup in 36h ({{ $labels.plan_id }})"
+      description: "Plan {{ $labels.plan_id }} on repo {{ $labels.repo_id }} has not completed a successful backup in 36h."
+
+  # Deliberately the gauge, not increase() on the counter.
+  #
+  # increase() needs a delta between two samples. Backrest creates its counters
+  # lazily on first run, so the first failure makes the status="failed" series
+  # appear already at 1 and stay there — no delta, increase() == 0, and the
+  # alert never fires. That is not an edge case: it is every first failure,
+  # and it recurs after each restart because the counters reset to absent.
+  #
+  # backrest_last_task_status is a gauge, 0 on success and 1 on failure, and
+  # RecordTaskRun does a DeletePartialMatch on (repo_id, plan_id, task_type)
+  # before every write. So exactly one series exists per task type, holding the
+  # outcome of the most recent run — one sample is enough to alert on, and the
+  # next success clears it.
+  - alert: BackupFailed
+    expr: backrest_last_task_status{task_type="backup"} > 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Last backup failed ({{ $labels.plan_id }})"
+      description: "The most recent backup of plan {{ $labels.plan_id }} on repo {{ $labels.repo_id }} failed, and no successful backup has run since. The pre-backup hook is ON_ERROR_FATAL, so a failed pg_dump lands here rather than silently snapshotting stale dumps. This stays firing until a backup succeeds."
+
+  # Prune and check are the repo's integrity guarantees. This catches them
+  # *failing*; it deliberately does not try to catch them silently never being
+  # scheduled, because these metrics cannot answer that question.
+  #
+  # Both tasks are monthly, and the counters reset to absent on every restart —
+  # which happens far more often than monthly. Any "has a check succeeded in the
+  # last N days" expression is therefore evaluating a series that usually does
+  # not exist, and a long window is capped by the 30d TSDB retention anyway. The
+  # earlier increase(...[45d]) == 0 form returned an empty vector for most of its
+  # life and false-positived for the rest.
+  #
+  # The unscheduled case is not really uncovered: losing the config is what stops
+  # check and prune from being scheduled, and that stops backups too, so
+  # BackupNeverRan fires within 26h. Backrest's own Discord hook on
+  # CONDITION_ANY_ERROR is repo-level and covers these failures as well.
+  - alert: RepoMaintenanceFailed
+    expr: backrest_last_task_status{task_type=~"check|prune"} > 0
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Backrest {{ $labels.task_type }} failed ({{ $labels.repo_id }})"
+      description: "Repo integrity task {{ $labels.task_type }} on {{ $labels.repo_id }} failed on its most recent run — restic corruption would go undetected until it succeeds again."
+
+  - alert: BackrestDown
+    expr: up{job="backrest"} == 0
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Backrest is not scrapeable"
+      description: "Prometheus cannot scrape backrest-metrics:9898. While this is down the backup alerts above are blind."
