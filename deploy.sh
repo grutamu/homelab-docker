@@ -22,9 +22,15 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 #   gpu-host       exporters for the RTX 3090 box, deployed by hand (see its readme)
 #   github-runner  deploying it would restart the runner mid-job
 #   docs           not a stack
-# Order matters: backup attaches to other stacks' Docker networks as external,
-# so it must come after them.
-STACKS=(traefik infra monitoring pocket-id 1password
+# Order matters:
+#   1password  first. Every stack with a .env.tpl is deployed through `op run`,
+#              which needs Connect answering on :7070. On a host that is already
+#              running this is invisible -- Connect is up from last time. On a
+#              cold boot, nothing else can deploy until it is live.
+#   traefik    second. It owns the `proxy` network that ten other stacks attach
+#              to as external, so it has to exist before they start.
+#   backup     last. It attaches to other stacks' networks as external.
+STACKS=(1password traefik infra monitoring pocket-id
         mediaserver immich paperless frigate netbox
         audiobookshelf mealie portainer shelfarr
         minio mcpjungle hermes-agent backup adguard-sync)
@@ -80,6 +86,24 @@ reload_prometheus() {
         wget -q -O- --post-data='' http://localhost:9090/-/reload >/dev/null
 }
 
+# Block until 1Password Connect is answering. Starting the container is not the
+# same as it being ready, and every `op run`/`op inject` below depends on it --
+# without this, a cold boot races and each subsequent stack fails one by one.
+# On a host where Connect is already up this returns on the first attempt.
+wait_for_connect() {
+    local url="${OP_CONNECT_HOST:-http://localhost:7070}/heartbeat"
+    local i
+    for i in $(seq 1 30); do
+        if curl -fsS -o /dev/null "$url" 2>/dev/null; then
+            [ "$i" -gt 1 ] && echo "    Connect ready after ${i} attempts"
+            return 0
+        fi
+        sleep 2
+    done
+    echo "1Password Connect never became ready at $url (waited 60s)" >&2
+    return 1
+}
+
 deploy() {
     local stack=$1
     local compose="$REPO/$stack/docker-compose.yaml"
@@ -94,7 +118,13 @@ deploy() {
         prom_before=$(prometheus_started_at)
     fi
 
-    if [ "$stack" = "frigate" ]; then
+    if [ "$stack" = "1password" ]; then
+        # Deployed with no secrets available -- Connect reads its credentials
+        # from the bind-mounted 1password-credentials.json, not from op. That
+        # is what makes it a valid first stack on a cold host.
+        docker compose -f "$compose" up -d
+        wait_for_connect
+    elif [ "$stack" = "frigate" ]; then
         op inject -i "$REPO/frigate/config/config.yml.tpl" \
                   -o "$REPO/frigate/config/config.yml" -f
         docker compose -f "$compose" up -d

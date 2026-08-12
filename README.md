@@ -125,6 +125,31 @@ All services are accessed at `[service].calzone.zone` over HTTPS. DNS rewrites a
 ssh root@docker01 'docker compose -f /root/homelab-docker/[stack]/docker-compose.yaml logs -f [service]'
 ```
 
+### Bootstrapping a new host
+
+Deploying onto a host that has never run these stacks is different from deploying a change, because two things the running host takes for granted do not exist yet.
+
+```bash
+# 1. Clone. Public repo, so HTTPS needs no credentials -- and deploy.sh
+#    runs `git pull`, so the remote must be reachable unauthenticated.
+git clone https://github.com/grutamu/homelab-docker /root/homelab-docker
+
+# 2. Place the Connect credentials. This file is gitignored, so a fresh
+#    clone does not have it. If it is missing, Docker silently creates a
+#    *directory* with that name and Connect fails to start.
+#    (Under NixOS this is placed by sops-nix; see grutamu/nix-config.)
+install -m 0644 1password-credentials.json /root/homelab-docker/1password/
+
+# 3. Export the Connect env, then deploy.
+export OP_CONNECT_HOST=http://localhost:7070
+export OP_CONNECT_TOKEN=...
+./deploy.sh
+```
+
+`deploy.sh` handles the rest of the ordering itself: `1password` is deployed first and waited on via `/heartbeat` so that `op run` works, then `traefik` creates the `proxy` network that the remaining stacks attach to.
+
+**Application data is not bootstrapped.** `/docker-data/` is restored from backup — see [docs/restore.md](docs/restore.md). Starting the stacks against empty directories gives you twenty apps that come up looking healthy with no data.
+
 ---
 
 ## Networking

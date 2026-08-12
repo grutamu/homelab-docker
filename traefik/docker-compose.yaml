@@ -43,5 +43,22 @@ services:
       - "traefik.http.routers.traefik-secure.service=api@internal"
 
 networks:
+  # Traefik owns the shared ingress network.
+  #
+  # Ten other stacks attach to `proxy` with `external: true`, which means
+  # something has to create it first. Until now that something was a
+  # `docker network create proxy` typed by hand in Dec 2024 and recorded
+  # nowhere -- so a rebuilt host would fail on the very first stack with
+  # "network proxy declared as external, but could not be found".
+  #
+  # Defining it here makes a cold boot work, and puts the network next to the
+  # thing that actually defines the ingress.
+  #
+  # `name: proxy` pins the real network name. Without it compose would create
+  # `traefik_proxy` and every `external: true` reference elsewhere would miss.
+  #
+  # Note: `docker compose down` on this stack now attempts to remove the
+  # network. That fails harmlessly while other stacks are still attached.
   proxy:
-    external: true
+    name: proxy
+    driver: bridge
