@@ -6,6 +6,15 @@ services:
     user: 1000:1000
     devices:
       - /dev/dri:/dev/dri
+    # /dev/dri/renderD128 is `crw-rw---- root render`, and uid 1000 is not in
+    # `render` -- so without this the container maps the device in and then
+    # cannot open it. Hardware transcoding silently falls back to software.
+    #
+    # Numeric because the group name does not resolve inside the image. 993 is
+    # the `render` gid on the host (and is pinned to that value in the NixOS
+    # config, so it survives the migration).
+    group_add:
+      - "993"
     volumes:
       - nfs-photos:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro

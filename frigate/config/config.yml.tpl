@@ -16,7 +16,11 @@ database:
 detectors:
   ov:
     type: openvino
-    device: AUTO
+    # GPU, not AUTO. AUTO silently falls back to CPU if the OpenVINO GPU plugin
+    # cannot initialise -- detection keeps working, just on the CPU, so the only
+    # symptom is load. Pinning it makes a broken Level Zero / compute-runtime
+    # stack fail loudly, which matters when moving the host to NixOS.
+    device: GPU
 
 model:
   width: 300
