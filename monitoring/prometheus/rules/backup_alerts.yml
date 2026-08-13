@@ -22,8 +22,29 @@ groups:
       description: "No successful backup task in >26h — this is the shape of a lost plan/repo config, not a failed run. Check that backrest still has a plan: the config lives at /docker-data/backrest/config.json and must be reachable via BACKREST_CONFIG."
 
   # Plan exists and has succeeded before, but has stopped succeeding.
+  #
+  # The second clause is the same lazy-counter-creation trap described under
+  # BackupFailed below, in its other form. backrest_tasks_run_total resets to
+  # absent on restart, so the next successful backup re-creates the series
+  # already at 1, where it sits flat until the following night's run. A flat
+  # series means increase() == 0, so the bare expression fired for ~20h after
+  # every restart *because* a backup had just succeeded — which is what it did
+  # on 2026-08-13, from 04:05Z until the 03:00Z run the next day.
+  #
+  # Requiring the series to have existed at the start of the window
+  # distinguishes "counter is flat because nothing ran" from "counter is flat
+  # because it was just born". count_over_time drops __name__, so its label set
+  # matches the increase() side and `and` pairs them without on()/ignoring().
+  #
+  # Cost: for 36h after a restart this alert is suppressed. BackupNeverRan
+  # covers a plan that never runs at all, and BackupFailed covers one that runs
+  # and fails, so the only case deferred is a plan that succeeds once
+  # post-restart and is then silently lost — that fires 36h in rather than never.
   - alert: BackupStale
-    expr: increase(backrest_tasks_run_total{task_type="backup",status="success"}[36h]) == 0
+    expr: |
+      increase(backrest_tasks_run_total{task_type="backup",status="success"}[36h]) == 0
+      and
+      count_over_time(backrest_tasks_run_total{task_type="backup",status="success"}[10m] offset 36h) > 0
     for: 1h
     labels:
       severity: critical
