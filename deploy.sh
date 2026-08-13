@@ -59,6 +59,23 @@ deploy() {
     else
         docker compose -f "$compose" up -d
     fi
+
+    # Prometheus reads its config and rules from a bind mount, so editing them
+    # changes no part of the container spec: `compose up -d` sees an up-to-date
+    # container and leaves it running. Nothing watches the files either. Without
+    # this, a rule change deploys "successfully" and then sits on disk doing
+    # nothing until some unrelated restart picks it up — which is how a fixed
+    # alert can keep paging. --web.enable-lifecycle is set, so SIGHUP reloads
+    # in place.
+    #
+    # A reload that fails validation is only visible in the container log;
+    # Prometheus keeps serving the previous config and this still returns 0.
+    # The promtool gate in CI is what makes that acceptable.
+    if [ "$stack" = "monitoring" ] \
+       && [ "$(docker inspect -f '{{.State.Running}}' prometheus 2>/dev/null)" = "true" ]; then
+        echo "    reloading prometheus"
+        docker kill -s HUP prometheus >/dev/null
+    fi
 }
 
 cd "$REPO"

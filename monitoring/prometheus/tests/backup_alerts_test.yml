@@ -1,0 +1,124 @@
+---
+# Unit tests for rules/backup_alerts.yml.
+#
+# These live outside rules/ on purpose: prometheus.yaml globs `rules/*.yml` into
+# rule_files, and a unit-test file matching that glob fails to parse as a rule
+# group, which takes the whole config down on the next reload.
+#
+# `promtool check rules` is a syntax check, and every bug this file has shipped
+# was syntactically perfect. BackupFailed used increase() on a counter backrest
+# creates lazily, so it was blind to every first failure. BackupStale used
+# increase() on that same counter and fired *because* a backup had just
+# succeeded. The linter passed both. What breaks them is a series shape — a
+# counter that vanishes on restart and comes back already at 1 — so that shape
+# is what these tests feed in.
+#
+# Samples are 5m apart rather than the real 15s: nothing here turns on scrape
+# granularity, and 36h of 15s samples would be 8640 points per series.
+
+evaluation_interval: 5m
+
+# Resolved relative to this file, not the working directory. A path that
+# matches nothing is only a WARNING, and every "exp_alerts: []" assertion then
+# passes vacuously — the firing assertions below are what keep that honest.
+rule_files:
+  - ../rules/backup_alerts.yml
+
+tests:
+  # Baseline. The counter steps once every 24h and nothing should alert.
+  - interval: 5m
+    name: healthy daily backups stay quiet
+    input_series:
+      - series: 'backrest_tasks_run_total{task_type="backup",status="success",plan_id="backups",repo_id="truenas-nfs",instance="backrest-metrics:9898",job="backrest"}'
+        values: '1+0x287 2+0x287 3+0x287'
+    alert_rule_test:
+      - eval_time: 60h
+        alertname: BackupStale
+        exp_alerts: []
+
+  # The 2026-08-13 regression, and the reason the second clause exists.
+  #
+  # Backrest restarts at t=0, so the counter is absent. The first backup after
+  # the restart re-creates it already at 1 at t=36h, where it sits flat because
+  # the next run is a day away. increase() over a flat series is 0, so the bare
+  # rule fired here — while backups were working.
+  #
+  # The same series is asserted twice: suppressed while the counter is too young
+  # to distinguish "flat because nothing ran" from "flat because it was just
+  # born", then firing once it is old enough to tell them apart. That second
+  # assertion is the documented cost of the fix, pinned so it cannot quietly
+  # become "never fires".
+  - interval: 5m
+    name: a counter reborn by a restart is suppressed, then fires once it is old enough
+    input_series:
+      - series: 'backrest_tasks_run_total{task_type="backup",status="success",plan_id="backups",repo_id="truenas-nfs",instance="backrest-metrics:9898",job="backrest"}'
+        values: '_x431 1+0x600'
+    alert_rule_test:
+      # 20h after the counter was re-created. The old rule was firing by now.
+      - eval_time: 56h
+        alertname: BackupStale
+        exp_alerts: []
+      # 38h after, so the start of the 36h window now lands on a live counter.
+      - eval_time: 74h
+        alertname: BackupStale
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              task_type: backup
+              status: success
+              plan_id: backups
+              repo_id: truenas-nfs
+              instance: backrest-metrics:9898
+              job: backrest
+            exp_annotations:
+              summary: "No successful backup in 36h (backups)"
+              description: "Plan backups on repo truenas-nfs has not completed a successful backup in 36h."
+
+  # The failure the rule is actually for: a plan that ran fine and then stopped.
+  # Last success at t=24h, so the window clears it at t=60h and `for: 1h` lands
+  # the page at t=61h.
+  - interval: 5m
+    name: a plan that stops succeeding still pages
+    input_series:
+      - series: 'backrest_tasks_run_total{task_type="backup",status="success",plan_id="backups",repo_id="truenas-nfs",instance="backrest-metrics:9898",job="backrest"}'
+        values: '1+0x287 2+0x600'
+    alert_rule_test:
+      - eval_time: 62h
+        alertname: BackupStale
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              task_type: backup
+              status: success
+              plan_id: backups
+              repo_id: truenas-nfs
+              instance: backrest-metrics:9898
+              job: backrest
+            exp_annotations:
+              summary: "No successful backup in 36h (backups)"
+              description: "Plan backups on repo truenas-nfs has not completed a successful backup in 36h."
+
+  # The other half of the lazy-creation trap, guarding the decision to put
+  # BackupFailed on the gauge. The series is absent until the first failure
+  # creates it at 1 — no delta, so an increase()-based rule sees nothing. The
+  # gauge alerts off that single sample.
+  - interval: 5m
+    name: the first failure after a restart alerts even with no prior sample
+    input_series:
+      - series: 'backrest_last_task_status{task_type="backup",status="failed",plan_id="backups",repo_id="truenas-nfs",instance="backrest-metrics:9898",job="backrest"}'
+        values: '_x11 1+0x11'
+    alert_rule_test:
+      - eval_time: 1h30m
+        alertname: BackupFailed
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              task_type: backup
+              status: failed
+              plan_id: backups
+              repo_id: truenas-nfs
+              instance: backrest-metrics:9898
+              job: backrest
+            exp_annotations:
+              summary: "Last backup failed (backups)"
+              description: "The most recent backup of plan backups on repo truenas-nfs failed, and no successful backup has run since. The pre-backup hook is ON_ERROR_FATAL, so a failed pg_dump lands here rather than silently snapshotting stale dumps. This stays firing until a backup succeeds."
