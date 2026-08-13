@@ -34,6 +34,52 @@ if [ "${1:-}" = "--list" ]; then
     exit 0
 fi
 
+# Empty unless prometheus exists and is running.
+prometheus_started_at() {
+    docker inspect -f '{{if .State.Running}}{{.State.StartedAt}}{{end}}' \
+        prometheus 2>/dev/null || true
+}
+
+# Prometheus reads its config and rules from a bind mount, so editing them
+# changes no part of the container spec: `compose up -d` finds an up-to-date
+# container and leaves it running untouched, and nothing watches the files. A
+# rule change therefore deploys "successfully" and then sits on disk inert until
+# some unrelated restart picks it up — which is how a *fixed* alert keeps paging.
+#
+# Two things this deliberately does not do, both learned on 2026-08-13:
+#
+# Not SIGHUP. `compose up -d` returns once the container is started, not once
+# prometheus is ready, so a signal sent right after can land before prometheus
+# installs its handler — where SIGHUP takes its default disposition and kills
+# the process. `docker kill` also marks the container manually-stopped, so
+# `restart: unless-stopped` does not bring it back. That combination took
+# prometheus down for ~2min. POST /-/reload cannot kill it, and it reports a
+# config that fails to load instead of leaving prometheus silently serving the
+# previous one.
+#
+# Not unconditional. If compose recreated the container (image bump, spec
+# change) it already booted with the new config, and reloading a process that is
+# still starting up is the race described above. A changed StartedAt is the
+# signal that no reload is needed.
+reload_prometheus() {
+    local before=$1 after
+    after=$(prometheus_started_at)
+
+    if [ -z "$after" ]; then
+        echo "    prometheus is not running — skipping reload"
+        return
+    fi
+
+    if [ "$before" != "$after" ]; then
+        echo "    prometheus was recreated — new config already loaded"
+        return
+    fi
+
+    echo "    reloading prometheus"
+    docker exec prometheus \
+        wget -q -O- --post-data='' http://localhost:9090/-/reload >/dev/null
+}
+
 deploy() {
     local stack=$1
     local compose="$REPO/$stack/docker-compose.yaml"
@@ -42,6 +88,11 @@ deploy() {
     [ -f "$compose" ] || { echo "No compose file for '$stack', skipping."; return; }
 
     echo "==> $stack"
+
+    local prom_before=""
+    if [ "$stack" = "monitoring" ]; then
+        prom_before=$(prometheus_started_at)
+    fi
 
     if [ "$stack" = "frigate" ]; then
         op inject -i "$REPO/frigate/config/config.yml.tpl" \
@@ -60,21 +111,8 @@ deploy() {
         docker compose -f "$compose" up -d
     fi
 
-    # Prometheus reads its config and rules from a bind mount, so editing them
-    # changes no part of the container spec: `compose up -d` sees an up-to-date
-    # container and leaves it running. Nothing watches the files either. Without
-    # this, a rule change deploys "successfully" and then sits on disk doing
-    # nothing until some unrelated restart picks it up — which is how a fixed
-    # alert can keep paging. --web.enable-lifecycle is set, so SIGHUP reloads
-    # in place.
-    #
-    # A reload that fails validation is only visible in the container log;
-    # Prometheus keeps serving the previous config and this still returns 0.
-    # The promtool gate in CI is what makes that acceptable.
-    if [ "$stack" = "monitoring" ] \
-       && [ "$(docker inspect -f '{{.State.Running}}' prometheus 2>/dev/null)" = "true" ]; then
-        echo "    reloading prometheus"
-        docker kill -s HUP prometheus >/dev/null
+    if [ "$stack" = "monitoring" ]; then
+        reload_prometheus "$prom_before"
     fi
 }
 
