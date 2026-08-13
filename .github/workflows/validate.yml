@@ -85,3 +85,66 @@ jobs:
           done
 
           exit $RC
+
+      # The stack loop above cannot see this: Prometheus reads its config and
+      # rules from a bind mount, so `docker compose config` validates the
+      # compose schema and never opens the thing Prometheus actually evaluates.
+      #
+      # This runs the unit tests, not just the linter, because the linter is not
+      # the check that matters. Both rule bugs this repo has shipped were
+      # increase() over a counter that resets to absent on every backrest
+      # restart — BackupFailed blind to every first failure, BackupStale firing
+      # *because* a backup had just succeeded — and `check rules` reported
+      # SUCCESS on both. A wrong alerting rule is almost always a valid one.
+      - name: Validate Prometheus config and rules
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+
+          if git diff --quiet "$BASE"...HEAD -- monitoring/prometheus/; then
+            echo "No Prometheus config changes."
+            exit 0
+          fi
+
+          # Pinned to the deployed Prometheus so the promtool doing the checking
+          # cannot drift from the binary that will evaluate these rules.
+          VERSION=$(sed -n 's|^[[:space:]]*image:[[:space:]]*prom/prometheus:||p' \
+                      monitoring/docker-compose.yaml)
+          echo "Using promtool from prom/prometheus:$VERSION"
+
+          # docker cp rather than -v: this runner is a container talking to the
+          # host's Docker daemon, and only /root/homelab-docker is bind-mounted
+          # through at a shared path. The Actions workspace does not exist on
+          # the host, so a -v of it would mount an empty auto-created directory
+          # and check a copy of the config that isn't there. docker cp streams
+          # through the client, which reads the workspace directly.
+          promtool() {
+            local cid rc=0
+            cid=$(docker create -w /tmp/prometheus \
+                    --entrypoint promtool "prom/prometheus:$VERSION" "$@")
+            docker cp monitoring/prometheus/. "$cid:/tmp/prometheus" >/dev/null
+            docker start -a "$cid" || rc=$?
+            docker rm -f "$cid" >/dev/null
+            return $rc
+          }
+
+          # Covers every file the rule_files glob picks up, so it also catches a
+          # non-rule file landing in rules/ — which fails the next reload and
+          # leaves Prometheus silently running the previous config.
+          promtool check config prometheus.yaml
+
+          # Paths are relative to the container's workdir, so strip the prefix.
+          TESTS=$(cd monitoring/prometheus && ls tests/*.yml 2>/dev/null || true)
+          if [ -z "$TESTS" ]; then
+            echo "::warning::no promtool unit tests found"
+            exit 0
+          fi
+
+          # A rule_files path inside a test file that matches nothing is only a
+          # WARNING, and every "exp_alerts: []" assertion then passes against no
+          # rules at all. Treat it as a failure.
+          out=$(promtool test rules $TESTS 2>&1) || { echo "$out"; exit 1; }
+          echo "$out"
+          if printf '%s' "$out" | grep -q 'no file match pattern'; then
+            echo "::error::a test file's rule_files path matched nothing — tests ran against no rules"
+            exit 1
+          fi
