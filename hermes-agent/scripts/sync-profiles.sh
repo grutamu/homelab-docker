@@ -150,6 +150,33 @@ sync_profile() {
                 hermes_run -p "$name" config set "$key" "$value" >/dev/null
                 echo "  · set $key"
                 ;;
+            env)
+                # `env KEY=VALUE` — a NON-SECRET constant written to the
+                # profile's own .env, for config values that must reach the
+                # agent as a *string*.
+                #
+                # `hermes config set X true` coerces to a Python bool and YAML
+                # writes it unquoted, which is a boolean, not the string "true".
+                # GitHub's MCP needs `X-MCP-Readonly: "true"` as a header value,
+                # and a bool there makes the client hang until connect_timeout.
+                # Setting the config value to ${VAR} keeps it a string in YAML
+                # and lets interpolation supply the text at load time.
+                #
+                # Secrets never go here — they are injected via op run into the
+                # container environment. This file is for constants only.
+                if [ -n "$DRY_RUN" ]; then
+                    echo "      would write $rest to $soul_dest/.env"
+                else
+                    touch "$soul_dest/.env"
+                    key=${rest%%=*}
+                    grep -v "^${key}=" "$soul_dest/.env" > "$soul_dest/.env.tmp" 2>/dev/null || true
+                    printf '%s\n' "$rest" >> "$soul_dest/.env.tmp"
+                    mv "$soul_dest/.env.tmp" "$soul_dest/.env"
+                    chown "$HERMES_UID:$HERMES_GID" "$soul_dest/.env"
+                    chmod 600 "$soul_dest/.env"
+                    echo "  · env $key"
+                fi
+                ;;
             enable_platform|disable_platform)
                 # `enable_platform <platform> <toolset>` — toolsets are per
                 # platform, and the Discord surface is not the CLI one.
