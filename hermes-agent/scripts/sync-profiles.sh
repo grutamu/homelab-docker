@@ -61,6 +61,14 @@ sync_profile() {
     [ -d "$dir" ] || { echo "  ✗ no such profile in repo: $name" >&2; return 1; }
     echo "── $name"
 
+    # `default` is not a profile under profiles/ — it IS the data dir. Its
+    # SOUL.md sits at $HERMES_HOME/SOUL.md and its config is the root
+    # config.yaml. It always exists, so it is never created or cloned.
+    local soul_dest="$DATA_PROFILES/$name"
+    if [ "$name" = default ]; then
+        soul_dest=$(dirname "$DATA_PROFILES")
+    fi
+
     # `describe` is not decoration. The kanban decomposer routes triage tasks by
     # reading every profile's description, so this text is what decides whether
     # a card lands here or somewhere else. It is separate from SOUL.md on
@@ -68,7 +76,9 @@ sync_profile() {
     local description=''
     [ -f "$conf" ] && description=$(sed -n 's/^describe  *//p' "$conf" | head -1)
 
-    if docker exec "$CONTAINER" hermes profile list 2>/dev/null | grep -qE "[◆ ]$name +"; then
+    if [ "$name" = default ]; then
+        echo "  · the data dir itself — not created, not cloned"
+    elif docker exec "$CONTAINER" hermes profile list 2>/dev/null | grep -qE "[◆ ]$name +"; then
         echo "  · profile exists"
     else
         echo "  + creating profile"
@@ -108,17 +118,18 @@ sync_profile() {
     if [ -f "$soul" ]; then
         local bytes
         bytes=$(wc -c <"$soul" | tr -d ' ')
-        # SOUL.md is injected into every prompt this profile ever builds, and the
-        # live default profile already sits around 65k tokens against a single
-        # 128k llama.cpp slot. A soul that sprawls costs latency on every turn.
+        # SOUL.md is always-on — it is in the system prompt of every turn. That
+        # prompt measures ~22-25 KB (`hermes -p <name> prompt-size`), so a 3 KB
+        # soul is about an eighth of it. A guideline, not a gate: `default`
+        # exceeds it deliberately because it carries the specialist roster.
         if [ "$bytes" -gt 3072 ]; then
             echo "  ! SOUL.md is ${bytes}B (>3072B budget) — trim it"
         fi
         if [ -n "$DRY_RUN" ]; then
-            echo "      would install SOUL.md (${bytes}B)"
+            echo "      would install SOUL.md (${bytes}B) -> $soul_dest/SOUL.md"
         else
             install -o "$HERMES_UID" -g "$HERMES_GID" -m 644 \
-                "$soul" "$DATA_PROFILES/$name/SOUL.md"
+                "$soul" "$soul_dest/SOUL.md"
             echo "  ✓ SOUL.md installed (${bytes}B)"
         fi
     else
@@ -129,7 +140,7 @@ sync_profile() {
 
     # Directives, one per line. Only the first one or two fields are split, so
     # values may contain spaces (model paths, provider names, descriptions).
-    local directive rest key value
+    local directive rest key value verb platform toolset out
     while read -r directive rest; do
         case "$directive" in
             ''|'#'*|describe) continue ;;
@@ -138,6 +149,25 @@ sync_profile() {
                 value=${rest#* }
                 hermes_run -p "$name" config set "$key" "$value" >/dev/null
                 echo "  · set $key"
+                ;;
+            enable_platform|disable_platform)
+                # `enable_platform <platform> <toolset>` — toolsets are per
+                # platform, and the Discord surface is not the CLI one.
+                #
+                # Exit code is NOT a success signal here: `hermes tools enable`
+                # prints "✗ Unknown toolset 'x'" and still exits 0. Match the
+                # output instead, or a typo'd toolset silently does nothing and
+                # this script cheerfully reports it applied.
+                verb=${directive%%_platform}
+                platform=${rest%% *}
+                toolset=${rest#* }
+                out=$(hermes_run -p "$name" tools "$verb" "$toolset" \
+                        --platform "$platform" 2>&1) || true
+                if printf '%s' "$out" | grep -qiE "unknown toolset|error|✗"; then
+                    echo "  ! $verb $toolset (platform: $platform) REJECTED: $(printf '%s' "$out" | tr -d '\n' | head -c 80)"
+                else
+                    echo "  · $verb $toolset (platform: $platform)"
+                fi
                 ;;
             enable|disable)
                 # A toolset absent from a profile's build is not just disallowed,
