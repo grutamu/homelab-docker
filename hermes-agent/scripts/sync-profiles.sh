@@ -136,6 +136,22 @@ sync_profile() {
         echo "  ! no SOUL.md — this profile has no identity of its own"
     fi
 
+    # Repo-managed skills. A soul is identity and judgment; a *procedure* belongs
+    # in a skill, where it loads on demand instead of riding in every prompt.
+    # (The always-on cost of the skill tree is its ~7 KB index, not the bodies.)
+    # These are not agent-authored, so the curator leaves them alone — it only
+    # touches skills with `created_by: "agent"` provenance.
+    if [ -d "$dir/skills" ]; then
+        if [ -n "$DRY_RUN" ]; then
+            echo "      would install $(find "$dir/skills" -name SKILL.md | wc -l | tr -d ' ') skill(s)"
+        else
+            mkdir -p "$soul_dest/skills"
+            cp -R "$dir/skills/." "$soul_dest/skills/"
+            chown -R "$HERMES_UID:$HERMES_GID" "$soul_dest/skills"
+            echo "  ✓ installed $(find "$dir/skills" -name SKILL.md | wc -l | tr -d ' ') repo-managed skill(s)"
+        fi
+    fi
+
     [ -f "$conf" ] || return 0
 
     # Directives, one per line. Only the first one or two fields are split, so
