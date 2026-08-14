@@ -5,7 +5,7 @@ services:
     # Fresh data dir, so this starts on 17. A major bump later requires a
     # pg_dump/restore migration — bumping this tag and recreating would break
     # the DB. Renovate major updates for postgres are disabled in renovate.json.
-    image: postgres:17.10-alpine
+    image: postgres:17.11-alpine
     environment:
       POSTGRES_DB: mcpjungle
       POSTGRES_USER: mcpjungle
@@ -29,7 +29,7 @@ services:
     container_name: mcpjungle
     # The `-stdio` variant bundles node/npx/uvx. The plain tag is the binary
     # only and cannot spawn stdio upstream servers at all.
-    image: ghcr.io/mcpjungle/mcpjungle:0.4.5-stdio
+    image: ghcr.io/mcpjungle/mcpjungle:0.4.6-stdio
     restart: unless-stopped
     # Run tini as PID 1 so orphaned stdio children get reaped. Without this,
     # mcpjungle itself is PID 1, and a Go process that doesn't wait() on
