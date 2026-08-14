@@ -1,0 +1,16 @@
+{
+  "name": "proxmox_ro",
+  "transport": "stdio",
+  "description": "Proxmox VE, read-only — node/VM/container inventory and status for the virt sub-agent. Same server as `proxmox`; the credential is privilege-separated with PVEAuditor, so the write tools are present but refused by the API.",
+  "command": "uvx",
+  "args": ["proxmox-mcp-plus==0.5.10"],
+  "session_mode": "stateless",
+  "env": {
+    "PROXMOX_HOST": "${PROXMOX_HOST}",
+    "PROXMOX_PORT": "${PROXMOX_PORT}",
+    "PROXMOX_USER": "${PROXMOX_RO_USER}",
+    "PROXMOX_TOKEN_NAME": "${PROXMOX_RO_TOKEN_NAME}",
+    "PROXMOX_TOKEN_VALUE": "${PROXMOX_RO_TOKEN_VALUE}",
+    "PROXMOX_VERIFY_SSL": "true"
+  }
+}

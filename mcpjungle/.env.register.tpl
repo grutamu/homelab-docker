@@ -25,6 +25,28 @@ PROXMOX_USER=op://docker/mcpjungle/PROXMOX_USER
 PROXMOX_TOKEN_NAME=op://docker/mcpjungle/PROXMOX_TOKEN_NAME
 PROXMOX_TOKEN_VALUE=op://docker/mcpjungle/PROXMOX_TOKEN_VALUE
 
+# Second Proxmox registration, read-only, for the `virt` Hermes sub-agent.
+# Same host and port; only the credential differs.
+#
+# The scoping lives entirely in this token, NOT in the MCP server —
+# proxmox-mcp-plus registers all 42 tools either way, `delete_vm` included.
+# They are present in the agent's schema and fail at the API with 403. That is
+# a weaker shape than Grafana or AdGuard, where the write tools simply do not
+# exist, so the token is the only thing standing between `virt` and a live
+# delete.
+#
+# **`privsep=1` must be set on the token, and set FIRST.** While privilege
+# separation is off, a token inherits every right of its user, and granting it
+# PVEAuditor changes precisely nothing — you get a token that looks scoped in
+# the UI and is still Administrator. With privsep on, effective rights are the
+# intersection of user and token permissions.
+#
+# Do not assume it worked. The acceptance test is an actual write attempt
+# through this path returning 403 — see mcpjungle/readme.md.
+PROXMOX_RO_USER=op://docker/mcpjungle/PROXMOX_RO_USER
+PROXMOX_RO_TOKEN_NAME=op://docker/mcpjungle/PROXMOX_RO_TOKEN_NAME
+PROXMOX_RO_TOKEN_VALUE=op://docker/mcpjungle/PROXMOX_RO_TOKEN_VALUE
+
 # Dedicated local UniFi admin without MFA — not Ubiquiti SSO credentials.
 UNIFI_HOST=op://docker/mcpjungle/UNIFI_HOST
 UNIFI_USERNAME=op://docker/mcpjungle/UNIFI_USERNAME

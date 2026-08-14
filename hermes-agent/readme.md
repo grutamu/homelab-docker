@@ -197,12 +197,52 @@ agent. Injected env vars are neither.
 The rest of the restored `.env` is non-secret tuning (`TERMINAL_*`,
 `BROWSER_*`, `*_DEBUG`) and stays as-is.
 
+## Sub-agents
+
+`default` is the front door — it owns the Discord gateway and the kanban
+dispatcher. Specialist work is split into separate **profiles**, each with its
+own `SOUL.md`, memory, and tool surface, under `profiles/` in this repo.
+`scripts/sync-profiles.sh` applies them; see `profiles/README.md` for what a
+soul is, the 3 KB budget, and how enforcement actually works.
+
+They coordinate through the **kanban board** (`/opt/data/kanban.db`), not
+through chat. The dispatcher runs inside the gateway
+(`kanban.dispatch_in_gateway: true`, 60s tick), claims ready tasks, and spawns
+the assigned profile as a child process. Comments are the inter-agent protocol;
+parent→child links carry a worker's `kanban_complete(summary=…, metadata=…)`
+forward as the next agent's context. Workers never shell out to
+`hermes kanban` — the dispatcher injects `HERMES_KANBAN_TASK` and the `kanban_*`
+toolset appears in the agent's schema.
+
+```bash
+docker exec hermes-agent hermes kanban create "…" --assignee obs --max-runtime 15m
+docker exec hermes-agent hermes kanban tail <id>      # follow events
+docker exec hermes-agent hermes kanban log  <id>      # the worker's own output
+docker exec hermes-agent hermes kanban runs <id>      # attempt history
+```
+
+**One agent thinks at a time, by design.** Ports 8020 and 8021 on the GPU box
+are the *same* llama-server process — `total_slots: 1` — so extra workers would
+queue at the model rather than do anything. Keep `kanban.max_in_progress` at 1
+and let the board absorb the queue.
+
+Memory is not the limit: a freshly restarted container runs at 516 MiB with a
+worker in flight, the worker itself ~177 MB. The gateway does grow with uptime
+(1.43 GB after about a week), so compare against a fresh restart before
+concluding a worker leaked.
+
+Each profile authenticates to MCPJungle with its **own** client token whose
+`--allow` list is limited to the servers it owns; that ACL, plus read-only
+upstream registrations, is what actually bounds an agent. `SOUL.md` documents
+the boundary — it does not enforce it.
+
 ## Operating
 
 ```bash
 make logs stack=hermes-agent
 docker exec -it hermes-agent hermes              # interactive chat
 docker exec hermes-agent hermes gateway status
+docker exec hermes-agent hermes -p obs chat -q "…"   # one specialist, directly
 ```
 
 Per-profile gateway logs rotate at `/opt/data/logs/gateways/<name>/current`;

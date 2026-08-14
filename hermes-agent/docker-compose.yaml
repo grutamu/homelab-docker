@@ -60,6 +60,15 @@ services:
       DISCORD_BOT_TOKEN:
       GITHUB_TOKEN:
 
+      # Per-profile MCPJungle client tokens. The kanban dispatcher spawns
+      # specialist profiles as child processes of the gateway, so they inherit
+      # this environment; each profile's config.yaml interpolates only its own
+      # variable, and MCPJungle's per-client --allow list refuses the rest at
+      # the server. See .env.tpl for how these are minted.
+      MCP_OBS_API_KEY:
+      MCP_NETOPS_API_KEY:
+      MCP_VIRT_API_KEY:
+
       # The OpenAI-compatible API server (8642) is deliberately off. The
       # dashboard and gateway talk to each other inside the container, so
       # nothing needs it. Turning it on requires API_SERVER_ENABLED=true

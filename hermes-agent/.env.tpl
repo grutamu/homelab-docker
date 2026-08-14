@@ -23,6 +23,42 @@ DISCORD_BOT_TOKEN=op://docker/hermes-agent/DISCORD_BOT_TOKEN
 # actually needs — this is a credential the agent acts with, not just holds.
 GITHUB_TOKEN=op://docker/hermes-agent/GITHUB_TOKEN
 
+# ── Sub-agent MCP tokens (one MCPJungle client per profile) ───────────────
+# Each specialist profile gets its own MCPJungle client whose --allow list is
+# limited to the upstream servers that profile owns. That list is the *auth*
+# boundary, not a hint: a token without `proxmox` in its allow-list cannot see
+# or invoke a single Proxmox tool, regardless of what the model decides to try.
+#
+# Distinct variable names matter. Kanban workers are spawned by the dispatcher
+# inside this container and inherit its whole environment, so every profile can
+# read every one of these. What keeps them apart is that each profile's own
+# config.yaml interpolates only its own name — combined with the server-side
+# ACL, a profile that reached for the wrong variable would still be refused.
+#
+# Create with:
+#   mcpjungle --registry https://mcp.calzone.zone \
+#     create mcp-client hermes-<profile> --allow "<server>,<server>"
+# The token prints once. Store it on the `hermes-agent` item, never in the data
+# dir's .env — see the note at the top of this file.
+
+# obs — the diagnostician. Grafana only, which is read-only on two independent
+# levels (Viewer service account + --disable-write), so this is the one
+# specialist that cannot mutate anything even if it tries.
+MCP_OBS_API_KEY=op://docker/hermes-agent/MCP_OBS_API_KEY
+
+# netops — DNS/IPAM. AdGuard (registered read-only tier: 29 of 65 tools) and
+# NetBox (no write tools exist upstream). 33 tools total, none of them mutations.
+# Deliberately no UniFi: unifi-network-mcp has no read-only mode, and its five
+# visible tools hide ~200 behind unifi_execute, including firewall deletion.
+MCP_NETOPS_API_KEY=op://docker/hermes-agent/MCP_NETOPS_API_KEY
+
+# virt — Proxmox, read-only. Points at the `proxmox_ro` registration, which runs
+# the same proxmox-mcp-plus as `proxmox` with a different credential: all 42
+# tools are present, delete_vm included, and every write is refused by the API.
+# The fence is mcp-viewer@pam!mcpjungle (privsep=1, PVEAuditor on / propagate),
+# not the MCP server. `default` keeps the full-Administrator `proxmox` entry.
+MCP_VIRT_API_KEY=op://docker/hermes-agent/MCP_VIRT_API_KEY
+
 # ── Model provider ───────────────────────────────────────────────────────
 # Intentionally absent. config.yaml selects a custom provider, not a hosted
 # API, so there is no key to inject — the endpoint *is* the credential:
