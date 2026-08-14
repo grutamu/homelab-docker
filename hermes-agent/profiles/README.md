@@ -8,6 +8,19 @@ The data dir is agent-mutable state and is not in git. A profile's *identity* is
 authored config, so it lives here and is reviewed like any other change. The sync
 is one-way: repo → data dir, never back.
 
+## Roster
+
+| Profile | Servers (via its own token) | Tools | Owns |
+|---|---|---|---|
+| `obs` | grafana | 52, all read | Why is X broken; what changed at time T |
+| `netops` | adguard, netbox | 33, no mutations | DNS, filtering, addressing, documented-vs-observed |
+
+`default` is unchanged and keeps the full surface — it is the front door and the
+escalation target, not a specialist.
+
+Planned: `virt` (Proxmox, blocked on `privsep=1` + `PVEAuditor`), `repo`
+(GitHub), `scribe` (no MCP; synthesises other agents' results into prose).
+
 ## The three files that shape an agent
 
 They are not interchangeable, and you generally want all three.

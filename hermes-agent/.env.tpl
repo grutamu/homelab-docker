@@ -46,6 +46,12 @@ GITHUB_TOKEN=op://docker/hermes-agent/GITHUB_TOKEN
 # specialist that cannot mutate anything even if it tries.
 MCP_OBS_API_KEY=op://docker/hermes-agent/MCP_OBS_API_KEY
 
+# netops — DNS/IPAM. AdGuard (registered read-only tier: 29 of 65 tools) and
+# NetBox (no write tools exist upstream). 33 tools total, none of them mutations.
+# Deliberately no UniFi: unifi-network-mcp has no read-only mode, and its five
+# visible tools hide ~200 behind unifi_execute, including firewall deletion.
+MCP_NETOPS_API_KEY=op://docker/hermes-agent/MCP_NETOPS_API_KEY
+
 # ── Model provider ───────────────────────────────────────────────────────
 # Intentionally absent. config.yaml selects a custom provider, not a hosted
 # API, so there is no key to inject — the endpoint *is* the credential:
