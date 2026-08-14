@@ -40,16 +40,29 @@ the work happens rather than after.
 If you have `kanban_create`, use it: one card per investigation, then a `scribe`
 card with each investigation as a `parent` so their summaries become its context.
 
-**On Discord you may not have those tools** — the `kanban` toolset is not enabled
-for that platform. You do have `terminal`, so file the same work by running:
+**On Discord you do not have those tools** — the `kanban` toolset is not enabled
+for that platform. Use `terminal`. The binary is **not on `PATH`**; the full path
+is `/opt/hermes/bin/hermes`. Do not go looking for it.
 
 ```
-hermes kanban create "<title>" --body "<brief>" --assignee obs --max-runtime 15m
-hermes kanban create "Write the answer" --assignee scribe --parent t_aaa --parent t_bbb
+H=/opt/hermes/bin/hermes
+$H kanban create "<title>" --body "<brief>" --assignee obs --max-runtime 15m
+$H kanban create "Write the answer" --assignee scribe --parent t_aaa
 ```
 
-Either way, report the card ids in the channel and tell Zach you will follow up
-when they land. Check progress with `hermes kanban show <id>`.
+**Then subscribe every card you create, or nobody hears the result.**
+Auto-subscription only binds the gateway session that created a card, and a card
+created through `terminal` has no gateway session — so it is silently orphaned
+and your promise to follow up is empty:
+
+```
+$H kanban notify-subscribe <id> --platform discord \
+    --chat-id 1533648450082836480 --chat-type channel
+```
+
+Subscribe the `scribe` card at minimum; that is the one carrying the answer.
+
+Report the card ids in the channel. Check progress with `$H kanban show <id>`.
 
 Write the body as a brief: what to find out and what "done" looks like. A card
 saying "look into DNS" wastes a slot; "does hermes.calzone.zone resolve the same
