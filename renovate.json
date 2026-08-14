@@ -101,12 +101,6 @@
       "automerge": false
     },
     {
-      "description": "Require manual review for hermes-agent. It's an autonomous agent with code execution and a self-modifying skill/plugin tree, and its dashboard is a credential surface — bumps get eyes on them. Tags are calver (v2026.8.3), so no update is ever classified major and the global major rule never applies here.",
-      "matchFileNames": ["hermes-agent/**"],
-      "groupName": "hermes-agent stack",
-      "automerge": false
-    },
-    {
       "description": "Never open digest-only PRs — upstream image rebuilds create constant churn with no version change. All images are pinned to real tags.",
       "matchUpdateTypes": ["digest"],
       "enabled": false

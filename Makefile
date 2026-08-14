@@ -1,4 +1,4 @@
-STACKS := traefik monitoring mediaserver immich frigate paperless netbox pocket-id audiobookshelf mealie portainer 1password mcpjungle hermes-agent
+STACKS := traefik monitoring mediaserver immich frigate paperless netbox pocket-id audiobookshelf mealie portainer 1password mcpjungle
 
 DC = docker compose -f $(stack)/docker-compose.yaml
 
