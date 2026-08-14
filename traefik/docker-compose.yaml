@@ -43,5 +43,23 @@ services:
       - "traefik.http.routers.traefik-secure.service=api@internal"
 
 networks:
+  # Stays `external: true` deliberately -- deploy.sh creates it.
+  #
+  # Seventeen stacks attach to `proxy`, and until recently nothing created it:
+  # it was a `docker network create proxy` typed by hand in Dec 2024 and
+  # recorded nowhere, so a rebuilt host failed on the first stack with
+  # "network proxy declared as external, but could not be found".
+  #
+  # The obvious fix -- declaring it here as a compose-managed network -- does
+  # not work on a host that is already running. Compose refuses to adopt a
+  # network it did not create:
+  #
+  #   network proxy was found but has incorrect label
+  #   com.docker.compose.network set to "" (expected: "proxy")
+  #
+  # The live network has no compose labels, so switching would break every
+  # traefik deploy until all seventeen stacks were stopped and the network
+  # recreated. deploy.sh does an idempotent `docker network create` instead:
+  # cold boot works, warm host is a no-op, no downtime.
   proxy:
     external: true
