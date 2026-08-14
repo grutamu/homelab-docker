@@ -10,16 +10,30 @@ is one-way: repo → data dir, never back.
 
 ## Roster
 
-| Profile | Servers (via its own token) | Tools | Owns |
+| Profile | Servers | Tools | Owns |
 |---|---|---|---|
 | `obs` | grafana | 52, all read | Why is X broken; what changed at time T |
 | `netops` | adguard, netbox | 33, no mutations | DNS, filtering, addressing, documented-vs-observed |
+| `repo` | github (readonly header) | repos, issues, PRs | What the infra is *declared* to be |
+| `scribe` | none | none | Turning other agents' results into one written answer |
 
 `default` is unchanged and keeps the full surface — it is the front door and the
 escalation target, not a specialist.
 
-Planned: `virt` (Proxmox, blocked on `privsep=1` + `PVEAuditor`), `repo`
-(GitHub), `scribe` (no MCP; synthesises other agents' results into prose).
+Planned: `virt` (Proxmox — blocked on `privsep=1` + `PVEAuditor`; see below).
+
+Two profiles scope differently and are worth understanding before copying the
+pattern:
+
+- **`repo`** has no MCPJungle token. GitHub is configured straight against
+  `api.githubcopilot.com`, so its fences are `X-MCP-Readonly`, `X-MCP-Toolsets`,
+  and the PAT's own scopes. It currently shares `default`'s `GITHUB_TOKEN`, and
+  the readonly header is a client-side request — so that header bounds the
+  agent's schema, not the credential. Minting `repo` its own read-only PAT is the
+  obvious next hardening step.
+- **`scribe`** has no tools at all, deliberately. It cannot check anything, so an
+  unsupported claim has nowhere to come from except invention — which is exactly
+  what its invariants are written to catch.
 
 ## The three files that shape an agent
 

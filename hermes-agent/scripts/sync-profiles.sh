@@ -14,6 +14,12 @@
 #
 # Safe to re-run: creating an existing profile is skipped, and `hermes config
 # set` is idempotent. Run it after every change to a SOUL.md or profile.conf.
+#
+# Slow by construction — every directive is a separate `hermes` invocation, and
+# each one is a Python process that loads the whole CLI. A full sync of three
+# profiles is ~100 spawns and takes minutes. That is the cost of using the
+# supported write path instead of editing config.yaml; don't "optimise" it by
+# generating YAML directly.
 
 set -euo pipefail
 
@@ -66,9 +72,33 @@ sync_profile() {
         echo "  · profile exists"
     else
         echo "  + creating profile"
+        # --clone-from default, and not a bare create, for one specific reason:
+        # `model.provider: custom:…` requires a matching entry in the
+        # `custom_providers` LIST, and there is no supported way to write a YAML
+        # list into config.yaml. `hermes config set custom_providers.0.name …`
+        # produces a dict keyed '0' (doctor: "custom_providers is a dict — it
+        # must be a YAML list"), and `config set --force` stores the JSON as a
+        # literal string. Cloning inherits the list already-valid. There is no
+        # generic `openai` provider to fall back on — that name is rejected too.
+        #
         # --no-alias: wrapper scripts in the data dir are for humans at a shell,
         # and nobody gets an interactive shell in this container.
-        hermes_run profile create "$name" --no-alias ${description:+--description "$description"}
+        hermes_run profile create "$name" --clone-from default --no-alias \
+            ${description:+--description "$description"}
+
+        # The clone also copies default's .env. It holds no credentials (16
+        # entries, all TERMINAL_*/BROWSER_*/*_DEBUG tuning plus default's own
+        # DISCORD_* ids — the stack readme is accurate on this), but none of it
+        # applies to a specialist: terminal and browser are disabled in these
+        # profiles, and the Discord ids belong to default's gateway. A per-profile
+        # copy would only drift. Everything a specialist actually needs — the
+        # MCP_*_API_KEYs — comes from the container environment via op run.
+        if [ -z "$DRY_RUN" ]; then
+            rm -f "$DATA_PROFILES/$name/.env"
+            echo "  · dropped cloned .env (default's tuning, not applicable here)"
+        else
+            echo "      would drop cloned .env"
+        fi
     fi
     # --text, not a positional: an unflagged description is parsed as extra
     # arguments and the command fails. --text also overwrites, which is what we
