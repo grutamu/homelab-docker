@@ -222,10 +222,14 @@ docker exec hermes-agent hermes kanban runs <id>      # attempt history
 ```
 
 **One agent thinks at a time, by design.** Ports 8020 and 8021 on the GPU box
-are the *same* llama-server process — `total_slots: 1` — so parallel workers
-would serialize at the model anyway, while each costing a full Python process in
-a 4 GB container (one worker: 626 MiB → 1.57 GiB peak). Keep
-`kanban.max_in_progress` at 1 and let the board absorb the queue.
+are the *same* llama-server process — `total_slots: 1` — so extra workers would
+queue at the model rather than do anything. Keep `kanban.max_in_progress` at 1
+and let the board absorb the queue.
+
+Memory is not the limit: a freshly restarted container runs at 516 MiB with a
+worker in flight, the worker itself ~177 MB. The gateway does grow with uptime
+(1.43 GB after about a week), so compare against a fresh restart before
+concluding a worker leaked.
 
 Each profile authenticates to MCPJungle with its **own** client token whose
 `--allow` list is limited to the servers it owns; that ACL, plus read-only

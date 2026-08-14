@@ -48,15 +48,33 @@ They are not interchangeable, and you generally want all three.
 `SOUL.md` is how the agent behaves. `describe` is how the board *finds* it — a
 vague description means well-written souls never get the right work.
 
-## Hard budget: SOUL.md under 3 KB
+## Budget: SOUL.md around 3 KB
 
-Not a style preference. `SOUL.md` is injected into every prompt this profile ever
-builds, and the whole lab shares **one** llama.cpp slot (ports 8020 and 8021 are
-the same process — `total_slots: 1`, `n_ctx: 131072`). The default profile's
-prompt already sits near 65k tokens. Every paragraph you add is latency on every
-turn of every task, for every agent waiting behind it.
+`SOUL.md` is always-on — it is in the system prompt of every turn this profile
+ever takes. Measure with `hermes -p <name> prompt-size`:
 
-The sync script warns above 3072 bytes.
+| | system prompt | of which SOUL.md |
+|---|---|---|
+| `default` (stock 514 B soul) | 21.9 KB | 0.5 KB |
+| `obs` | 24.6 KB | 3.0 KB |
+| `netops` | 24.7 KB | 3.1 KB |
+
+So a soul is roughly an eighth of the system prompt — worth keeping tight, not
+worth agonising over. The sync script warns above 3072 bytes; `netops` sits at
+3122 B and that is fine. Trim when a soul is repeating itself, not to hit a number.
+
+Don't confuse this with the ~65k tokens you may see on the llama.cpp slot
+(`/slots` → `n_prompt_tokens`). That is accumulated *session* context, not the
+system prompt.
+
+**Don't bother trimming the bundled skills.** Cloning copies all 71 into each
+profile, which looks alarming, but the always-on cost is the skills *index* at
+~7 KB flat — bodies are read on demand. `--no-skills` is mutually exclusive with
+`--clone-from` anyway, and you need the clone (see below). One real caveat: a
+cloned skill can document tooling the specialist does not have — `netops` found
+one describing UniFi tools it lacks. It handled that correctly by verifying the
+tools were absent rather than trusting the doc, which is exactly what its
+invariants ask for.
 
 ## What makes a good soul
 
@@ -143,6 +161,15 @@ names are load-bearing; reusing one collapses two agents into the same authority
 ## Concurrency
 
 One inference slot means one agent thinking at a time. `kanban.max_in_progress`
-should stay at 1 — the board queues, so nothing is lost, and workers that
-serialize cleanly beat workers that thrash a 4 GB container. A single worker took
-the container from 626 MiB to 1.57 GiB peak; two would fit, three would not.
+stays at 1 — the board queues, so nothing is lost.
+
+**Memory is not the reason.** Measured on a freshly restarted container: 516 MiB
+total with a worker running, of which the worker is ~177 MB (gateway ~186 MB,
+dashboard ~153 MB). Several workers would fit in the 4 GB cap comfortably. The
+constraint is the model — `total_slots: 1` — so extra workers would queue at the
+llama.cpp server instead of doing anything.
+
+Worth knowing when you read `docker stats`: the gateway grows with uptime. After
+about a week it had reached 1.43 GB on its own, which makes a worker look far
+more expensive than it is. Compare against a fresh restart before concluding a
+worker leaked.
