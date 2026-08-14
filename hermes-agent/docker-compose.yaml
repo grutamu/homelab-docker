@@ -67,6 +67,7 @@ services:
       # the server. See .env.tpl for how these are minted.
       MCP_OBS_API_KEY:
       MCP_NETOPS_API_KEY:
+      MCP_VIRT_API_KEY:
 
       # The OpenAI-compatible API server (8642) is deliberately off. The
       # dashboard and gateway talk to each other inside the container, so

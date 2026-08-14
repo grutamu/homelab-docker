@@ -52,6 +52,13 @@ MCP_OBS_API_KEY=op://docker/hermes-agent/MCP_OBS_API_KEY
 # visible tools hide ~200 behind unifi_execute, including firewall deletion.
 MCP_NETOPS_API_KEY=op://docker/hermes-agent/MCP_NETOPS_API_KEY
 
+# virt — Proxmox, read-only. Points at the `proxmox_ro` registration, which runs
+# the same proxmox-mcp-plus as `proxmox` with a different credential: all 42
+# tools are present, delete_vm included, and every write is refused by the API.
+# The fence is mcp-viewer@pam!mcpjungle (privsep=1, PVEAuditor on / propagate),
+# not the MCP server. `default` keeps the full-Administrator `proxmox` entry.
+MCP_VIRT_API_KEY=op://docker/hermes-agent/MCP_VIRT_API_KEY
+
 # ── Model provider ───────────────────────────────────────────────────────
 # Intentionally absent. config.yaml selects a custom provider, not a hosted
 # API, so there is no key to inject — the endpoint *is* the credential:

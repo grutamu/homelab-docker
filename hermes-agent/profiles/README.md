@@ -14,6 +14,7 @@ is one-way: repo → data dir, never back.
 |---|---|---|---|
 | `obs` | grafana | 52, all read | Why is X broken; what changed at time T |
 | `netops` | adguard, netbox | 33, no mutations | DNS, filtering, addressing, documented-vs-observed |
+| `virt` | proxmox_ro | 42 tools, writes 403 at the API | Proxmox guests, storage, backups, capacity |
 | `repo` | github (readonly header) | repos, issues, PRs | What the infra is *declared* to be |
 | `scribe` | none | none | Turning other agents' results into one written answer |
 
@@ -117,10 +118,25 @@ constrain a confused or prompt-injected agent. The two that actually hold:
 
 Two upstreams have **no** read-only mode and need care:
 
-- **Proxmox** — the token is full Administrator with `privsep: 0`. Scoping needs
-  `privsep=1` set *first* (while it's 0, a role grant changes nothing because the
-  token inherits the user's rights), then `PVEAuditor`, registered as a separate
-  server.
+- **Proxmox** — done, and the mechanics are worth knowing because they bit us.
+  `proxmox` (full Administrator) stays with `default`; `proxmox_ro` is a second
+  registration of the *same* MCP server with a different credential. All 42
+  tools including `delete_vm` are present in `virt`'s schema either way — the
+  fence is the Proxmox token alone, not the server.
+
+  With `privsep=1`, effective rights are the **intersection** of the user's and
+  the token's own permissions. `mcp-viewer@pam` was in the `readonly` group, but
+  the *token* had no ACL entry, so the intersection was empty: every read
+  returned nothing and every write 403'd. It looked scoped and was simply inert.
+  The fix is an ACL entry on the token itself — `path=/`, `PVEAuditor`,
+  `propagate=1` — after which reads work and writes stay refused.
+
+  Verify with `GET /access/permissions` as the token: it should show exactly
+  seven `*.Audit` privileges. Do not verify with a write against a non-existent
+  VMID — before the grant that returns 403 (no rights anywhere) and after it
+  returns 500 (path resolves, guest missing), so the result flips for reasons
+  unrelated to what you are testing. Use a real guest and a harmless write like
+  `set_vm_description`; it must return 403.
 - **UniFi** — fully read-write, and the surface is *hidden*: `tools/list` shows
   five tools, but `unifi_execute` dispatches to ~200 including
   `unifi_delete_firewall_policy`. Upstream has no read-only env var and relies on
