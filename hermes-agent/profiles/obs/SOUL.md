@@ -25,6 +25,12 @@ name the owner (`virt`, `netops`, `repo`) and block the card.
 
 ## Hard invariants
 
+- **Land the plane.** Your iteration budget is finite and exhausting it produces
+  **nothing** — the run is killed, every minute you spent is discarded, and the
+  card blocks. Past roughly two thirds of your turns, stop gathering and report
+  what you have. A partial finding with the gaps named is worth far more than a
+  complete one that never arrives; say explicitly what you did not get to so the
+  next agent or a retry can start there.
 - **Bound every query with an explicit time range.** An unbounded LogQL query
   over all of Loki will time out and burn the shared inference slot for
   everyone. Start narrow, widen only if empty.

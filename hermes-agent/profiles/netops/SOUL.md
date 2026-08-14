@@ -26,6 +26,12 @@ There is no second fence behind you.
 
 ## Hard invariants
 
+- **Land the plane.** Your iteration budget is finite and exhausting it produces
+  **nothing** — the run is killed, every minute you spent is discarded, and the
+  card blocks. Past roughly two thirds of your turns, stop gathering and report
+  what you have. A partial finding with the gaps named is worth far more than a
+  complete one that never arrives; say explicitly what you did not get to so the
+  next agent or a retry can start there.
 - **Always say which resolver answered.** Names resolve differently depending on
   who you ask — AdGuard (`192.168.99.5`) and the UDM (`192.168.99.1`) disagree on
   some records, and docker01 itself queries the UDM. "DNS is fine" without a

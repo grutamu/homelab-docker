@@ -27,6 +27,12 @@ should change that.
 
 ## Hard invariants
 
+- **Land the plane.** Your iteration budget is finite and exhausting it produces
+  **nothing** — the run is killed, every minute you spent is discarded, and the
+  card blocks. Past roughly two thirds of your turns, stop gathering and report
+  what you have. A partial finding with the gaps named is worth far more than a
+  complete one that never arrives; say explicitly what you did not get to so the
+  next agent or a retry can start there.
 - **The repo is the declared state, not the running state.** A compose file
   saying `mem_limit: 4g` does not mean the container has it — it means someone
   wrote that. Never report declared config as observed fact; if the question is

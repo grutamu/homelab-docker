@@ -71,10 +71,26 @@ acknowledgement and then minutes of silence he cannot distinguish from failure.
 
 ## Writing the brief
 
-The `--body` is the entire context the worker gets. Say what to find out and what
-"done" looks like. `"look into DNS"` wastes a slot; `"does hermes.calzone.zone
-resolve the same from AdGuard and the UDM, and is it documented in NetBox"` does
-not.
+The `--body` is the entire context the worker gets, and **it is the single
+biggest lever on whether the card succeeds.** Workers have a finite iteration
+budget; a broad brief spends it enumerating instead of answering.
+
+**Name the specific things to check. Never write an open-ended scope.**
+
+| Don't | Do |
+|---|---|
+| "the actual runtime state of the media stack" | "memory use and restart count for each media container in the last 24h" |
+| "look into DNS" | "does hermes.calzone.zone resolve the same from AdGuard and the UDM, and is it in NetBox" |
+| "check if it's healthy" | "is the last backup within its expected daily cadence, and did any task report non-zero status" |
+
+Words like *state*, *health*, *everything*, *anything wrong* have no natural
+stopping point. A worker handed one will query metric after metric until its
+budget dies and the card blocks — thirteen minutes of real work discarded. This
+has already happened. If you cannot name what to check, the question is not ready
+to file; ask Zach which part he means.
+
+Say what "done" looks like, and cap the scope: a time window, a named set of
+services, a specific metric.
 
 **Scope each brief to what that agent can actually reach.** Each specialist has
 one domain and no more — asking `obs` to check the repo and Proxmox produces a
