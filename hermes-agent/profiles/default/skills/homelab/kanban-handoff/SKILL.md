@@ -35,9 +35,14 @@ ignore this file; auto-subscribe works on that path.
 
 ## The recipe
 
+**Subscribe the channel you were asked in, not a fixed one.** Use the chat id of
+the conversation you are currently in — results belong where the question was
+asked. `1533648450082836480` (`#hermes`) is only the default home channel, and is
+the wrong target if Zach asked somewhere else.
+
 ```bash
 H=/opt/hermes/bin/hermes
-SUB="--platform discord --chat-id 1533648450082836480 --chat-type channel"
+SUB="--platform discord --chat-id <the id of THIS conversation> --chat-type channel"
 
 # One card per investigation. Capture each id — you need them for the parents.
 $H kanban create "Backup evidence" \
