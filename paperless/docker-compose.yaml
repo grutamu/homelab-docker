@@ -50,7 +50,22 @@ services:
     networks:
       - paperless
   webserver:
-    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.5
+    # Built locally from ./Dockerfile — paperless-ngx plus the
+    # paperless-paddleocr plugin. The paperless-ngx version is pinned by the
+    # FROM line in that Dockerfile, which is what Renovate now updates; there is
+    # no ghcr.io tag to pin here anymore.
+    #
+    # No `image:` here, matching the other build stacks. It is not just style:
+    # the validate workflow runs `docker manifest inspect` on every image: line
+    # a PR adds, and a locally-built tag exists in no registry, so naming it
+    # would fail CI. Compose names the image `paperless-webserver` by default.
+    #
+    # deploy.sh passes --build for any stack carrying a Dockerfile. Without it
+    # `compose up -d` would only build when the image is missing, so a Renovate
+    # bump to the base image would merge, deploy green, and leave the old image
+    # running.
+    build:
+      context: .
     restart: unless-stopped
     depends_on:
       - db
@@ -73,6 +88,25 @@ services:
       PAPERLESS_TIME_ZONE: America/Chicago
       PAPERLESS_OCR_LANGUAGE: eng
       PAPERLESS_CONSUMER_POLLING: "10"
+      # PaddleOCR-VL. Layout work happens in this container on CPU; the VLM
+      # recognition calls go to the server on gpu-host.
+      PAPERLESS_PADDLEOCR_ENGINE: vl-remote
+      # No /v1 suffix needed — the plugin appends it. Resolves to 192.168.1.43
+      # from inside the container (LAN via calzone.zone), not the Tailscale
+      # address the host resolves it to, so the page images stay on the LAN.
+      # The server has no authentication, so PAPERLESS_PADDLEOCR_VL_API_KEY is
+      # deliberately unset; setting it would send a Bearer token nothing checks.
+      PAPERLESS_PADDLEOCR_VL_SERVER_URL: http://gpu-host:8022
+      # The *served model id*, not the model family. vLLM matches this string
+      # against the `id` in /v1/models, which is `paddleocr-vl`; sending
+      # `PaddleOCR-VL-1.6` gets a 404 NotFoundError even though that is what the
+      # server is actually running.
+      PAPERLESS_PADDLEOCR_VL_MODEL_NAME: paddleocr-vl
+      # Must match the model family gpu-host serves (root: PaddleOCR-VL-1.6).
+      # This is NOT the plugin default — it defaults to v1.5, which would send
+      # a 1.5-era prompt to a 1.6 model. Re-check this whenever gpu-host's model
+      # changes.
+      PAPERLESS_PADDLEOCR_VL_PIPELINE_VERSION: v1.6
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
