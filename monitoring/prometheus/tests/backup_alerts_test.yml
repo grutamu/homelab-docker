@@ -13,6 +13,13 @@
 # counter that vanishes on restart and comes back already at 1 — so that shape
 # is what these tests feed in.
 #
+# The shape has to be the *real* one. The 2026-08-14 false positive shipped
+# green past a rebirth fixture whose series was absent since the beginning of
+# time, which no restart ever produces: a restarted target leaves its earlier
+# incarnation in the TSDB, and reaching back into it is exactly what the old
+# guard did wrong. A fixture that omits the prior samples cannot express that
+# bug. Model the hole, not just the rebirth.
+#
 # Samples are 5m apart rather than the real 15s: nothing here turns on scrape
 # granularity, and 36h of 15s samples would be 8640 points per series.
 
@@ -26,39 +33,76 @@ rule_files:
 
 tests:
   # Baseline. The counter steps once every 24h and nothing should alert.
+  #
+  # Every BackupStale case needs an `up` series now: the second clause counts
+  # the counter's samples against the target's scrapes, so with no `up` the
+  # right-hand side is empty, the match drops every sample, and the rule can
+  # never fire — which would make each "exp_alerts: []" below pass for the
+  # wrong reason. The firing assertions are what keep that honest.
   - interval: 5m
     name: healthy daily backups stay quiet
     input_series:
       - series: 'backrest_tasks_run_total{task_type="backup",status="success",plan_id="backups",repo_id="truenas-nfs",instance="backrest-metrics:9898",job="backrest"}'
         values: '1+0x287 2+0x287 3+0x287'
+      - series: 'up{job="backrest",instance="backrest-metrics:9898"}'
+        values: '1+0x900'
     alert_rule_test:
       - eval_time: 60h
         alertname: BackupStale
         exp_alerts: []
 
-  # The 2026-08-13 regression, and the reason the second clause exists.
+  # The shape that actually broke on 2026-08-14, and the one the previous
+  # `offset 36h` guard could not see.
   #
-  # Backrest restarts at t=0, so the counter is absent. The first backup after
-  # the restart re-creates it already at 1 at t=36h, where it sits flat because
-  # the next run is a day away. increase() over a flat series is 0, so the bare
-  # rule fired here — while backups were working.
+  # The counter is born at t=0 by a nightly run, backrest restarts at t=11h so
+  # the series goes absent, and the next nightly run reborns it at t=24h already
+  # at 1. Backups are healthy throughout. What defeated the old guard is that
+  # the pre-restart samples are still in the TSDB, so its probe at t-36h landed
+  # on that earlier incarnation and reported the series as long-lived.
   #
-  # The same series is asserted twice: suppressed while the counter is too young
-  # to distinguish "flat because nothing ran" from "flat because it was just
-  # born", then firing once it is old enough to tell them apart. That second
-  # assertion is the documented cost of the fix, pinned so it cannot quietly
-  # become "never fires".
+  # Asserted twice, on both sides of where the old rule started paging: t=40h is
+  # 16h after the rebirth, t=50h is past the point where a t-36h probe clears
+  # the hole and lands on the pre-restart samples. Neither may fire.
   - interval: 5m
-    name: a counter reborn by a restart is suppressed, then fires once it is old enough
+    name: a counter reborn by a restart with a prior incarnation in the TSDB stays quiet
+    input_series:
+      - series: 'backrest_tasks_run_total{task_type="backup",status="success",plan_id="backups",repo_id="truenas-nfs",instance="backrest-metrics:9898",job="backrest"}'
+        values: '1+0x131 _x156 1+0x480'
+      - series: 'up{job="backrest",instance="backrest-metrics:9898"}'
+        values: '1+0x900'
+    alert_rule_test:
+      - eval_time: 40h
+        alertname: BackupStale
+        exp_alerts: []
+      # The old rule was firing by here; this is the assertion that pins the fix.
+      - eval_time: 50h
+        alertname: BackupStale
+        exp_alerts: []
+
+  # The same rebirth, but with no prior incarnation — backrest restarts at t=0
+  # having never been scraped before, so the counter is absent from the start
+  # and the first backup re-creates it at 1 at t=36h, flat until the next day.
+  #
+  # This is the fixture that let the bug ship green: a series absent since the
+  # beginning of time is the one rebirth shape that structurally cannot trip a
+  # t-36h probe, so the old guard looked correct here. Kept because it still
+  # pins the documented cost — suppressed while the counter is too young to
+  # tell "flat because nothing ran" from "flat because it was just born", then
+  # firing once it is old enough, so the fix cannot quietly become "never
+  # fires". The case above is the one that reproduces the incident.
+  - interval: 5m
+    name: a counter reborn with no prior incarnation is suppressed, then fires once it is old enough
     input_series:
       - series: 'backrest_tasks_run_total{task_type="backup",status="success",plan_id="backups",repo_id="truenas-nfs",instance="backrest-metrics:9898",job="backrest"}'
         values: '_x431 1+0x600'
+      - series: 'up{job="backrest",instance="backrest-metrics:9898"}'
+        values: '1+0x1100'
     alert_rule_test:
-      # 20h after the counter was re-created. The old rule was firing by now.
+      # 20h after the counter was re-created, so the window still spans the hole.
       - eval_time: 56h
         alertname: BackupStale
         exp_alerts: []
-      # 38h after, so the start of the 36h window now lands on a live counter.
+      # 38h after, so the hole has aged out and the window is fully covered.
       - eval_time: 74h
         alertname: BackupStale
         exp_alerts:
@@ -82,6 +126,8 @@ tests:
     input_series:
       - series: 'backrest_tasks_run_total{task_type="backup",status="success",plan_id="backups",repo_id="truenas-nfs",instance="backrest-metrics:9898",job="backrest"}'
         values: '1+0x287 2+0x600'
+      - series: 'up{job="backrest",instance="backrest-metrics:9898"}'
+        values: '1+0x900'
     alert_rule_test:
       - eval_time: 62h
         alertname: BackupStale
