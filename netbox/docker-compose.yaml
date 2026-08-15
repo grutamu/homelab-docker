@@ -6,7 +6,7 @@ services:
     # A major bump (e.g. 18.x) requires a pg_dump/restore migration — bumping
     # this tag and recreating would break the DB. Renovate major updates for
     # postgres are disabled in renovate.json.
-    image: postgres:16.14-alpine
+    image: postgres:16.15-alpine
     environment:
       POSTGRES_DB: netbox
       POSTGRES_USER: netbox
