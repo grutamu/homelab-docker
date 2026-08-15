@@ -23,18 +23,34 @@ groups:
 
   # Plan exists and has succeeded before, but has stopped succeeding.
   #
-  # The second clause is the same lazy-counter-creation trap described under
+  # The first clause is the same lazy-counter-creation trap described under
   # BackupFailed below, in its other form. backrest_tasks_run_total resets to
   # absent on restart, so the next successful backup re-creates the series
   # already at 1, where it sits flat until the following night's run. A flat
-  # series means increase() == 0, so the bare expression fired for ~20h after
-  # every restart *because* a backup had just succeeded — which is what it did
-  # on 2026-08-13, from 04:05Z until the 03:00Z run the next day.
+  # series means increase() == 0, so the bare expression fires *because* a
+  # backup has just succeeded. The second clause is what distinguishes "flat
+  # because nothing ran" from "flat because it was just born".
   #
-  # Requiring the series to have existed at the start of the window
-  # distinguishes "counter is flat because nothing ran" from "counter is flat
-  # because it was just born". count_over_time drops __name__, so its label set
-  # matches the increase() side and `and` pairs them without on()/ignoring().
+  # That guard used to be `count_over_time(...[10m] offset 36h) > 0` — "did this
+  # series exist 36h ago". It does not work, because Prometheus series identity
+  # is label-based: the pre-restart incarnation stays in the TSDB, so a probe at
+  # t-36h reaches back *past* the restart hole and lands on the old samples. It
+  # only ever held for restarts longer than 36h10m. On 2026-08-14 backrest
+  # restarted at 14:27Z with the counter born 03:28Z that morning and reborn
+  # 03:28Z the next day; the probe cleared the hole at 15:18Z and the alert went
+  # pending at 15:29Z, then paged hourly while backups were succeeding.
+  #
+  # Requiring the series to be present for *every scrape* in the window closes
+  # that by construction: any re-creation, restart or otherwise, leaves a hole
+  # that must age out of the 36h window before this can fire. Calibrating
+  # against up{job="backrest"} rather than a hardcoded 36h/scrape_interval keeps
+  # it correct if the scrape interval changes; 0.99 tolerates the odd dropped
+  # scrape. A scrape outage also suppresses — BackrestDown covers that, and
+  # under-alerting is the right failure mode for a rule with this history.
+  #
+  # count_over_time drops __name__, but the two sides no longer share a label
+  # set (up has no plan_id/repo_id/task_type), hence the explicit
+  # on(instance, job) group_left().
   #
   # Cost: for 36h after a restart this alert is suppressed. BackupNeverRan
   # covers a plan that never runs at all, and BackupFailed covers one that runs
@@ -44,7 +60,9 @@ groups:
     expr: |
       increase(backrest_tasks_run_total{task_type="backup",status="success"}[36h]) == 0
       and
-      count_over_time(backrest_tasks_run_total{task_type="backup",status="success"}[10m] offset 36h) > 0
+      count_over_time(backrest_tasks_run_total{task_type="backup",status="success"}[36h])
+        >= on(instance, job) group_left()
+           (0.99 * count_over_time(up{job="backrest"}[36h]))
     for: 1h
     labels:
       severity: critical
