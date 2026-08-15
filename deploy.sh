@@ -139,27 +139,44 @@ deploy() {
         prom_before=$(prometheus_started_at)
     fi
 
+    # Stacks that build their own image (paperless, backup, adguard-sync) need
+    # --build. `compose up -d` on its own builds only when the image is *absent*
+    # from the local daemon, so once it exists nothing ever rebuilds it: an edit
+    # to the Dockerfile, or a Renovate bump to the FROM line inside it, would
+    # merge, deploy green, and leave the previously built image running. That is
+    # the same silent drift that kept traefik on 3.7.9 while main said 3.7.10,
+    # except no image tag changes to make it visible.
+    #
+    # Rebuilds are layer-cached, so this costs a second or two when nothing
+    # changed. It deliberately does not pass --pull: refreshing the base image
+    # is Renovate's job via the pinned FROM tag, and pulling here would mean an
+    # unrelated deploy could silently move paperless onto a new base.
+    local build_flag=()
+    if [ -f "$REPO/$stack/Dockerfile" ]; then
+        build_flag=(--build)
+    fi
+
     if [ "$stack" = "1password" ]; then
         # Deployed with no secrets available -- Connect reads its credentials
         # from the bind-mounted 1password-credentials.json, not from op. That
         # is what makes it a valid first stack on a cold host.
-        docker compose -f "$compose" up -d
+        docker compose -f "$compose" up -d "${build_flag[@]}"
         wait_for_connect
     elif [ "$stack" = "frigate" ]; then
         op inject -i "$REPO/frigate/config/config.yml.tpl" \
                   -o "$REPO/frigate/config/config.yml" -f
-        docker compose -f "$compose" up -d
+        docker compose -f "$compose" up -d "${build_flag[@]}"
     elif [ "$stack" = "mediaserver" ]; then
         op inject -i "$REPO/mediaserver/recyclarr/recyclarr.yml.tpl" \
                   -o "$REPO/mediaserver/recyclarr/recyclarr.yml" -f
         # recyclarr runs as uid 1000; op inject writes 0600 root, so hand
         # the resolved config to the container user (still not world-readable)
         chown 1000:1000 "$REPO/mediaserver/recyclarr/recyclarr.yml"
-        docker compose -f "$compose" up -d
+        docker compose -f "$compose" up -d "${build_flag[@]}"
     elif [ -f "$env_tpl" ]; then
-        op run --env-file="$env_tpl" -- docker compose -f "$compose" up -d
+        op run --env-file="$env_tpl" -- docker compose -f "$compose" up -d "${build_flag[@]}"
     else
-        docker compose -f "$compose" up -d
+        docker compose -f "$compose" up -d "${build_flag[@]}"
     fi
 
     if [ "$stack" = "monitoring" ]; then
