@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.26
 #
 # paperless-ngx + the paperless-paddleocr plugin, running the `vl-remote`
 # engine against the PaddleOCR-VL server on gpu-host.
@@ -25,7 +25,7 @@
 ARG PLUGIN_REF=v0.1.0
 
 # --- Stage 1: build the plugin wheel from source --------------------------
-FROM python:3.12-slim AS plugin
+FROM python:3.14-slim AS plugin
 ARG PLUGIN_REF
 ADD https://github.com/flobernd/paperless-paddleocr.git#${PLUGIN_REF} /src
 WORKDIR /src
