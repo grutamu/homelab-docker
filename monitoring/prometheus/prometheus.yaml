@@ -50,6 +50,14 @@ scrape_configs:
     static_configs:
       - targets: ['backrest-metrics:9898']
 
+  # Librarr exposes /metrics when METRICS_ENABLED is set. Scraped by container
+  # name over the proxy network — the endpoint is unauthenticated upstream and
+  # is not routed through Traefik.
+  - job_name: 'librarr'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['librarr:5050']
+
   - job_name: pikiosk
     static_configs:
       - targets: ['100.86.212.93:9100']
@@ -94,6 +102,7 @@ scrape_configs:
           - https://requests.calzone.zone/api/v1/status
           - https://mcp.calzone.zone/health
           - https://books.calzone.zone/api/v1/healthcheck
+          - https://bookrequests.calzone.zone/api/health
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

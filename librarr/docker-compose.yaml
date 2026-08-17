@@ -1,0 +1,104 @@
+services:
+  librarr:
+    image: ghcr.io/jeremiahm37/librarr:v1.2.1
+    container_name: librarr
+    restart: unless-stopped
+    volumes:
+      # SQLite DB, settings.json, and the incoming/ staging dir for direct
+      # (non-Prowlarr) downloads before file organization moves them.
+      - /docker-data/librarr:/data
+      # The media export root, mounted exactly as sabnzbd mounts it. Librarr
+      # imports finished usenet grabs by the path SABnzbd reports over its API,
+      # so both containers have to see that path spelled identically —
+      # /media/usenet/<category> here and in sabnzbd's complete_dir.
+      - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      LIBRARR_PORT: "5050"
+      LIBRARR_DB_PATH: /data/librarr.db
+      TZ: America/Chicago
+
+      # File organization. Doubled `media` is not a typo — the export is
+      # /mnt/hdd-pool/media and the library tree starts one level inside it.
+      # These are the same dirs audiobookshelf serves and grimmory reads.
+      FILE_ORG_ENABLED: "true"
+      EBOOK_DIR: /media/media/ebooks
+      AUDIOBOOK_DIR: /media/media/audiobooks
+      INCOMING_DIR: /data/incoming
+
+      PROWLARR_URL: http://prowlarr:9696
+      PROWLARR_API_KEY:
+
+      # Usenet. This homelab has no torrent client, so SABnzbd is the only
+      # download backend. Create a `librarr` category in SABnzbd pointing at
+      # its own dir, otherwise grabs land loose in complete_dir (/media/usenet).
+      SABNZBD_URL: http://sabnzbd:8080
+      SABNZBD_API_KEY:
+      SABNZBD_CATEGORY: librarr
+
+      # Librarr always believes qBittorrent is configured: QB_URL defaults to
+      # http://qbittorrent:8080 and HasQBittorrent() is a non-empty check, but
+      # an empty value falls back to that default in both the env parser and
+      # settings.json — there is no supported way to blank it. Nothing here
+      # listens on that name, so torrent-protocol results fail on grab while
+      # usenet and direct-source downloads work. Point QB_URL at a real client
+      # if a torrent daemon is ever added.
+
+      # Web UI + API auth. API_KEY covers programmatic access (X-Api-Key);
+      # TORZNAB_API_KEY guards the Torznab endpoint, which is exempt from
+      # session auth and carries its own key check.
+      API_KEY:
+      TORZNAB_API_KEY:
+
+      # SSO through pocket-id. Deliberately not behind pocket-id-auth@file:
+      # librarr serves OPDS feeds and a Torznab API, and neither e-readers nor
+      # Prowlarr can complete a forward-auth browser redirect. Native OIDC
+      # gates the UI while leaving those endpoints on their own key auth —
+      # the same reasoning as grimmory.
+      OIDC_ENABLED: "true"
+      OIDC_PROVIDER_NAME: pocket-id
+      OIDC_ISSUER: https://auth.calzone.zone
+      OIDC_CLIENT_ID:
+      OIDC_CLIENT_SECRET:
+      OIDC_REDIRECT_URI: https://bookrequests.calzone.zone/auth/oidc/callback
+      OIDC_AUTO_CREATE_USERS: "true"
+      OIDC_DEFAULT_ROLE: user
+
+      # /metrics, scraped by prometheus over the proxy network. Unauthenticated
+      # by design upstream — it is not exposed through Traefik.
+      METRICS_ENABLED: "true"
+
+      # Off: neither has a home here. Manga would import to MANGA_DIR
+      # (/books/manga), which is not mounted, and web novels need a
+      # lightnovel-crawler container to produce an EPUB at all.
+      MANGADEX_ENABLED: "false"
+      WEBNOVEL_ENABLED: "false"
+
+      # ABS_URL/ABS_TOKEN are intentionally unset. They only trigger a library
+      # scan after import, and audiobookshelf already rescans on a schedule.
+      # Wiring it needs an ABS API token minted from its UI.
+    healthcheck:
+      test: wget -q -O - http://localhost:5050/api/health
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.librarr.rule=Host(`bookrequests.calzone.zone`)"
+      - "traefik.http.routers.librarr.entrypoints=https"
+      - "traefik.http.routers.librarr.tls=true"
+      - "traefik.http.services.librarr.loadbalancer.server.port=5050"
+    networks:
+      - proxy
+
+volumes:
+  nfs-media:
+    driver_opts:
+      type: "nfs"
+      o: "addr=truenas.calzone.zone,nolock,soft,nfsvers=4"
+      device: ":/mnt/hdd-pool/media"
+
+networks:
+  proxy:
+    external: true
