@@ -25,6 +25,7 @@ services:
       - NETBOX_DB_PASSWORD
       - PAPERLESS_DB_PASSWORD
       - MCPJUNGLE_DB_PASSWORD
+      - GRIMMORY_DB_PASSWORD
       - RESTIC_PASSWORD
     labels:
       - "traefik.enable=true"
@@ -50,6 +51,7 @@ services:
       netbox_netbox:
       paperless_paperless:
       mcpjungle_mcpjungle:
+      grimmory_grimmory:
 
 volumes:
   nfs-backup:
@@ -68,4 +70,6 @@ networks:
   paperless_paperless:
     external: true
   mcpjungle_mcpjungle:
+    external: true
+  grimmory_grimmory:
     external: true

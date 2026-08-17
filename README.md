@@ -42,6 +42,7 @@ Docker Compose configurations for a self-hosted homelab. Each service is organiz
 | [Bazarr](https://bazarr.media) | Subtitle management |
 | [Seerr](https://github.com/seerr-team/seerr) | Media request interface |
 | [Shelfarr](https://github.com/pedro-revez-silva/shelfarr) | Book request interface |
+| [Grimmory](https://github.com/grimmory-tools/grimmory) | Ebook/comic library and in-browser reader — OPDS, Kobo sync, KOReader |
 | [Recyclarr](https://recyclarr.dev) | Sync TRaSH Guide quality profiles to Radarr/Sonarr |
 | [Tautulli](https://tautulli.com) | Plex analytics |
 | [Maintainerr](https://github.com/jorenn92/Maintainerr) | Automated media collection cleanup |

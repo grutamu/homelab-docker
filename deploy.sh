@@ -32,7 +32,7 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 #   backup     last. It attaches to other stacks' networks as external.
 STACKS=(1password traefik infra monitoring pocket-id
         mediaserver immich paperless frigate netbox
-        audiobookshelf mealie portainer shelfarr
+        audiobookshelf mealie portainer shelfarr grimmory
         minio mcpjungle backup adguard-sync)
 
 if [ "${1:-}" = "--list" ]; then

@@ -93,6 +93,7 @@ scrape_configs:
           - https://grafana.calzone.zone/api/health
           - https://requests.calzone.zone/api/v1/status
           - https://mcp.calzone.zone/health
+          - https://books.calzone.zone/api/v1/healthcheck
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
