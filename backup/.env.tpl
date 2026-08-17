@@ -12,6 +12,10 @@ PAPERLESS_DB_PASSWORD=op://docker/paperless/POSTGRES_PASSWORD
 # only in this DB, so it must be in the dump set.
 MCPJUNGLE_DB_PASSWORD=op://docker/mcpjungle/POSTGRES_PASSWORD
 
+# Grimmory — MariaDB, not postgres. Library metadata, shelves, annotations and
+# read progress live here; the book files themselves are on the media share.
+GRIMMORY_DB_PASSWORD=op://docker/grimmory/DATABASE_PASSWORD
+
 # Restic repository password — used to encrypt the backup repo
 # Generate with: openssl rand -base64 32
 # Add to 1Password at op://docker/backrest/RESTIC_PASSWORD

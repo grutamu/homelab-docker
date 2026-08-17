@@ -42,6 +42,13 @@
       "enabled": false
     },
     {
+      "description": "MariaDB major upgrades need a mariadb-upgrade pass over the on-disk data dir — recreating on a new major is not enough. Don't propose them.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|/)mariadb$/"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "Require manual review for pocket-id (auth provider — outage locks out all services)",
       "matchFileNames": ["pocket-id/**"],
       "groupName": "pocket-id stack",
@@ -87,6 +94,11 @@
       "description": "Group 1Password Connect updates",
       "matchFileNames": ["1password/**"],
       "groupName": "1password stack"
+    },
+    {
+      "description": "Group the grimmory app and its MariaDB into one PR — a bump that moves only one of the pair still has to boot against the other.",
+      "matchFileNames": ["grimmory/**"],
+      "groupName": "grimmory stack"
     },
     {
       "description": "Shelfarr ships ~2 releases/day — batch into a single monthly PR instead of one per weekend run",

@@ -1,0 +1,98 @@
+---
+services:
+  grimmory-mariadb:
+    container_name: grimmory-mariadb
+    # Pinned to 11.4 LTS (supported to 2029) to match what upstream Grimmory
+    # tests against. Fresh data dir, so this starts on 11.4. A major bump later
+    # needs a mariadb-upgrade run against the on-disk dir — bumping the tag and
+    # recreating is not enough. Renovate major updates for mariadb are disabled
+    # in renovate.json, same as postgres.
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: grimmory
+      MARIADB_USER: grimmory
+      MARIADB_PASSWORD:
+      MARIADB_ROOT_PASSWORD:
+      TZ: America/Chicago
+    healthcheck:
+      # Ships in the official image. --connect proves the socket answers,
+      # --innodb_initialized proves recovery finished — without the second
+      # flag grimmory can start against a server still replaying the redo log
+      # and fail its Flyway migration on boot.
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - /docker-data/grimmory/mariadb:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - grimmory
+
+  grimmory:
+    container_name: grimmory
+    image: ghcr.io/grimmory-tools/grimmory:v3.3.1
+    restart: unless-stopped
+    depends_on:
+      grimmory-mariadb:
+        condition: service_healthy
+    environment:
+      # Matches the uid/gid that owns the NFS media share — the same pair
+      # audiobookshelf and shelfarr run as. Grimmory writes into /books when
+      # it moves a BookDrop import into the library, so this has to line up.
+      USER_ID: "1000"
+      GROUP_ID: "1000"
+      TZ: America/Chicago
+      DATABASE_URL: jdbc:mariadb://grimmory-mariadb:3306/grimmory
+      DATABASE_USERNAME: grimmory
+      DATABASE_PASSWORD:
+      # Swagger UI. Off — the app is reachable on the LAN and nothing here
+      # consumes the generated docs.
+      API_DOCS_ENABLED: "false"
+      DISK_TYPE: LOCAL
+    volumes:
+      # App state: search index, generated covers, per-user settings, heap dumps.
+      - /docker-data/grimmory/data:/app/data
+      # The library itself, read-write, on the same NFS export shelfarr fills.
+      - nfs-ebooks:/books
+      # Watched import folder. Local rather than on the share: files here are
+      # transient (grimmory moves them into /books once enriched) and a stalled
+      # NFS mount would otherwise wedge the watcher.
+      - /docker-data/grimmory/bookdrop:/bookdrop
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: wget -q -O - http://localhost:6060/api/v1/healthcheck
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    labels:
+      - "traefik.enable=true"
+      # Two networks — without this Traefik can pick the internal one and
+      # return a gateway timeout.
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.grimmory.rule=Host(`books.calzone.zone`)"
+      - "traefik.http.routers.grimmory.entrypoints=https"
+      - "traefik.http.routers.grimmory.tls=true"
+      # Deliberately not behind pocket-id-auth@file: grimmory has its own
+      # accounts, and Kobo sync / OPDS / KOReader clients cannot complete a
+      # forward-auth browser redirect. Wire SSO through grimmory's own OIDC
+      # settings instead if you want it.
+      - "traefik.http.services.grimmory.loadbalancer.server.port=6060"
+    networks:
+      - proxy
+      - grimmory
+
+volumes:
+  nfs-ebooks:
+    driver_opts:
+      type: "nfs"
+      o: "addr=truenas.calzone.zone,nolock,soft,nfsvers=4"
+      device: ":/mnt/hdd-pool/media/ebooks"
+
+networks:
+  proxy:
+    external: true
+  grimmory:
