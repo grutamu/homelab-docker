@@ -36,13 +36,10 @@ services:
       SABNZBD_API_KEY:
       SABNZBD_CATEGORY: librarr
 
-      # Librarr always believes qBittorrent is configured: QB_URL defaults to
-      # http://qbittorrent:8080 and HasQBittorrent() is a non-empty check, but
-      # an empty value falls back to that default in both the env parser and
-      # settings.json — there is no supported way to blank it. Nothing here
-      # listens on that name, so torrent-protocol results fail on grab while
-      # usenet and direct-source downloads work. Point QB_URL at a real client
-      # if a torrent daemon is ever added.
+      # No QB_URL/TRANSMISSION_URL, so librarr starts with "no torrent client
+      # configured" and its completion watcher runs sabnzbd-only. Torrent
+      # results from Prowlarr can still be searched but have nowhere to be
+      # grabbed to. Set QB_URL if a torrent daemon is ever added.
 
       # Web UI + API auth. API_KEY covers programmatic access (X-Api-Key);
       # TORZNAB_API_KEY guards the Torznab endpoint, which is exempt from
