@@ -90,7 +90,15 @@ volumes:
     driver_opts:
       type: "nfs"
       o: "addr=truenas.calzone.zone,nolock,soft,nfsvers=4"
-      device: ":/mnt/hdd-pool/media/ebooks"
+      # Doubled `media` is not a typo. The TrueNAS export is
+      # /mnt/hdd-pool/media, and the tree inside it starts with
+      # backup/ media/ torrents/ usenet/ — so the library sits one level
+      # deeper than the export name suggests. audiobookshelf and shelfarr
+      # mount the export root and reach it as /media/media/ebooks; this
+      # mounts the subpath directly so grimmory sees the ebooks tree and
+      # not the torrent/usenet dirs. NFSv4 serves the subpath without it
+      # needing its own export entry.
+      device: ":/mnt/hdd-pool/media/media/ebooks"
 
 networks:
   proxy:
