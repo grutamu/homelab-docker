@@ -40,8 +40,8 @@ services:
         condition: service_healthy
     environment:
       # Matches the uid/gid that owns the NFS media share — the same pair
-      # audiobookshelf and shelfarr run as. Grimmory writes into /books when
-      # it moves a BookDrop import into the library, so this has to line up.
+      # audiobookshelf runs as. Grimmory writes into /books when it moves a
+      # BookDrop import into the library, so this has to line up.
       USER_ID: "1000"
       GROUP_ID: "1000"
       TZ: America/Chicago
@@ -55,7 +55,7 @@ services:
     volumes:
       # App state: search index, generated covers, per-user settings, heap dumps.
       - /docker-data/grimmory/data:/app/data
-      # The library itself, read-write, on the same NFS export shelfarr fills.
+      # The library itself, read-write, on the shared NFS media export.
       - nfs-ebooks:/books
       # Watched import folder. Local rather than on the share: files here are
       # transient (grimmory moves them into /books once enriched) and a stalled
@@ -93,8 +93,8 @@ volumes:
       # Doubled `media` is not a typo. The TrueNAS export is
       # /mnt/hdd-pool/media, and the tree inside it starts with
       # backup/ media/ torrents/ usenet/ — so the library sits one level
-      # deeper than the export name suggests. audiobookshelf and shelfarr
-      # mount the export root and reach it as /media/media/ebooks; this
+      # deeper than the export name suggests. audiobookshelf mounts the
+      # export root and reaches it as /media/media/ebooks; this
       # mounts the subpath directly so grimmory sees the ebooks tree and
       # not the torrent/usenet dirs. NFSv4 serves the subpath without it
       # needing its own export entry.

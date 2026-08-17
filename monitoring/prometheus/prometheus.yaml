@@ -120,7 +120,6 @@ scrape_configs:
           - https://sabnzbd.calzone.zone/
           - https://frigate.calzone.zone/api/version
           - https://tautulli.calzone.zone/
-          - https://bookrequests.calzone.zone/
           - https://alertmanager.calzone.zone/
           - https://portainer.calzone.zone/
           - https://backrest.calzone.zone/
