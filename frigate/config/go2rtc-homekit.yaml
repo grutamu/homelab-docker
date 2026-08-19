@@ -1,0 +1,30 @@
+# Declarative half of the go2rtc-homekit sidecar (see docker-compose.yaml).
+# Loaded second, so nothing here is ever rewritten by go2rtc; the `homekit:`
+# section lives in /docker-data/go2rtc-homekit/pairings.yaml instead, because
+# go2rtc appends generated key material to whichever camera it exports.
+
+# The same Protect endpoints frigate/config/config.yml.tpl uses, minus the _lq
+# substreams -- those exist to feed Frigate's detector. HomeKit negotiates its
+# own resolution and bitrate off the main feed.
+streams:
+  frontdoor: rtspx://192.168.1.1:7441/aW5kuiYd6041kfpv
+  packagecam: rtspx://192.168.1.1:7441/mpgv0uUu622nxXTQ
+  garage: rtspx://192.168.1.1:7441/xnexsGcsDCI8PxZY
+  front: rtspx://192.168.1.1:7441/Iu7PTWnVramD4hyn
+
+# The WebUI, used to export a camera to HomeKit and to read back its pairing
+# code. No auth of its own -- this is a host-namespace container, so it is on
+# the LAN. Frigate's docs assume the same.
+api:
+  listen: ":1984"
+
+# HomeKit needs neither, and every listener this container opens lands on the
+# host. Empty string disables. The SRTP server on :8443 is left alone: that is
+# what actually carries HomeKit video.
+rtsp:
+  listen: ""
+webrtc:
+  listen: ""
+
+log:
+  format: text
