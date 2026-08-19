@@ -39,43 +39,6 @@ services:
     networks:
       - proxy
 
-  # A second go2rtc, separate from the one Frigate embeds, whose only job is
-  # publishing cameras to Apple HomeKit.
-  #
-  # HomeKit pairing is HAP announced over mDNS, so the accessory has to sit on
-  # the LAN at layer 2 -- a bridged container cannot do it. Frigate's own docs
-  # solve that by putting *Frigate* in host network mode, but that would also
-  # drop its unauthenticated API on :5000 onto the LAN, where today it is
-  # reachable only through Traefik's OIDC middleware. This container takes the
-  # host namespace instead and leaves the frigate service above untouched.
-  #
-  # It pulls from Protect directly rather than from Frigate's restream on :8554,
-  # which would have meant publishing that port on the host -- the same exposure
-  # this split exists to avoid. go2rtc opens a source only while something is
-  # consuming it, so a HomeKit camera nobody is watching costs Protect nothing.
-  go2rtc-homekit:
-    container_name: go2rtc-homekit
-    restart: unless-stopped
-    image: alexxit/go2rtc:1.9.14
-    network_mode: host
-    # go2rtc writes generated state -- accessory id, private key, paired
-    # controllers -- back into the *first* config file it is given. That one
-    # therefore lives on writable storage and is not in git (it holds key
-    # material); the repo half is mounted read-only after it.
-    command:
-      - go2rtc
-      - -config
-      - /config/pairings.yaml
-      - -config
-      - /config/go2rtc-homekit.yaml
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /docker-data/go2rtc-homekit:/config
-      - type: bind
-        source: ./config/go2rtc-homekit.yaml
-        target: /config/go2rtc-homekit.yaml
-        read_only: true
-
 volumes:
   nfs-frigate:
     driver_opts:
