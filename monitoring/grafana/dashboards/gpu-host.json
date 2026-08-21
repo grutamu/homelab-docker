@@ -355,18 +355,159 @@
     },
 
     {
+      "id": 107,
+      "type": "row",
+      "title": "llama.cpp",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+      "panels": []
+    },
+    {
+      "id": 70,
+      "title": "Throughput",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 23},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Tokens per second of wall-clock time, so idle stretches drag the line toward zero. This is 'how much work did the box do', not 'how fast is it when working' — for that see Decode Speed. Prompt tokens spike far above generated ones because a cache miss re-ingests the whole conversation in one batch.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {"lineWidth": 2, "fillOpacity": 8, "showPoints": "never", "axisLabel": "tok/s"}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "rate(llamacpp:tokens_predicted_total{job=\"gpu-host-llama\"}[5m])", "legendFormat": "generated"},
+        {"expr": "rate(llamacpp:prompt_tokens_total{job=\"gpu-host-llama\"}[5m])", "legendFormat": "prompt ingested"}
+      ]
+    },
+    {
+      "id": 71,
+      "title": "Decode Speed",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 23},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Tokens divided by the seconds actually spent on them, so idle time cancels out. These are the numbers the server writes to its own log as `print_timing` — generation sits around 46 t/s on this rig, prompt eval an order faster. A drop in generation with GPU clocks unchanged points at KV cache pressure or context growth, not thermals.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "min", "lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {"lineWidth": 2, "fillOpacity": 0, "showPoints": "never", "axisLabel": "tok/s"}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "rate(llamacpp:tokens_predicted_total{job=\"gpu-host-llama\"}[5m]) / rate(llamacpp:tokens_predicted_seconds_total{job=\"gpu-host-llama\"}[5m])", "legendFormat": "generation"},
+        {"expr": "rate(llamacpp:prompt_tokens_total{job=\"gpu-host-llama\"}[5m]) / rate(llamacpp:prompt_seconds_total{job=\"gpu-host-llama\"}[5m])", "legendFormat": "prompt eval"}
+      ]
+    },
+    {
+      "id": 72,
+      "title": "Requests",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 31},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "This variant runs -np 1, so there is exactly one slot: processing is only ever 0 or 1, and a second caller shows up as deferred rather than sharing the GPU. Sustained deferred means the single slot is the bottleneck — the fix is more slots, which costs KV pool, not a faster card.",
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "list", "placement": "bottom", "calcs": []}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "decimals": 0,
+          "custom": {"lineWidth": 2, "fillOpacity": 20, "showPoints": "never", "drawStyle": "line", "lineInterpolation": "stepAfter"}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "llamacpp:requests_processing{job=\"gpu-host-llama\"}", "legendFormat": "processing"},
+        {"expr": "llamacpp:requests_deferred{job=\"gpu-host-llama\"}", "legendFormat": "deferred"}
+      ]
+    },
+    {
+      "id": 73,
+      "title": "Speculative Gain (MTP)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 31},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Tokens emitted per llama_decode() call. The GGUF embeds an MTP head driven at --spec-draft-n-max 2, so the ceiling is 3 (one base token plus two drafted); 1.0 means the drafter is being rejected every time and is pure overhead. This is the only Prometheus-visible proxy for draft acceptance — the exporter has no metric for it, the server only writes `draft acceptance` to its log.",
+      "options": {
+        "tooltip": {"mode": "single", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom", "calcs": []}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "max": 3,
+          "decimals": 2,
+          "custom": {"lineWidth": 2, "fillOpacity": 8, "showPoints": "never", "axisLabel": "tok / decode"},
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 1.5},
+              {"color": "green", "value": 2.2}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "rate(llamacpp:tokens_predicted_total{job=\"gpu-host-llama\"}[5m]) / rate(llamacpp:n_decode_total{job=\"gpu-host-llama\"}[5m])", "legendFormat": "tokens per decode"}
+      ]
+    },
+    {
+      "id": 74,
+      "title": "Server Availability",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 31},
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Gaps here are expected, not faults. gpu-host runs a variant-switching estate — launch.sh tears the container down and brings a different model up, and the target is down in between. There is deliberately no alert rule on this job for that reason. A gap that never recovers means the new variant bound a different port than 8090, or was started without metrics enabled.",
+      "options": {
+        "tooltip": {"mode": "single", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom", "calcs": []}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "decimals": 0,
+          "custom": {"lineWidth": 2, "fillOpacity": 25, "showPoints": "never", "lineInterpolation": "stepAfter"}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {"expr": "up{job=\"gpu-host-llama\"}", "legendFormat": "llama.cpp server"}
+      ]
+    },
+
+    {
       "id": 102,
       "type": "row",
       "title": "CPU",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 39},
       "panels": []
     },
     {
       "id": 40,
       "title": "CPU by Mode",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 23},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Stacked across all cores, idle excluded. Total height is overall busy percentage.",
       "options": {
@@ -390,7 +531,7 @@
       "id": 52,
       "title": "Load Average",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 23},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Dashed line is core count — load sustained above it means the run queue is backing up.",
       "options": {
@@ -425,14 +566,14 @@
       "type": "row",
       "title": "Memory",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 31},
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 48},
       "panels": []
     },
     {
       "id": 41,
       "title": "Memory",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 49},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Used excludes cache and buffers (MemTotal - MemAvailable). Total is drawn as a ceiling reference.",
       "options": {
@@ -466,7 +607,7 @@
       "id": 42,
       "title": "Swap",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 49},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Any sustained swap use on a host serving a 27B model is worth investigating.",
       "options": {
@@ -500,14 +641,14 @@
       "type": "row",
       "title": "Disk",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 40},
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 57},
       "panels": []
     },
     {
       "id": 50,
       "title": "Filesystem Usage",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 41},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 58},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "options": {
         "tooltip": {"mode": "multi", "sort": "desc"},
@@ -530,7 +671,7 @@
       "id": 53,
       "title": "Disk I/O",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 41},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 58},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Reads above the axis, writes below. Physical devices only.",
       "options": {
@@ -555,14 +696,14 @@
       "type": "row",
       "title": "Network",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 49},
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 66},
       "panels": []
     },
     {
       "id": 51,
       "title": "Throughput",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 50},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 67},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Receive above the axis, transmit below. Physical and Tailscale interfaces only; docker bridges excluded.",
       "options": {
@@ -585,7 +726,7 @@
       "id": 54,
       "title": "Errors & Drops",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 50},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 67},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "Flat zero is the expected state. Anything sustained here points at cabling, the NIC, or an overloaded link.",
       "options": {
@@ -613,14 +754,14 @@
       "type": "row",
       "title": "Fans & Temps",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 58},
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 75},
       "panels": []
     },
     {
       "id": 60,
       "title": "Temperatures",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 16, "x": 0, "y": 59},
+      "gridPos": {"h": 8, "w": 16, "x": 0, "y": 76},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "GPU core, hottest CPU core, and each NVMe drive. coretemp and the NVMe chips report many sensors each, so both are reduced to a max rather than plotting all 27 series.",
       "options": {
@@ -645,7 +786,7 @@
       "id": 21,
       "title": "GPU Fan Speed",
       "type": "timeseries",
-      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 59},
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 76},
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "description": "The only fan on this host that reports. node-exporter finds no hwmon fan RPM sensors, so chassis and CPU fans are not visible. Kept separate from Temperatures because percent and celsius on one axis would be a dual-axis chart.",
       "options": {
