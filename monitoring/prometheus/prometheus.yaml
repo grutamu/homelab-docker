@@ -80,6 +80,27 @@ scrape_configs:
         labels:
           host: gpu-host
 
+  # llama.cpp inference server on gpu-host. Its /metrics endpoint is built into
+  # llama-server but is off by default and 501s until the process is started
+  # with --metrics (or LLAMA_ARG_ENDPOINT_METRICS=1). That flag is set in the
+  # club-3090 estate repo on gpu-host, NOT here — see docs/gpu-host-llama.md.
+  #
+  # Unlike the two exporter jobs above, this target is not Tailscale-only: the
+  # estate publishes 8090 on 0.0.0.0 because the inference API itself is used
+  # from the LAN. Prometheus still reaches it over Tailscale, since docker01 is
+  # on a different subnet, but /metrics is readable from 192.168.1.0/24 too.
+  #
+  # EXPECT THIS TARGET TO FLAP. gpu-host swaps model variants via launch.sh,
+  # and each variant is its own container; the target is down between switches
+  # and whenever no model is loaded. That is normal operation, so there is no
+  # alert rule on this job — an absent llama.cpp is not a broken llama.cpp.
+  - job_name: 'gpu-host-llama'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['100.123.167.70:8090']
+        labels:
+          host: gpu-host
+
   # Blackbox: services with unauthenticated 200 endpoints
   - job_name: 'blackbox_http'
     metrics_path: /probe
