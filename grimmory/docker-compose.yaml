@@ -7,7 +7,7 @@ services:
     # needs a mariadb-upgrade run against the on-disk dir — bumping the tag and
     # recreating is not enough. Renovate major updates for mariadb are disabled
     # in renovate.json, same as postgres.
-    image: mariadb:11.4
+    image: mariadb:11.8
     restart: unless-stopped
     environment:
       MARIADB_DATABASE: grimmory
@@ -33,7 +33,7 @@ services:
 
   grimmory:
     container_name: grimmory
-    image: ghcr.io/grimmory-tools/grimmory:v3.3.1
+    image: ghcr.io/grimmory-tools/grimmory:v3.3.3
     restart: unless-stopped
     depends_on:
       grimmory-mariadb:
