@@ -3,29 +3,23 @@
 An autonomous agent with the homelab's MCP tool surface, reachable through a
 web dashboard at `hermes.calzone.zone`. Inference runs on gpu-host, not here.
 
-This is a **minimal rebuild** of the install removed in #166. That one had a
-Discord gateway, five specialist sub-agent profiles, a kanban board they
-coordinated through, and state restored from the pre-Docker host. None of that
-came back — one profile, one MCPJungle token, one way in, empty data dir.
-
-## Layout
+This is a **stock install** of the stack removed in #166. That one had a
+Discord gateway, five specialist sub-agent profiles with souls versioned in
+git, a kanban board they coordinated through, a sync script that pushed those
+profiles into the container, and state restored from the pre-Docker host. None
+of it came back. What is here is the container, one MCPJungle token, and an
+empty data dir — the agent runs on its own defaults.
 
 ```
-docker-compose.yaml       the container, the dashboard, the Traefik route
-.env.tpl                  two secrets, injected via `op run`
-profiles/default/         SOUL.md + profile.conf — the agent's identity, in git
-scripts/sync-profiles.sh  one-way bridge: repo -> data dir
+docker-compose.yaml   the container, the dashboard, the Traefik route
+.env.tpl              one secret, injected via `op run`
 ```
 
-`/docker-data/hermes-agent` is agent-mutable state: config, memories, sessions,
-skills the agent writes for itself. None of it is in git. A profile's
-*identity* is the opposite — `SOUL.md` and `profile.conf` are authored and
-diffed like any other file here, and `sync-profiles.sh` pushes them in. Nothing
-reads back.
-
-`SOUL.md` is always-on — it is in the system prompt of every turn, so it has a
-3 KB budget and the sync script warns past it. A *procedure* belongs in a skill
-instead, where it loads on demand.
+Everything else lives in `/docker-data/hermes-agent` and belongs to the agent:
+config, memories, sessions, and any skills it writes for itself. **None of that
+is in git**, and nothing in this repo pushes into it. If you later want the
+agent's identity or tool scoping under review, that is the thing to add back —
+see #166's `profiles/` and `scripts/sync-profiles.sh` for the shape it had.
 
 ## Why this diverges from upstream's compose
 
@@ -52,16 +46,15 @@ it authenticates against pocket-id directly. Same SSO as everything else, one
 login instead of two, and the edge middleware is redundant.
 
 With Discord gone, this dashboard is the **only** interface. If OIDC is
-misconfigured there is no second door — the container will not start, and
-`docker logs hermes-agent` is where it says why.
+misconfigured there is no second door.
 
 ### One-time pocket-id client
 
 `docker-compose.yaml` still carries the client UUID from the removed install
 (`763e47b3-…`). #166's teardown notes left deleting that client to a human, so
-it may or may not still exist. **Verify before the first deploy** — a deleted
-client fails the token exchange on an `aud` mismatch, which reads like a login
-loop rather than a config error.
+it may or may not still exist. **Verify before first login** — a deleted client
+fails the token exchange on an `aud` mismatch, which presents as a login loop
+rather than a config error.
 
 If it needs recreating, in pocket-id at `https://auth.calzone.zone`:
 
@@ -110,13 +103,6 @@ callback URL together.
 The model is a **custom provider**, not a hosted API, so there is no key — the
 endpoint *is* the credential. Anything that can reach port 8090 can use it.
 
-```yaml
-model:
-  provider: "custom:Local (gpu-host:8090)"
-  base_url: http://100.123.167.70:8090/v1
-  default:  qwen3.8-27b
-```
-
 **This is not where the removed install pointed.** That one used
 `http://100.123.167.70:8020/v1` with
 `/models/qwen3.6-27b-gguf/…/Qwen3.6-27B-Q4_K_M.gguf`. Port 8020 no longer
@@ -138,15 +124,15 @@ is also why the `gpu-host-llama` Prometheus target flaps by design (see
 [docs/gpu-host-llama.md](../docs/gpu-host-llama.md)). A variant that binds a
 different port leaves the agent with no model. Nothing here restarts it.
 
-### Bootstrapping the provider
+### Pointing the agent at it — one-time, by hand
 
-A fresh data dir has no `custom_providers`, and **the CLI cannot create one** —
-it is a YAML list, and `hermes config set custom_providers.0.name …` writes a
+A fresh data dir has no `custom_providers`, and **the CLI cannot create one**.
+It is a YAML list, and `hermes config set custom_providers.0.name …` writes a
 dict keyed `'0'` (doctor: *"custom_providers is a dict — it must be a YAML
 list"*), while `--force` stores the JSON as a literal string. There is no
 generic `openai` provider to fall back on; that name is rejected too. The
 removed install sidestepped this by inheriting a valid list from its restored
-backup, and new specialist profiles by cloning `default`.
+backup.
 
 So the list is written once, by hand, against a stopped container:
 
@@ -157,13 +143,21 @@ ssh root@docker01 'docker stop hermes-agent'
 #     - name: "Local (gpu-host:8090)"
 #       base_url: http://100.123.167.70:8090/v1
 #       api_key: ""
-ssh root@docker01 'docker start hermes-agent && docker exec hermes-agent hermes doctor'
+ssh root@docker01 'docker start hermes-agent'
 ```
 
-This is the one place upstream's never-hand-edit-config.yaml rule gets broken,
-and only because the supported write path does not cover it. Everything after
-this — including the three `model.*` scalars — goes through
-`sync-profiles.sh`, which uses `hermes config set`.
+The three settings that *select* it are plain scalars, so they go through the
+supported write path once the list exists:
+
+```bash
+ssh root@docker01 'docker exec hermes-agent hermes config set model.provider "custom:Local (gpu-host:8090)"
+docker exec hermes-agent hermes config set model.base_url http://100.123.167.70:8090/v1
+docker exec hermes-agent hermes config set model.default qwen3.8-27b
+docker exec hermes-agent hermes doctor'
+```
+
+The hand edit is the one place upstream's never-edit-config.yaml rule gets
+broken, and only because the supported write path does not cover a YAML list.
 
 ## Deploy
 
@@ -174,18 +168,10 @@ ssh root@docker01 'bash -l -c "/root/homelab-docker/deploy.sh hermes-agent"'
 
 The data dir must exist and be owned by `1000:1000` before the first start —
 that matches `HERMES_UID`/`HERMES_GID`, which the s6 stage2 hook remaps the
-container's `hermes` user to. A `SOUL.md` owned by root is a file the agent
-cannot read.
+container's `hermes` user to. Files owned by root are files the agent cannot
+read.
 
-Then, in order: bootstrap the provider (above), then
-
-```bash
-./scripts/sync-profiles.sh default      # DRY_RUN=1 to preview
-```
-
-Slow by construction — every directive is a separate `hermes` invocation, each
-loading the whole Python CLI. That is the cost of using the supported write
-path; don't "optimise" it by generating YAML directly.
+Then bootstrap the provider, above. Until that is done the agent has no model.
 
 ## Secrets
 
@@ -202,17 +188,20 @@ trail.
 `claude-code` token the previous install shared — so revoking the agent does
 not also cut off Claude Code. Its `--allow` list is
 `proxmox,unifi_network,home_assistant,grafana,adguard,netbox`, full parity with
-the removed install. **That list is the real tool boundary** — `SOUL.md`
-documents it but does not enforce it — and it includes the full-Administrator
-`proxmox` credential plus UniFi's `unifi_execute`, which fronts ~200 tools
-including firewall deletion. Narrowing it later means delete + recreate, which
-issues a different token.
+the removed install.
+
+**That allow-list is the only enforced boundary.** The removed install layered
+a versioned `SOUL.md` on top of it telling the agent to never infer approval
+for a destructive action; a stock install has no such file. The list includes
+the full-Administrator `proxmox` credential and UniFi's `unifi_execute`, which
+fronts ~200 tools including firewall deletion — so nothing but the agent's own
+judgment stands between it and a destructive call. Narrowing the client means
+delete + recreate, which issues a different token.
 
 `GITHUB_TOKEN` is **not set**. The archived item's 40-char PAT was not reused
 (unknown scopes, archived since 2026-08-14). Both the `.env.tpl` line and the
 compose passthrough are commented out; uncomment them together after minting a
-fresh fine-grained PAT and adding it to the item. The agent has no GitHub reach
-until then, and nothing else depends on it.
+fresh fine-grained PAT and adding it to the item.
 
 ## Operating
 
@@ -223,8 +212,8 @@ docker exec hermes-agent hermes gateway status
 docker exec hermes-agent hermes doctor
 ```
 
-Gateway logs rotate at `/opt/data/logs/gateways/default/current`; `docker logs`
-shows the dashboard plus a supervision breadcrumb.
+Gateway logs rotate under `/opt/data/logs/gateways/`; `docker logs` shows the
+dashboard plus a supervision breadcrumb.
 
 **Never run a second gateway against this data directory** — session files and
 the memory store are not safe for concurrent writes.
@@ -239,9 +228,9 @@ this host on 2026-07-25.
 
 - **Discord.** No `DISCORD_BOT_TOKEN`, no gateway. The bot application from the
   previous install may still exist in the Discord developer portal.
-- **Sub-agents and kanban.** One profile, so there is nothing to dispatch to.
-  The `proxmox_ro` MCPJungle registration that once backed the `virt`
-  specialist is still there and still useful as a read-only Proxmox path.
+- **Sub-agents and kanban.** One agent, nothing to dispatch to. The
+  `proxmox_ro` MCPJungle registration that once backed the `virt` specialist is
+  still there and still useful as a read-only Proxmox path.
 - **The OpenAI-compatible API server** (`:8642`). Nothing needs it — the
   dashboard and gateway talk inside the container. To turn it on, set
   `API_SERVER_ENABLED=true`, `API_SERVER_HOST=0.0.0.0`, and an `API_SERVER_KEY`

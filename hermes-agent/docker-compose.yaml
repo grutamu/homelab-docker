@@ -72,10 +72,14 @@ services:
       # Minted 2026-08-27 as the `hermes-default` MCPJungle client, allowed
       # proxmox,unifi_network,home_assistant,grafana,adguard,netbox — full
       # parity with what the removed install's default profile could reach,
-      # chosen deliberately. That includes the full-Administrator `proxmox`
-      # credential and UniFi's unifi_execute, so the agent can make destructive
-      # calls; SOUL.md's "never infer approval" is the only thing above the API
-      # that says not to. Narrow the client (delete + recreate, new token) if
+      # chosen deliberately.
+      #
+      # That allow-list is the ONLY enforced boundary on this agent. It carries
+      # the full-Administrator `proxmox` credential and UniFi's unifi_execute
+      # (~200 tools behind one entry point, firewall deletion included), and
+      # unlike the removed install there is no versioned SOUL.md above it
+      # telling the agent never to infer approval for a destructive action.
+      # Narrow the client — delete + recreate, which issues a new token — if
       # that trade stops being worth it.
       MCP_HOMELAB_API_KEY:
 
