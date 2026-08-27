@@ -98,6 +98,19 @@ container and stack name) would remove the ambiguity. That means changing the
 Traefik rule, `HERMES_DASHBOARD_PUBLIC_URL`, and the pocket-id client's
 callback URL together.
 
+**After a long teardown, expect a stale negative cache.** The name did not
+resolve for the two weeks this stack was gone, and clients hold onto that:
+`dig @192.168.99.5 hermes.calzone.zone` answers correctly while the same
+machine's browser and `curl` still say *"Could not resolve host"*, because
+`dig` bypasses the system resolver. On macOS:
+
+```bash
+sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder
+```
+
+`curl --resolve hermes.calzone.zone:443:192.168.99.41 https://…` proves whether
+the service itself is up while the cache is still lying to you.
+
 ## Model endpoint
 
 The model is a **custom provider**, not a hosted API, so there is no key — the
@@ -124,40 +137,66 @@ is also why the `gpu-host-llama` Prometheus target flaps by design (see
 [docs/gpu-host-llama.md](../docs/gpu-host-llama.md)). A variant that binds a
 different port leaves the agent with no model. Nothing here restarts it.
 
-### Pointing the agent at it — one-time, by hand
+### Pointing the agent at it
 
-A fresh data dir has no `custom_providers`, and **the CLI cannot create one**.
-It is a YAML list, and `hermes config set custom_providers.0.name …` writes a
-dict keyed `'0'` (doctor: *"custom_providers is a dict — it must be a YAML
-list"*), while `--force` stores the JSON as a literal string. There is no
-generic `openai` provider to fall back on; that name is rejected too. The
-removed install sidestepped this by inheriting a valid list from its restored
-backup.
-
-So the list is written once, by hand, against a stopped container:
+Three scalars through the supported write path. No hand edit:
 
 ```bash
-ssh root@docker01 'docker stop hermes-agent'
-# Append to /docker-data/hermes-agent/config.yaml:
-#   custom_providers:
-#     - name: "Local (gpu-host:8090)"
-#       base_url: http://100.123.167.70:8090/v1
-#       api_key: ""
-ssh root@docker01 'docker start hermes-agent'
-```
-
-The three settings that *select* it are plain scalars, so they go through the
-supported write path once the list exists:
-
-```bash
-ssh root@docker01 'docker exec hermes-agent hermes config set model.provider "custom:Local (gpu-host:8090)"
+ssh root@docker01 'docker exec hermes-agent hermes config set model.provider custom
 docker exec hermes-agent hermes config set model.base_url http://100.123.167.70:8090/v1
 docker exec hermes-agent hermes config set model.default qwen3.8-27b
-docker exec hermes-agent hermes doctor'
+docker restart hermes-agent'
 ```
 
-The hand edit is the one place upstream's never-edit-config.yaml rule gets
-broken, and only because the supported write path does not cover a YAML list.
+**This is not what the removed install needed, and the difference is a schema
+change upstream.** On `v2026.8.3`, `provider` had to name an entry in a
+`custom_providers` **list** (`custom:Local (…)`), and that list could not be
+written by the CLI at all — `config set custom_providers.0.name` produced a
+dict keyed `'0'`, `--force` stored the JSON as a string, and the only way in
+was editing `config.yaml` by hand or cloning a profile that already had one.
+That install never hit it because it inherited a valid list from its restored
+backup.
+
+On `v2026.8.19` there is no list. `provider: "custom"` plus `base_url` is the
+whole thing, and `ollama` / `vllm` / `llamacpp` are documented aliases for the
+same path. If a future bump reintroduces the list, the symptom is `hermes
+doctor` reporting the provider does not resolve.
+
+## Wiring up the homelab tools
+
+A stock config knows nothing about MCPJungle — `mcp_servers` is absent from a
+fresh `config.yaml`, so injecting `MCP_HOMELAB_API_KEY` on its own gets you an
+agent with no homelab reach at all. The previous install had this in its
+restored config and never had to add it.
+
+```bash
+ssh root@docker01 'printf "y\ny\n" | docker exec -i hermes-agent \
+  hermes mcp add homelab --url https://mcp.calzone.zone/mcp --auth header'
+```
+
+Two prompts, hence the two `y`s: *"Does this server require authentication?"*
+and *"Enable all 210 tools?"*. **Do not run it with `</dev/null`** — the tool
+prompt EOFs to `Cancelled.` after doing all the discovery work, which looks
+like success until you check. `docker exec -i` is enough; no TTY needed.
+
+Authentication needs no answer beyond the first `y`: the CLI finds
+`MCP_HOMELAB_API_KEY` already in the container environment and reports
+`✓ already configured`. What it writes is an interpolation, not the value:
+
+```yaml
+mcp_servers:
+  homelab:
+    url: https://mcp.calzone.zone/mcp
+    headers:
+      Authorization: Bearer ${MCP_HOMELAB_API_KEY}
+    enabled: true
+```
+
+Worth checking after any future re-add — a literal token in `config.yaml` would
+be readable through the dashboard's `GET /api/env` surface.
+
+Tools land on a **new session**, not the running one, so restart before
+testing.
 
 ## Deploy
 
@@ -171,7 +210,20 @@ that matches `HERMES_UID`/`HERMES_GID`, which the s6 stage2 hook remaps the
 container's `hermes` user to. Files owned by root are files the agent cannot
 read.
 
-Then bootstrap the provider, above. Until that is done the agent has no model.
+Then point it at the model and add the MCP server, both above. Until the first
+is done the agent has no model; until the second, no tools.
+
+Acceptance, in order — each one fails differently:
+
+```bash
+# model reachable, agent completes a turn
+docker exec hermes-agent hermes chat -q "Reply with exactly: HERMES ONLINE."
+# tools wired, and the gateway actually calls them
+docker exec hermes-agent hermes chat -q "Use the adguard tools to report the AdGuard Home version."
+# dashboard up, TLS valid, auth gate armed
+curl -s https://hermes.calzone.zone/api/status | jq '.auth_required, .auth_providers, .gateway_state'
+# true / ["self-hosted"] / "running"
+```
 
 ## Secrets
 
