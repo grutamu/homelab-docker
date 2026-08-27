@@ -1,0 +1,131 @@
+---
+services:
+  hermes-agent:
+    container_name: hermes-agent
+    # Upstream's own docker-compose.yml uses `build: .` and network_mode: host.
+    # Neither is needed here: the published image is on Docker Hub, and host
+    # networking is only required when the dashboard runs as a *separate*
+    # container (its gateway-liveness probe wants a shared PID namespace).
+    # One container with HERMES_DASHBOARD=1 supervises both under s6, so
+    # bridge + proxy works and Traefik can route to it normally.
+    #
+    # Not on the newest tag on purpose. v2026.8.27 exists and was published the
+    # same day this stack was rebuilt; this is an autonomous agent with code
+    # execution, so it gets a tag with some soak time instead. Renovate is set
+    # to manual review for this stack (calver tags are never "major", so the
+    # repo-wide never-automerge-major rule would not catch it).
+    image: nousresearch/hermes-agent:v2026.8.19
+    restart: unless-stopped
+
+    # 15 GB host, ~8 GB free. Upstream sizes the container at ~1 GB, or 2-4 GB
+    # with browser automation on. This is a ceiling, not a reservation — it's
+    # here so a runaway agent loop can't repeat what MetaMCP did to this host
+    # on 2026-07-25.
+    mem_limit: 4g
+
+    environment:
+      # Remap the in-container `hermes` user to the owner of /docker-data.
+      # The s6 stage2 hook usermod/groupmod's to these before any service
+      # starts; every supervised service then drops to it via s6-setuidgid.
+      HERMES_UID: "1000"
+      HERMES_GID: "1000"
+
+      # ── Dashboard ────────────────────────────────────────────────────
+      # Registered as an s6 service but stays down unless this is set. With
+      # Discord off (see below) this is the *only* way in, so it is not
+      # optional here the way it was in the previous install.
+      HERMES_DASHBOARD: "1"
+      # Binds 0.0.0.0 *inside the container* so Traefik can reach it. That
+      # is a non-loopback bind, which arms the auth gate below.
+      HERMES_DASHBOARD_HOST: 0.0.0.0
+      HERMES_DASHBOARD_PORT: "9119"
+
+      # The dashboard reads and writes .env — it is a credential surface.
+      # Since the June 2026 hardening a non-loopback bind *fails closed*:
+      # no registered auth provider means the dashboard refuses to start.
+      # HERMES_DASHBOARD_INSECURE is a deprecated no-op and will not open it.
+      #
+      # So Traefik's pocket-id-auth@file alone is not sufficient — Hermes
+      # needs its own provider. The bundled self_hosted OIDC plugin points
+      # straight at pocket-id, which keeps this on the same SSO as every
+      # other service instead of a second login.
+      HERMES_DASHBOARD_OIDC_ISSUER: https://auth.calzone.zone
+      # pocket-id mints its own client ID and does not let you choose one —
+      # the `hermes-dashboard` you see in its UI is only the display name.
+      # This must be the generated UUID: Hermes pins the ID token's `aud`
+      # claim to whatever is set here, so a friendly name fails the exchange.
+      #
+      # ⚠️ This UUID is carried over from the install removed in #166, whose
+      # teardown notes left deleting the pocket-id client to a human. If that
+      # deletion happened, this ID is dead and the exchange fails with an
+      # `aud` mismatch — recreate the client and paste the NEW UUID here.
+      # See readme.md → "One-time pocket-id client".
+      HERMES_DASHBOARD_OIDC_CLIENT_ID: 763e47b3-8ed5-4196-a7c6-4f433dd1263c
+      # Needed so the OIDC callback resolves to the public hostname rather
+      # than the container's own bind address.
+      HERMES_DASHBOARD_PUBLIC_URL: https://hermes.calzone.zone
+
+      # ── Secrets (op run passthrough — see .env.tpl) ───────────────────
+      # Bearer token for the MCPJungle gateway. config.yaml interpolates it
+      # as ${MCP_HOMELAB_API_KEY}; passing it here keeps it out of the data
+      # dir's .env, which the dashboard can display.
+      # Minted 2026-08-27 as the `hermes-default` MCPJungle client, allowed
+      # proxmox,unifi_network,home_assistant,grafana,adguard,netbox — full
+      # parity with what the removed install's default profile could reach,
+      # chosen deliberately.
+      #
+      # That allow-list is the ONLY enforced boundary on this agent. It carries
+      # the full-Administrator `proxmox` credential and UniFi's unifi_execute
+      # (~200 tools behind one entry point, firewall deletion included), and
+      # unlike the removed install there is no versioned SOUL.md above it
+      # telling the agent never to infer approval for a destructive action.
+      # Narrow the client — delete + recreate, which issues a new token — if
+      # that trade stops being worth it.
+      MCP_HOMELAB_API_KEY:
+
+      # GITHUB_TOKEN is commented out in .env.tpl — no value exists for it yet.
+      # Uncomment both together. See .env.tpl for why the old PAT wasn't reused.
+      # GITHUB_TOKEN:
+
+      # DISCORD_BOT_TOKEN is deliberately absent — this install has no Discord
+      # gateway. The bot application from the previous install may still exist
+      # in the Discord developer portal; it is not used here.
+      #
+      # The per-profile MCP_OBS/NETOPS/VIRT_API_KEYs are gone with the
+      # specialists. There is one profile now, so there is one token.
+
+      # The OpenAI-compatible API server (8642) is deliberately off. The
+      # dashboard and gateway talk to each other inside the container, so
+      # nothing needs it. Turning it on requires API_SERVER_ENABLED=true
+      # plus an API_SERVER_KEY — see readme.md before doing that.
+
+    volumes:
+      # Single source of truth for all Hermes state: config.yaml, .env,
+      # SOUL.md, skills/, memories/, sessions/, cron/, hooks/, logs/.
+      # A bind mount under /docker-data (not a named volume) so Backrest's
+      # file-level sweep picks it up with no extra config.
+      - /docker-data/hermes-agent:/opt/data
+      - /etc/localtime:/etc/localtime:ro
+
+    # Never run two gateway containers against one data dir — session files
+    # and the memory store are not safe for concurrent writes.
+    command: ["gateway", "run"]
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.hermes-agent.rule=Host(`hermes.calzone.zone`)"
+      - "traefik.http.routers.hermes-agent.entrypoints=https"
+      - "traefik.http.routers.hermes-agent.tls=true"
+      # No pocket-id-auth@file here on purpose. Hermes runs its own OIDC gate
+      # against the same provider, so the edge middleware would only add a
+      # second redirect through the identity it already checked. The gate
+      # cannot be turned off, so this is not an unauthenticated route.
+      - "traefik.http.services.hermes-agent.loadbalancer.server.port=9119"
+
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
