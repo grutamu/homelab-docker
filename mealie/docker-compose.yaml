@@ -1,7 +1,7 @@
 services:
   mealie:
     container_name: mealie
-    image: ghcr.io/mealie-recipes/mealie:v3.23.1
+    image: ghcr.io/mealie-recipes/mealie:v3.24.0
     restart: always
     volumes:
       - /docker-data/mealie:/app/data/
