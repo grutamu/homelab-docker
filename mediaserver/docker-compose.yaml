@@ -1,6 +1,6 @@
 services:
   sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:5.1.1
+    image: lscr.io/linuxserver/sabnzbd:5.1.2
     container_name: sabnzbd
     restart: unless-stopped
     volumes:
@@ -184,7 +184,7 @@ services:
       - proxy
 
   tautulli:
-    image: lscr.io/linuxserver/tautulli:2.17.2
+    image: lscr.io/linuxserver/tautulli:2.18.1
     container_name: tautulli
     restart: unless-stopped
     environment:
@@ -203,7 +203,7 @@ services:
       - proxy
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr:3.24.0
+    image: ghcr.io/maintainerr/maintainerr:3.25.0
     container_name: maintainerr
     restart: unless-stopped
     user: 1000:1000
