@@ -36,7 +36,7 @@ services:
       
   netbox-server:
     container_name: netbox-server
-    image: lscr.io/linuxserver/netbox:4.6.8
+    image: lscr.io/linuxserver/netbox:4.6.9
     environment:
       PGID: "1000"
       PUID: "1000"
