@@ -1,6 +1,6 @@
 services:
   cf-tunnel:
-    image: cloudflare/cloudflared:2026.8.2
+    image: cloudflare/cloudflared:2026.8.3
     container_name: cf-tunnel
     restart: unless-stopped
     command: tunnel --no-autoupdate run
