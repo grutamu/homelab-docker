@@ -1,6 +1,6 @@
 services:
   sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:5.1.2
+    image: lscr.io/linuxserver/sabnzbd:5.1.3
     container_name: sabnzbd
     restart: unless-stopped
     volumes:
@@ -21,7 +21,7 @@ services:
       - proxy
 
   plex:
-    image: lscr.io/linuxserver/plex:1.43.3
+    image: lscr.io/linuxserver/plex:1.43.4
     container_name: plex
     restart: unless-stopped
 # Add Configurations for GPU Hardware Rendering Here:
@@ -203,7 +203,7 @@ services:
       - proxy
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr:3.27.0
+    image: ghcr.io/maintainerr/maintainerr:3.28.0
     container_name: maintainerr
     restart: unless-stopped
     user: 1000:1000
