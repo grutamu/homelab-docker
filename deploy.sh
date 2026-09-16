@@ -225,11 +225,22 @@ deploy() {
         docker compose -f "$compose" up -d "${build_flag[@]}"
         restart_frigate_if_config_changed "$cfg_before" "$cfg_after" "$frigate_before"
     elif [ "$stack" = "mediaserver" ]; then
+        # Written into recyclarr's data dir rather than into the repo, because
+        # the data dir is already bind-mounted as a *directory*. The repo copy
+        # used to be bind-mounted as a single file, which pins an inode at
+        # container creation while `op inject -f` replaces the file — so the
+        # container kept reading the old unlinked inode and config changes
+        # never landed. See the comment in mediaserver/docker-compose.yaml.
+        #
+        # No restart needed afterwards, unlike frigate: the container runs
+        # supercronic and each scheduled run execs a fresh `recyclarr sync`
+        # that re-reads the config, so a change is picked up on the next run.
+        local rc_cfg="/docker-data/recyclarr/recyclarr.yml"
         op inject -i "$REPO/mediaserver/recyclarr/recyclarr.yml.tpl" \
-                  -o "$REPO/mediaserver/recyclarr/recyclarr.yml" -f
+                  -o "$rc_cfg" -f
         # recyclarr runs as uid 1000; op inject writes 0600 root, so hand
         # the resolved config to the container user (still not world-readable)
-        chown 1000:1000 "$REPO/mediaserver/recyclarr/recyclarr.yml"
+        chown 1000:1000 "$rc_cfg"
         docker compose -f "$compose" up -d "${build_flag[@]}"
     elif [ -f "$env_tpl" ]; then
         op run --env-file="$env_tpl" -- docker compose -f "$compose" up -d "${build_flag[@]}"

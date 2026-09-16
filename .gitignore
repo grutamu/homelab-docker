@@ -19,7 +19,10 @@ acme.json
 # Frigate resolved config (contains camera credentials)
 frigate/config/config.yml
 
-# Recyclarr resolved config (contains Sonarr/Radarr API keys)
+# Recyclarr resolved config (contains Sonarr/Radarr API keys). deploy.sh now
+# injects this into /docker-data/recyclarr/ instead, so nothing should write
+# here any more — kept so a leftover copy on an existing checkout, or a
+# hand-run `op inject` into the old path, still cannot be committed.
 mediaserver/recyclarr/recyclarr.yml
 
 # Deploy marker — per-host state (last SHA docker01 finished deploying),
