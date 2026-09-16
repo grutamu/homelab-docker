@@ -225,17 +225,18 @@ deploy() {
         docker compose -f "$compose" up -d "${build_flag[@]}"
         restart_frigate_if_config_changed "$cfg_before" "$cfg_after" "$frigate_before"
     elif [ "$stack" = "mediaserver" ]; then
-        # Written into recyclarr's data dir rather than into the repo, because
-        # the data dir is already bind-mounted as a *directory*. The repo copy
-        # used to be bind-mounted as a single file, which pins an inode at
-        # container creation while `op inject -f` replaces the file — so the
-        # container kept reading the old unlinked inode and config changes
-        # never landed. See the comment in mediaserver/docker-compose.yaml.
+        # Stays inside $REPO. This script runs in the github-runner container
+        # during a CI deploy, and /root/homelab-docker is the only host path
+        # mounted into it — writing to /docker-data works over ssh but fails
+        # under CI with "No such file or directory". The compose file binds
+        # this directory (not the file) into recyclarr as /config/configs,
+        # which is where the inode problem is actually solved; see the comment
+        # there.
         #
         # No restart needed afterwards, unlike frigate: the container runs
         # supercronic and each scheduled run execs a fresh `recyclarr sync`
         # that re-reads the config, so a change is picked up on the next run.
-        local rc_cfg="/docker-data/recyclarr/recyclarr.yml"
+        local rc_cfg="$REPO/mediaserver/recyclarr/recyclarr.yml"
         op inject -i "$REPO/mediaserver/recyclarr/recyclarr.yml.tpl" \
                   -o "$rc_cfg" -f
         # recyclarr runs as uid 1000; op inject writes 0600 root, so hand
