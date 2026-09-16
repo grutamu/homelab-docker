@@ -30,6 +30,13 @@ model:
   path: /openvino-model/ssdlite_mobilenet_v2.xml
   labelmap_path: /openvino-model/coco_91cl_bkgr.txt
 
+# Must be set explicitly. DetectConfig.enabled defaults to False, and the only
+# thing that ever turned it on was migrate_016_0(), which ran solely because the
+# config declared an older version. Now that `version:` tracks the running
+# release, no migration runs and the default applies — so this has to be stated.
+detect:
+  enabled: true
+
 ffmpeg:
   hwaccel_args: preset-intel-qsv-h264
 
