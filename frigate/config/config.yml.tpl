@@ -184,8 +184,15 @@ cameras:
         coordinates: 0.136,0.285,0.433,0.163,0.671,0.354,0.977,0.659,0.86,1,0.221,0.997,0.161,0.676
         loitering_time: 0
 # Must match CURRENT_CONFIG_VERSION in the running image. Kept current on
-# purpose: Frigate only migrates a config it considers old, and it never writes
-# the result back here because deploy.sh re-injects this template every run. A
-# stale value means the whole migration chain replays on every single start, and
-# the file on disk silently stops matching what actually runs.
+# purpose, and bumped in the same commit as the image tag.
+#
+# A stale value means Frigate replays the whole migration chain on every start.
+# That is not just noise: migrations supply defaults, so the file stops being
+# the whole story. `detect.enabled` was set only by migrate_016_0(), and pinning
+# this to 0.18-0 turned detection off until it was stated explicitly above.
+#
+# The migrated result never persists back here either — deploy.sh regenerates
+# this file from the template on every run, so any write Frigate makes is
+# overwritten on the next deploy. Treat the template as the only source of
+# truth: whatever a migration would have supplied has to be written down.
 version: 0.18-0

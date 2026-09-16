@@ -15,10 +15,17 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /docker-data/frigate:/config
-      - type: bind
-        source: ./config/config.yml
-        target: /config/config.yml
-        # read_only: true
+      # The *directory*, not config.yml itself. A single-file bind is resolved
+      # to an inode once, at container creation. deploy.sh regenerates this file
+      # with `op inject -f`, which replaces it rather than rewriting it in place,
+      # so the new config lands on a new inode and the container keeps reading
+      # the old, now-unlinked one. Every config-only change deployed green and
+      # did nothing until some unrelated image bump recreated the container —
+      # which is how detection stayed off after #210 merged. Observed directly:
+      # host inode=12976152 (mtime 14:59) vs container inode=12976153 (14:53).
+      # A directory bind resolves each lookup at access time, so a replaced file
+      # is picked up normally.
+      - ./config:/config-src
       - nfs-frigate:/media/frigate
       - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
         target: /tmp/cache
@@ -30,8 +37,14 @@ services:
     #   - "8554:8554" # RTSP feeds
     #   - "8555:8555/tcp" # WebRTC over tcp
     #   - "8555:8555/udp" # WebRTC over udp
-    # environment:
-    #   PLUS_API_KEY: ${PLUS_API_KEY}
+    environment:
+      # Points frigate at the bind-mounted directory above instead of the
+      # default /config/config.yml. /config stays the data dir (frigate.db,
+      # model_cache, jwt secret), which is why the config cannot simply live
+      # there. Frigate, the go2rtc config generator and the ffmpeg path helper
+      # all resolve the file through find_config_file(), which reads this.
+      CONFIG_FILE: /config-src/config.yml
+      # PLUS_API_KEY: ${PLUS_API_KEY}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frigate.rule=Host(`frigate.calzone.zone`)"

@@ -86,6 +86,57 @@ reload_prometheus() {
         wget -q -O- --post-data='' http://localhost:9090/-/reload >/dev/null
 }
 
+# The same class of problem as prometheus, one layer deeper. Frigate's config is
+# a bind mount, so editing it changes no part of the container spec, `compose
+# up -d` leaves the running container alone, and frigate reads the file once at
+# startup with no reload endpoint or signal. A config-only change deploys green
+# and does nothing.
+#
+# Until 2026-09-16 it was worse than inert. The config was bound as a single
+# *file*, which docker resolves to an inode at container creation, and the
+# `op inject -f` below replaces the file rather than rewriting it in place. The
+# container went on reading the old, unlinked inode, so a config change could
+# not take effect even across a restart — only a full recreate rebound it. The
+# compose file now binds the directory, which fixes visibility; this is the
+# other half, making a visible change actually take effect.
+#
+# Restart rather than reload because there is nothing to reload — there is no
+# POST /-/reload. That also sidesteps the SIGHUP race described above: a restart
+# stops and starts the container cleanly rather than signalling a process that
+# may still be coming up.
+#
+# Conditional on the content actually changing, so a full `deploy.sh` with no
+# arguments does not bounce frigate every run, and skipped when compose already
+# recreated the container — the same StartedAt test reload_prometheus uses.
+frigate_started_at() {
+    docker inspect -f '{{if .State.Running}}{{.State.StartedAt}}{{end}}' \
+        frigate 2>/dev/null || true
+}
+
+restart_frigate_if_config_changed() {
+    local before_sum=$1 after_sum=$2 before_start=$3 after_start
+
+    if [ "$before_sum" = "$after_sum" ]; then
+        echo "    frigate config unchanged — no restart needed"
+        return
+    fi
+
+    after_start=$(frigate_started_at)
+
+    if [ -z "$after_start" ]; then
+        echo "    frigate is not running — skipping restart"
+        return
+    fi
+
+    if [ "$before_start" != "$after_start" ]; then
+        echo "    frigate was recreated — new config already loaded"
+        return
+    fi
+
+    echo "    frigate config changed — restarting to apply it"
+    docker restart frigate >/dev/null
+}
+
 # Block until 1Password Connect is answering. Starting the container is not the
 # same as it being ready, and every `op run`/`op inject` below depends on it --
 # without this, a cold boot races and each subsequent stack fails one by one.
@@ -163,9 +214,16 @@ deploy() {
         docker compose -f "$compose" up -d "${build_flag[@]}"
         wait_for_connect
     elif [ "$stack" = "frigate" ]; then
-        op inject -i "$REPO/frigate/config/config.yml.tpl" \
-                  -o "$REPO/frigate/config/config.yml" -f
+        local cfg="$REPO/frigate/config/config.yml"
+        local cfg_before="" cfg_after frigate_before
+        if [ -f "$cfg" ]; then
+            cfg_before=$(sha256sum "$cfg" | cut -d' ' -f1)
+        fi
+        op inject -i "$REPO/frigate/config/config.yml.tpl" -o "$cfg" -f
+        cfg_after=$(sha256sum "$cfg" | cut -d' ' -f1)
+        frigate_before=$(frigate_started_at)
         docker compose -f "$compose" up -d "${build_flag[@]}"
+        restart_frigate_if_config_changed "$cfg_before" "$cfg_after" "$frigate_before"
     elif [ "$stack" = "mediaserver" ]; then
         op inject -i "$REPO/mediaserver/recyclarr/recyclarr.yml.tpl" \
                   -o "$REPO/mediaserver/recyclarr/recyclarr.yml" -f
