@@ -153,19 +153,30 @@ services:
     container_name: recyclarr
     restart: unless-stopped
     volumes:
-      # Config is managed in git as recyclarr/recyclarr.yml.tpl; deploy.sh
-      # injects it straight into this directory as recyclarr.yml, which
-      # RECYCLARR_CONFIG_DIR (/config) picks up.
-      #
-      # Deliberately not a single-file bind of the resolved config. Docker
-      # resolves a single-file bind to an inode once, at container creation,
-      # and deploy.sh regenerates the file with `op inject -f`, which replaces
-      # it rather than rewriting in place. The container then reads the old
-      # unlinked inode forever — not even a restart rebinds it. Measured before
-      # this change: host inode=12846567 (mtime 09-12) vs container
-      # inode=12846452 (mtime 09-04). Writing into the directory bind that
-      # already exists avoids the problem entirely.
       - /docker-data/recyclarr:/config
+      # The repo's recyclarr *directory*, not the resolved file itself, mounted
+      # where recyclarr auto-loads extra config (/config/configs/*.yml, non
+      # recursive — recyclarr.yml.tpl is ignored, it does not match the glob).
+      #
+      # A single-file bind of the resolved config is what this replaces. Docker
+      # pins a single-file bind to an inode at container creation, and deploy.sh
+      # regenerates the file with `op inject -f`, which replaces it rather than
+      # rewriting in place — so the container read the old unlinked inode
+      # forever, and not even a restart rebound it. Measured before the change:
+      # host inode=12846567 (mtime 09-12) vs container inode=12846452 (09-04).
+      # A directory bind resolves each lookup at access time.
+      #
+      # /config cannot hold the resolved config instead: deploy.sh runs inside
+      # the github-runner container during a CI deploy and cannot write to
+      # /docker-data from there.
+      #
+      # NOTE: /docker-data/recyclarr/recyclarr.yml must not exist. recyclarr
+      # loads the config-dir root *and* configs/ together, and with the same
+      # instances defined twice it silently resolves to nothing — "Found 0
+      # config files with 0 Radarr and 0 Sonarr instances", no error. It was
+      # deleted when this landed; nothing recreates it (RECYCLARR_CREATE_CONFIG
+      # is false).
+      - ./recyclarr:/config/configs
       - /etc/localtime:/etc/localtime:ro
     networks:
       - proxy
