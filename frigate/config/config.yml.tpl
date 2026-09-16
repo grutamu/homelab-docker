@@ -46,9 +46,13 @@ snapshots:
 
 record:
   enabled: true
-  retain:
+  # 0.17 split the old `retain: {days, mode}` into separate continuous/motion
+  # retention, and dropped `mode` from each. The old `mode: all` kept 3 days of
+  # both, so both are set to 3 here to preserve the previous behaviour exactly.
+  continuous:
     days: 3
-    mode: all
+  motion:
+    days: 3
   alerts:
     retain:
       days: 30
@@ -118,7 +122,6 @@ go2rtc:
 cameras:
   frigate_frontdoor:
     ffmpeg:
-      hwaccel_args: preset-intel-qsv-h264
       inputs:
         - path: rtsp://localhost:8554/frigate_frontdoor_lq
           input_args: preset-rtsp-restream
@@ -133,7 +136,6 @@ cameras:
 
   frigate_packagecam:
     ffmpeg:
-      hwaccel_args: preset-intel-qsv-h264
       inputs:
         - path: rtsp://localhost:8554/frigate_packagecam
           input_args: preset-rtsp-restream
@@ -145,7 +147,6 @@ cameras:
 
   frigate_garage:
     ffmpeg:
-      hwaccel_args: preset-intel-qsv-h264
       inputs:
         - path: rtsp://localhost:8554/frigate_garage_lq
           input_args: preset-rtsp-restream
@@ -160,7 +161,6 @@ cameras:
 
   frigate_front:
     ffmpeg:
-      hwaccel_args: preset-intel-qsv-h264
       inputs:
         - path: rtsp://localhost:8554/frigate_front_lq
           input_args: preset-rtsp-restream
@@ -176,4 +176,9 @@ cameras:
       driveway:
         coordinates: 0.136,0.285,0.433,0.163,0.671,0.354,0.977,0.659,0.86,1,0.221,0.997,0.161,0.676
         loitering_time: 0
-version: 0.15-1
+# Must match CURRENT_CONFIG_VERSION in the running image. Kept current on
+# purpose: Frigate only migrates a config it considers old, and it never writes
+# the result back here because deploy.sh re-injects this template every run. A
+# stale value means the whole migration chain replays on every single start, and
+# the file on disk silently stops matching what actually runs.
+version: 0.18-0
