@@ -86,9 +86,10 @@
       "groupName": "netbox stack"
     },
     {
-      "description": "Group all frigate updates",
+      "description": "Require manual review for frigate. Every minor rewrites the config schema (0.17 replaced record.retain, 0.18 reworked genai/masks) and the config models are extra=forbid, so a bad bump means the stack won't start. 0.x tags make those minors, not majors, so the global major rule never catches them. config/config.yml.tpl's `version:` must be hand-migrated in the same PR.",
       "matchFileNames": ["frigate/**"],
-      "groupName": "frigate stack"
+      "groupName": "frigate stack",
+      "automerge": false
     },
     {
       "description": "Group 1Password Connect updates",

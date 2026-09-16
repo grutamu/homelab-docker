@@ -2,12 +2,15 @@ services:
   frigate:
     container_name: frigate
     restart: unless-stopped
-    image: ghcr.io/blakeblackshear/frigate:stable
+    # Pinned, not `:stable`. Every Frigate minor rewrites the config schema and
+    # the models are extra="forbid", so an unattended jump can leave the stack
+    # refusing to start. Bumping this is a reviewable commit, and the version in
+    # config/config.yml.tpl has to move with it.
+    image: ghcr.io/blakeblackshear/frigate:0.18.0
     shm_size: "450mb" # update for your cameras based on calculation above
     devices:
-      - /dev/bus/usb:/dev/bus/usb # Passes the USB Coral, needs to be modified for other versions
-      # - /dev/apex_0:/dev/apex_0 # Passes a PCIe Coral, follow driver instructions here https://coral.ai/docs/m2/get-started/#2a-on-linux
-      # - /dev/video11:/dev/video11 # For Raspberry Pi 4B
+      # No Coral here — detection is OpenVINO on the Intel iGPU, so renderD128
+      # is the only device needed.
       - /dev/dri/renderD128:/dev/dri/renderD128 # For intel hwaccel, needs to be updated for your hardware
     volumes:
       - /etc/localtime:/etc/localtime:ro
