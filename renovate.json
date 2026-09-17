@@ -76,6 +76,11 @@
       "groupName": "mediaserver stack"
     },
     {
+      "description": "Group gluetun and qBittorrent — qBittorrent runs inside gluetun's network namespace, so the pair is recreated together anyway.",
+      "matchFileNames": ["torrent/**"],
+      "groupName": "torrent stack"
+    },
+    {
       "description": "Group all paperless updates",
       "matchFileNames": ["paperless/**"],
       "groupName": "paperless stack"
