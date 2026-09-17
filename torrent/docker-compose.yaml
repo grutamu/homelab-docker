@@ -16,7 +16,9 @@ services:
       VPN_TYPE: openvpn
       OPENVPN_USER:
       OPENVPN_PASSWORD:
-      SERVER_COUNTRIES: United States
+      # Privado names it USA; "United States" fails validation and gluetun
+      # exits before connecting.
+      SERVER_COUNTRIES: USA
     volumes:
       # Cached server list, so a restart doesn't have to re-download it.
       - /docker-data/gluetun:/gluetun
