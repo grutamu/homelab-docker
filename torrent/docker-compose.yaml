@@ -1,0 +1,78 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:v3.41.3
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      # Provider and server selection aren't secret, so they live here; only the
+      # account credentials come from 1Password (see .env.tpl). If the provider
+      # changes, check gluetun's wiki for its env vars — some are WireGuard-only
+      # and take WIREGUARD_PRIVATE_KEY/WIREGUARD_ADDRESSES instead.
+      VPN_SERVICE_PROVIDER: privado
+      VPN_TYPE: openvpn
+      OPENVPN_USER:
+      OPENVPN_PASSWORD:
+      SERVER_COUNTRIES: United States
+    volumes:
+      # Cached server list, so a restart doesn't have to re-download it.
+      - /docker-data/gluetun:/gluetun
+      - /etc/localtime:/etc/localtime:ro
+    # No host ports. qBittorrent's web UI is reached through Traefik and the
+    # proxy network, and its peer port only matters on the VPN side — publishing
+    # 6881 on docker01 would accept connections that never reach the tunnel.
+    labels:
+      # qBittorrent shares this container's network namespace, so its router
+      # lives here: Traefik only sees gluetun's address.
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.calzone.zone`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=https"
+      - "traefik.http.routers.qbittorrent.tls=true"
+      - "traefik.http.routers.qbittorrent.middlewares=pocket-id-auth@file"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
+    networks:
+      - proxy
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:5.2.3
+    container_name: qbittorrent
+    restart: unless-stopped
+    # All traffic goes through gluetun's tunnel. Gluetun's firewall is the kill
+    # switch: if the VPN drops, qBittorrent has no route out.
+    #
+    # Radarr/Sonarr reach the web API at gluetun:8080 over the proxy network —
+    # not https://qbittorrent.calzone.zone, which sits behind pocket-id forward
+    # auth that an API client can't complete.
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+        # Recreating gluetun leaves this container attached to a namespace that
+        # no longer exists; restart it along with gluetun.
+        restart: true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - WEBUI_PORT=8080
+    volumes:
+      - /docker-data/qbittorrent:/config
+      # Same export at the same path as sabnzbd and the arrs, so a download
+      # path qBittorrent reports resolves identically in radarr/sonarr and
+      # imports can hardlink. Set the default save path to /media/torrents.
+      - nfs-media:/media
+      - /etc/localtime:/etc/localtime:ro
+
+volumes:
+  nfs-media:
+    driver_opts:
+      type: "nfs"
+      o: "addr=truenas.calzone.zone,nolock,soft,nfsvers=4"
+      device: ":/mnt/hdd-pool/media"
+
+networks:
+  proxy:
+    external: true

@@ -31,7 +31,7 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 #              attach to as external, so it has to exist before they start.
 #   backup     last. It attaches to other stacks' networks as external.
 STACKS=(1password traefik infra monitoring pocket-id
-        mediaserver immich paperless frigate netbox
+        mediaserver torrent immich paperless frigate netbox
         audiobookshelf mealie portainer grimmory
         minio mcpjungle hermes-agent backup adguard-sync)
 
