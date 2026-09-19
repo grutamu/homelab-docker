@@ -33,7 +33,7 @@ services:
 
   grimmory:
     container_name: grimmory
-    image: ghcr.io/grimmory-tools/grimmory:v3.3.3
+    image: ghcr.io/grimmory-tools/grimmory:v3.4.1
     restart: unless-stopped
     depends_on:
       grimmory-mariadb:
