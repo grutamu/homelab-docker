@@ -182,7 +182,7 @@ services:
       - proxy
 
   bazarr:
-    image: lscr.io/linuxserver/bazarr:1.6.1
+    image: lscr.io/linuxserver/bazarr:1.6.2
     container_name: bazarr
     restart: unless-stopped
     volumes:
