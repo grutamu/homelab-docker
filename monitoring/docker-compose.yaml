@@ -52,7 +52,7 @@ services:
       - proxy
     
   grafana:
-    image: grafana/grafana:13.2.2
+    image: grafana/grafana:13.2.3
     container_name: grafana
     restart: unless-stopped
     user: "472"
@@ -124,7 +124,7 @@ services:
       - proxy
 
   alloy:
-    image: grafana/alloy:v1.20.0
+    image: grafana/alloy:v1.20.1
     container_name: alloy
     restart: unless-stopped
     command:
