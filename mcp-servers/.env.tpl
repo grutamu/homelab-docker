@@ -36,9 +36,15 @@ ADGUARD_URL=op://docker/mcp-servers/ADGUARD_URL
 ADGUARD_USERNAME=op://docker/mcp-servers/ADGUARD_USERNAME
 ADGUARD_PASSWORD=op://docker/mcp-servers/ADGUARD_PASSWORD
 
+# Pocket ID — admin API key (Pocket ID has no scoped keys). The server runs
+# read-only, but the key itself can do anything: give it an expiry and rotate.
+POCKET_ID_URL=op://docker/mcp-servers/POCKET_ID_URL
+POCKET_ID_API_KEY=op://docker/mcp-servers/POCKET_ID_API_KEY
+
 # What the portal presents to each server. The same values are stored on the
 # portal's server definitions; rotating one means updating both (see readme.md).
 GRAFANA_MCP_AUTH_TOKEN=op://docker/mcp-servers/GRAFANA_MCP_AUTH_TOKEN
 NETBOX_MCP_AUTH_TOKEN=op://docker/mcp-servers/NETBOX_MCP_AUTH_TOKEN
 PROXMOX_RO_MCP_API_KEY=op://docker/mcp-servers/PROXMOX_RO_MCP_API_KEY
 HA_MCP_SECRET_PATH=op://docker/mcp-servers/HA_MCP_SECRET_PATH
+POCKET_ID_MCP_HTTP_TOKEN=op://docker/mcp-servers/POCKET_ID_MCP_HTTP_TOKEN

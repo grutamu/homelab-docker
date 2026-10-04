@@ -161,6 +161,40 @@ services:
       mcp-servers:
         ipv4_address: 172.30.100.15
 
+  pocket-id-mcp:
+    <<: *common
+    container_name: pocket-id-mcp
+    # Built from a pinned upstream commit, not the published image. The only
+    # release (0.1.0, ghcr `latest` too) is OAuth-only; static-token auth and
+    # 50+ commits of fixes are on main, unreleased. Upstream's own two-stage
+    # Dockerfile (cargo build --locked, non-root alpine runtime).
+    #
+    # To bump: change the SHA in BOTH lines. The image tag carrying the SHA is
+    # what makes `compose up -d` rebuild — it only builds when the tag is
+    # absent. Renovate can't see this; switch back to ghcr.io/vplme/pocket-id-mcp
+    # once a release includes HTTP_AUTH=token.
+    build: https://github.com/vplme/pocket-id-mcp.git#a0545e1d63e6b61084d9709397c691f613fd9eb9
+    image: pocket-id-mcp:a0545e1
+    mem_limit: 128m
+    environment:
+      POCKET_ID_MCP_TRANSPORT: http
+      # Bind the container's own address, not 0.0.0.0: the server's Host-header
+      # check (DNS-rebinding protection) accepts loopback plus the bind host,
+      # and the portal connects by this IP.
+      POCKET_ID_MCP_HTTP_BIND: 172.30.100.16:8756
+      POCKET_ID_MCP_HTTP_AUTH: token
+      POCKET_ID_MCP_HTTP_TOKEN: ${POCKET_ID_MCP_HTTP_TOKEN}
+      # Read tools only (33 of 91). Pocket ID is the SSO for everything behind
+      # pocket-id-auth@file, and its API key is all-or-nothing admin — through
+      # an internet-facing portal, nothing here should be able to create users,
+      # OIDC clients or group memberships. ALLOW_DANGEROUS stays unset too.
+      POCKET_ID_MCP_READ_ONLY: "true"
+      POCKET_ID_URL: ${POCKET_ID_URL}
+      POCKET_ID_API_KEY: ${POCKET_ID_API_KEY}
+    networks:
+      mcp-servers:
+        ipv4_address: 172.30.100.16
+
 networks:
   mcp-servers:
     external: true
