@@ -66,22 +66,11 @@ services:
       HERMES_DASHBOARD_PUBLIC_URL: https://hermes.calzone.zone
 
       # ── Secrets (op run passthrough — see .env.tpl) ───────────────────
-      # Bearer token for the MCPJungle gateway. config.yaml interpolates it
-      # as ${MCP_HOMELAB_API_KEY}; passing it here keeps it out of the data
-      # dir's .env, which the dashboard can display.
-      # Minted 2026-08-27 as the `hermes-default` MCPJungle client, allowed
-      # proxmox,unifi_network,home_assistant,grafana,adguard,netbox — full
-      # parity with what the removed install's default profile could reach,
-      # chosen deliberately.
-      #
-      # That allow-list is the ONLY enforced boundary on this agent. It carries
-      # the full-Administrator `proxmox` credential and UniFi's unifi_execute
-      # (~200 tools behind one entry point, firewall deletion included), and
-      # unlike the removed install there is no versioned SOUL.md above it
-      # telling the agent never to infer approval for a destructive action.
-      # Narrow the client — delete + recreate, which issues a new token — if
-      # that trade stops being worth it.
-      MCP_HOMELAB_API_KEY:
+      # No homelab MCP credential while the agent is unused. MCPJungle (and
+      # its `hermes-default` bearer token) was removed on 2026-10-03; tools
+      # now come from the Cloudflare MCP portal, which a non-interactive
+      # client reaches with an Access service token. To wire it back up see
+      # readme.md → "Wiring up the homelab tools".
 
       # GITHUB_TOKEN is commented out in .env.tpl — no value exists for it yet.
       # Uncomment both together. See .env.tpl for why the old PAT wasn't reused.

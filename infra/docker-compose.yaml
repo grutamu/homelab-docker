@@ -8,7 +8,19 @@ services:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     networks:
       - proxy
+      - mcp-servers
 
 networks:
   proxy:
     external: true
+  # The only way into the mcp-servers stack. The Cloudflare MCP portal reaches
+  # each server through this tunnel via a private CIDR route for this subnet
+  # (warp-routing is on in the remotely-managed tunnel config), so the subnet
+  # is fixed and the servers have static addresses — the portal's server URLs
+  # are those IPs. Owned here rather than by mcp-servers because infra deploys
+  # first and cf-tunnel has to join it; mcp-servers attaches as external.
+  mcp-servers:
+    name: mcp-servers
+    ipam:
+      config:
+        - subnet: 172.30.100.0/24

@@ -11,21 +11,15 @@
 # specialist profiles, so DISCORD_BOT_TOKEN and the three MCP_*_API_KEYs that
 # scoped the sub-agents are gone.
 
-# Bearer token for the MCPJungle gateway at https://mcp.calzone.zone/mcp.
-# config.yaml references it as ${MCP_HOMELAB_API_KEY}.
+# Homelab MCP tools — not wired up while the agent is unused. When it is, these
+# are an Access service token for the MCP portal (see readme.md):
 #
-# This needs a *new* MCPJungle client — the previous install shared the
-# `claude-code` client's token, which is still registered but belongs to a
-# different consumer. Mint a dedicated one so revoking the agent's access does
-# not also cut off Claude Code:
+#   CF_ACCESS_CLIENT_ID=op://docker/hermes-agent/CF_ACCESS_CLIENT_ID
+#   CF_ACCESS_CLIENT_SECRET=op://docker/hermes-agent/CF_ACCESS_CLIENT_SECRET
 #
-#   mcpjungle --registry https://mcp.calzone.zone \
-#     create mcp-client hermes-default --allow "<server>,<server>"
-#
-# The token prints once. Store it on the `hermes-agent` item, never in the data
-# dir's .env — see the note at the top of this file. Editing a client's --allow
-# list later means delete + recreate, which issues a different token.
-MCP_HOMELAB_API_KEY=op://docker/hermes-agent/MCP_HOMELAB_API_KEY
+# Left commented: `op run` fails the whole deploy on an unresolvable reference,
+# and the fields don't exist yet. Both also need adding to the compose file's
+# `environment:` as passthrough.
 
 # GitHub PAT. Injected rather than stored so the dashboard cannot read it back
 # or hand it to the agent as editable state. Scope it to only what the agent

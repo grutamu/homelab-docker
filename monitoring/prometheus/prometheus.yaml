@@ -35,13 +35,6 @@ scrape_configs:
     static_configs:
       - targets: ['traefik:8080']
 
-  # MCPJungle exposes OTel metrics at /metrics in enterprise mode. Reachable
-  # by container name because both it and Prometheus sit on the proxy network.
-  - job_name: 'mcpjungle'
-    scrape_interval: 15s
-    static_configs:
-      - targets: ['mcpjungle:8080']
-
   # Backrest. Scraped via the backrest-metrics network alias, not `backrest` —
   # the container name collides with the backrest.calzone.zone CNAME that
   # adguard-sync publishes, which resolves to the host where 9898 isn't
@@ -113,7 +106,6 @@ scrape_configs:
           - https://audiobookshelf.calzone.zone/healthcheck
           - https://grafana.calzone.zone/api/health
           - https://requests.calzone.zone/api/v1/status
-          - https://mcp.calzone.zone/health
           - https://books.calzone.zone/api/v1/healthcheck
     relabel_configs:
       - source_labels: [__address__]

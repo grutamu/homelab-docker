@@ -107,9 +107,9 @@
       "groupName": "grimmory stack"
     },
     {
-      "description": "Require manual review for mcpjungle. It spawns upstream MCP servers as child processes with credentials, and its predecessor leaked subprocesses badly enough to OOM the host — bumps get eyes on them. Note the image tag carries a -stdio suffix Renovate must preserve; the plain tag cannot spawn stdio servers at all.",
-      "matchFileNames": ["mcpjungle/**"],
-      "groupName": "mcpjungle stack",
+      "description": "Require manual review for mcp-servers. Each container holds live credentials to a homelab control plane (Home Assistant, UniFi, Proxmox, AdGuard), several of these projects are small single-maintainer repos, and the tool surface a bump exposes goes straight to the internet-facing MCP portal — bumps get eyes on them.",
+      "matchFileNames": ["mcp-servers/**"],
+      "groupName": "mcp-servers stack",
       "automerge": false
     },
     {

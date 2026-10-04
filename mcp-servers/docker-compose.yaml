@@ -1,0 +1,168 @@
+---
+# One HTTP MCP server per upstream, fronted by the Cloudflare MCP portal at
+# mcp-portal.calzone.zone. Replaces MCPJungle — see readme.md.
+#
+# Nothing here has Traefik labels or published ports, on purpose. The only
+# path in is cf-tunnel on the `mcp-servers` network (owned by infra), which the
+# portal reaches through a private CIDR route. unifi and adguard have no auth
+# of their own, so that isolation is what protects them; every server that
+# supports a bearer token gets one as well, and the portal presents it.
+#
+# Addresses are static because they *are* the portal's server URLs. Changing
+# one means updating the server in the portal too (`cf mcp servers update`).
+#
+# Each container gets its own mem_limit. Under MCPJungle every upstream shared
+# one 2g cgroup; here a leak in one server can't starve the others.
+
+x-common: &common
+  restart: unless-stopped
+  volumes:
+    - /etc/localtime:/etc/localtime:ro
+
+services:
+  grafana-mcp:
+    <<: *common
+    container_name: grafana-mcp
+    image: grafana/mcp-grafana:2.0.0
+    mem_limit: 256m
+    # The image entrypoint hard-codes `--transport sse`; replace it rather than
+    # appending, since a second --transport would be ambiguous.
+    entrypoint:
+      - /app/mcp-grafana
+      - --transport=streamable-http
+      - --address=0.0.0.0:8000
+      # Host validation defaults to loopback only. The portal connects by IP.
+      - --allowed-hosts=172.30.100.10:8000,172.30.100.10
+      # Read-only on two levels: the service account is Viewer, and this drops
+      # the write tools. Allowing edits needs both changed — see readme.md.
+      - --disable-write
+    environment:
+      # Container name, not the Traefik hostname: this sits on `proxy` with
+      # Grafana, so it skips the proxy hop and survives Traefik being down.
+      GRAFANA_URL: ${GRAFANA_URL}
+      GRAFANA_SERVICE_ACCOUNT_TOKEN: ${GRAFANA_SERVICE_ACCOUNT_TOKEN}
+      MCP_GRAFANA_SERVER_TOKEN: ${GRAFANA_MCP_AUTH_TOKEN}
+    networks:
+      mcp-servers:
+        ipv4_address: 172.30.100.10
+      proxy:
+
+  netbox-mcp:
+    <<: *common
+    container_name: netbox-mcp
+    image: netboxlabs/netbox-mcp-server:1.2.1
+    mem_limit: 384m
+    environment:
+      TRANSPORT: http
+      HOST: 0.0.0.0
+      PORT: "8000"
+      # Must be the Traefik hostname, not the container: netbox enforces
+      # ALLOWED_HOST and returns 400 for anything else. Token is read-only
+      # ("Write enabled" unchecked in the NetBox UI).
+      NETBOX_URL: ${NETBOX_URL}
+      NETBOX_TOKEN: ${NETBOX_TOKEN}
+      MCP_AUTH_TOKEN: ${NETBOX_MCP_AUTH_TOKEN}
+    networks:
+      mcp-servers:
+        ipv4_address: 172.30.100.11
+
+  proxmox-ro-mcp:
+    <<: *common
+    container_name: proxmox-ro-mcp
+    image: ghcr.io/rekklesna/proxmoxmcp-plus:0.5.24
+    mem_limit: 384m
+    environment:
+      PROXMOX_MCP_MODE: mcp-http
+      MCP_TRANSPORT: STREAMABLE_HTTP
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8000"
+      MCP_API_KEY: ${PROXMOX_RO_MCP_API_KEY}
+      # Points the image's default config path at nothing so the loader falls
+      # back to the env vars below.
+      PROXMOX_MCP_CONFIG: /nonexistent
+      # proxmox.calzone.zone:443 via Traefik, not the node directly: Proxmox
+      # serves a self-signed cert on 8006, and this server refuses
+      # verify_ssl=false outside dev mode.
+      PROXMOX_HOST: ${PROXMOX_HOST}
+      PROXMOX_PORT: ${PROXMOX_PORT}
+      PROXMOX_VERIFY_SSL: "true"
+      # Read-only credential: privsep=1 + PVEAuditor. All 42 tools still
+      # register, delete_vm included; the API refuses the writes with 403.
+      # The full-admin token is deliberately not served through the portal.
+      PROXMOX_USER: ${PROXMOX_RO_USER}
+      PROXMOX_TOKEN_NAME: ${PROXMOX_RO_TOKEN_NAME}
+      PROXMOX_TOKEN_VALUE: ${PROXMOX_RO_TOKEN_VALUE}
+    networks:
+      mcp-servers:
+        ipv4_address: 172.30.100.12
+
+  ha-mcp:
+    <<: *common
+    container_name: ha-mcp
+    image: ghcr.io/homeassistant-ai/ha-mcp:8.6.0
+    mem_limit: 512m
+    command: ["ha-mcp-web"]
+    environment:
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8086"
+      # No bearer-token option outside OIDC mode; a high-entropy path is the
+      # credential, and the portal's server URL carries it.
+      MCP_SECRET_PATH: ${HA_MCP_SECRET_PATH}
+      HOMEASSISTANT_URL: ${HOMEASSISTANT_URL}
+      HOMEASSISTANT_TOKEN: ${HOMEASSISTANT_TOKEN}
+      ENABLE_STRICT_MANDATORY_BPS: "false"
+      HA_MCP_DISABLE_UPDATE_CHECK: "true"
+    networks:
+      mcp-servers:
+        ipv4_address: 172.30.100.13
+
+  unifi-mcp:
+    <<: *common
+    container_name: unifi-mcp
+    image: ghcr.io/sirkirby/unifi-network-mcp:0.36.2
+    mem_limit: 384m
+    environment:
+      UNIFI_MCP_HTTP_ENABLED: "true"
+      UNIFI_MCP_HTTP_TRANSPORT: streamable-http
+      UNIFI_MCP_HOST: 0.0.0.0
+      UNIFI_MCP_PORT: "3000"
+      # DNS-rebinding protection checks Host; the portal connects by IP.
+      UNIFI_MCP_ALLOWED_HOSTS: 172.30.100.14:3000,172.30.100.14
+      # Register every tool up front. The default (lazy) exposes only
+      # meta-tools, which defeats the portal's per-tool toggles.
+      UNIFI_TOOL_REGISTRATION_MODE: eager
+      # Dedicated local UniFi admin without MFA — not Ubiquiti SSO.
+      UNIFI_HOST: ${UNIFI_HOST}
+      UNIFI_USERNAME: ${UNIFI_USERNAME}
+      UNIFI_PASSWORD: ${UNIFI_PASSWORD}
+      UNIFI_VERIFY_SSL: "false"
+    networks:
+      mcp-servers:
+        ipv4_address: 172.30.100.14
+
+  adguard-mcp:
+    <<: *common
+    container_name: adguard-mcp
+    image: ghcr.io/samik081/mcp-adguard-home:0.10.0
+    mem_limit: 256m
+    # Serves MCP at `/`, not `/mcp` — `/mcp` is a 404. No auth option exists.
+    environment:
+      MCP_TRANSPORT: http
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "3000"
+      # Read-only is the *only* write barrier here: AdGuard has no scoped
+      # tokens, so this runs as the admin account adguard-sync also uses. It
+      # also keeps a model away from the rewrites adguard-sync owns.
+      ADGUARD_ACCESS_TIER: read-only
+      ADGUARD_URL: ${ADGUARD_URL}
+      ADGUARD_USERNAME: ${ADGUARD_USERNAME}
+      ADGUARD_PASSWORD: ${ADGUARD_PASSWORD}
+    networks:
+      mcp-servers:
+        ipv4_address: 172.30.100.15
+
+networks:
+  mcp-servers:
+    external: true
+  proxy:
+    external: true
