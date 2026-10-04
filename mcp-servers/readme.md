@@ -14,7 +14,8 @@ MCP client ──OAuth (Cloudflare Access, one-time PIN)──► mcp-portal.cal
                                                                 ├─ 172.30.100.12:8000/mcp  proxmox-ro-mcp
                                                                 ├─ 172.30.100.13:8086/<secret>  ha-mcp
                                                                 ├─ 172.30.100.14:3000/mcp  unifi-mcp
-                                                                └─ 172.30.100.15:3000/     adguard-mcp
+                                                                ├─ 172.30.100.15:3000/     adguard-mcp
+                                                                └─ 172.30.100.16:8756/mcp  pocket-id-mcp
 ```
 
 ```
@@ -33,7 +34,7 @@ scripts/grafana-service-account.sh   (re)mint the Viewer token for grafana-mcp
 - **Static IPs, because they are the portal's server URLs.** Changing one means
   `cf mcp servers update <id>` too.
 - **A bearer token on every server that supports one** (grafana, netbox,
-  proxmox-ro). The portal stores the same value and presents it. ha-mcp has no
+  proxmox-ro, pocket-id). The portal stores the same value and presents it. ha-mcp has no
   bearer option outside OIDC mode, so its credential is a high-entropy URL path
   (`HA_MCP_SECRET_PATH`) that is part of the portal's server URL.
 - **Per-container `mem_limit`.** Under MCPJungle every upstream was a stdio
@@ -51,7 +52,7 @@ Account `b4341433eedc051f29073ba3c6dbf9fe`, zone `calzone.zone`.
 |---|---|
 | Tunnel | `docker-01` (`b7c81b64-…`), run by `infra/cf-tunnel`, remotely managed, warp-routing on |
 | Private route | `172.30.100.0/24` → `docker-01` |
-| MCP servers | `grafana`, `netbox`, `proxmox-ro`, `home-assistant`, `unifi-network`, `adguard` — all `secure_web_gateway: true` |
+| MCP servers | `grafana`, `netbox`, `proxmox-ro`, `home-assistant`, `unifi-network`, `adguard`, `pocket-id` — all `secure_web_gateway: true` |
 | MCP portal | `homelab` on `mcp-portal.calzone.zone`, `code_mode: opt_in`, every server `on_behalf: false` |
 | DNS | `mcp-portal` CNAME → `gateway.agents.cloudflare.com`, proxied |
 | Access apps | `Homelab MCP portal` (type `mcp_portal`) + one `Homelab MCP — <server>` (type `mcp`, destination `via_mcp_server_portal`) per server |
@@ -233,6 +234,18 @@ home-assistant 77, unifi 208, adguard 29.
   and `UNIFI_TOOL_REGISTRATION_MODE=eager` — the default `lazy` exposes only
   meta-tools, which defeats the portal's per-tool toggles. Note env names
   changed from the old stdio pin (`UNIFI_NETWORK_HOST` → `UNIFI_HOST`).
+- **Pocket ID** ([`vplme/pocket-id-mcp`](https://github.com/vplme/pocket-id-mcp),
+  Rust) — **read-only** (`POCKET_ID_MCP_READ_ONLY`): 33 read tools of 91 —
+  users, groups, OIDC clients, audit logs, version/health. Writes and the
+  "dangerous" tier (user/passkey deletion, login-token minting) are not
+  registered. That matters more here than anywhere: Pocket ID is the SSO for
+  every `pocket-id-auth@file` service, and its API key is all-or-nothing admin,
+  so the key — not the tool list — is the real exposure. Give it an expiry and
+  rotate it. Binds `172.30.100.16:8756` rather than `0.0.0.0` because the
+  Host-header check accepts only loopback and the bind host. Young project
+  (first release 2026-08-15, tested upstream against Pocket ID v2.14.0) — read
+  bumps before taking them. **Built from upstream commit `a0545e1`** (see the
+  compose comment) because 0.1.0, the only release, is OAuth-only.
 - **AdGuard** — serves MCP at `/`, not `/mcp`. `ADGUARD_ACCESS_TIER=read-only`
   is the *only* write barrier (AdGuard has no scoped tokens; this is the admin
   account `adguard-sync` also uses), and it keeps a model off the rewrites
