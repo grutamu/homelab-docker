@@ -35,7 +35,7 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 STACKS=(1password traefik infra monitoring pocket-id
         mediaserver torrent immich paperless frigate netbox
         audiobookshelf mealie portainer grimmory
-        minio mcp-servers hermes-agent backup adguard-sync)
+        minio mcp-servers backup adguard-sync)
 
 if [ "${1:-}" = "--list" ]; then
     printf '%s\n' "${STACKS[@]}"

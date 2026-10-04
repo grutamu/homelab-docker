@@ -76,7 +76,7 @@ credential:
 OAuth servers sit at `status: waiting` with no tools until the first user
 authorizes them through the portal; that first grant is what syncs the tool
 list. They're `on_behalf: true`, so each user connects their own account, and
-an Access service token (e.g. Hermes) never sees them. Each still needs its own
+an Access service token never sees them. Each still needs its own
 `type: mcp` Access app like the local servers.
 
 **All four use manual OAuth (`auth_mode: manual`), not the portal's automatic
@@ -142,7 +142,7 @@ claude mcp add --transport http --scope user homelab https://mcp-portal.calzone.
 # then in Claude Code: /mcp → homelab → Authenticate
 ```
 
-**Non-interactive (hermes-agent)** — an Access **service token**, sent as two
+**Non-interactive (agents, scripts)** — an Access **service token**, sent as two
 headers. It needs a *Service Auth* policy (decision `non_identity`, include the
 token) added to the portal's Access app **and** every server's Access app;
 `Homelab owner` alone will reject it.
