@@ -57,6 +57,52 @@ Account `b4341433eedc051f29073ba3c6dbf9fe`, zone `calzone.zone`.
 | Access apps | `Homelab MCP portal` (type `mcp_portal`) + one `Homelab MCP — <server>` (type `mcp`, destination `via_mcp_server_portal`) per server |
 | Access policy | `Homelab owner` (reusable) — the two owner email addresses, 168h session |
 | Identity provider | One-time PIN |
+| Hosted MCP servers | `cloudflare-api`, `cloudflare-dns-analytics`, `cloudflare-audit-logs`, `github` (OAuth, `on_behalf: true`); `cloudflare-docs` (unauthenticated) — see below |
+
+### Hosted servers on the same portal
+
+Not everything on the portal runs here. These are public, vendor-hosted MCP
+servers added directly to `homelab` — no container, no tunnel, no stored
+credential:
+
+| Server id | URL | Auth |
+|---|---|---|
+| `cloudflare-api` | `https://mcp.cloudflare.com/mcp` | per-user OAuth, read-only scopes — acts as the signed-in user |
+| `cloudflare-dns-analytics` | `https://dns-analytics.mcp.cloudflare.com/mcp` | per-user OAuth |
+| `cloudflare-audit-logs` | `https://auditlogs.mcp.cloudflare.com/mcp` | per-user OAuth |
+| `cloudflare-docs` | `https://docs.mcp.cloudflare.com/mcp` | none |
+| `github` | `https://api.githubcopilot.com/mcp/` | per-user OAuth — acts as the signed-in GitHub user |
+
+OAuth servers sit at `status: waiting` with no tools until the first user
+authorizes them through the portal; that first grant is what syncs the tool
+list. They're `on_behalf: true`, so each user connects their own account, and
+an Access service token (e.g. Hermes) never sees them. Each still needs its own
+`type: mcp` Access app like the local servers.
+
+**All four use manual OAuth (`auth_mode: manual`), not the portal's automatic
+registration** — a server the portal can't register a client for is silently
+left off the connect screen, with no error anywhere. What it took:
+
+- `auth_credentials` is a **JSON-encoded string**, not an object (`[7001]
+  Expected string, received object`), and with `--body` the CLI's
+  `--client-secret` flag is ignored — put `client_secret` inside the body.
+- Manual mode requires a `client_secret`, so the client must be confidential.
+- Redirect URI is the shared callback
+  `https://oauth-callbacks.cloudflareaccess.com/cdn-cgi/access/outbound-oauth-callback`,
+  with `is_shared_oauth_callback_enabled: true`.
+- **GitHub**: no dynamic client registration. A GitHub OAuth App (owner's
+  account, client id `Ov23liKJeZJ5qoaN9uPH`) with that callback; scopes
+  `repo read:org read:user notifications`.
+- **Cloudflare**: they do support registration, but the portal's own attempt
+  never produced a connectable server. Clients were registered by hand against
+  each server's `/register` with `token_endpoint_auth_method:
+  client_secret_basic` — `client_secret_post` fails the token exchange with
+  "invalid client". `cloudflare-api` requests only the `*.read` scopes (+
+  `user:read account:read offline_access`); widening it means re-registering.
+
+To rotate one of these secrets, re-register (Cloudflare) or regenerate in the
+GitHub OAuth App, then `cf mcp servers update <id>` with the full body,
+`client_secret` included — the update is a PUT, so omitted fields are dropped.
 
 Things the API does **not** do that the dashboard does — if you ever recreate
 this by hand:
