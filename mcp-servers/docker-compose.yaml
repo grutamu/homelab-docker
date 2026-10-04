@@ -184,11 +184,13 @@ services:
       POCKET_ID_MCP_HTTP_BIND: 172.30.100.16:8756
       POCKET_ID_MCP_HTTP_AUTH: token
       POCKET_ID_MCP_HTTP_TOKEN: ${POCKET_ID_MCP_HTTP_TOKEN}
-      # Read tools only (33 of 91). Pocket ID is the SSO for everything behind
-      # pocket-id-auth@file, and its API key is all-or-nothing admin — through
-      # an internet-facing portal, nothing here should be able to create users,
-      # OIDC clients or group memberships. ALLOW_DANGEROUS stays unset too.
-      POCKET_ID_MCP_READ_ONLY: "true"
+      # Read + write (opened 2026-10-03 to manage Pocket ID from the portal,
+      # e.g. the Cloudflare Access OIDC client). Pocket ID is the SSO for
+      # everything behind pocket-id-auth@file: anyone through the portal can
+      # now create users, OIDC clients and group memberships. Set "true" to go
+      # back to the 38 read tools. ALLOW_DANGEROUS (user/passkey deletion,
+      # login-token minting) stays unset.
+      POCKET_ID_MCP_READ_ONLY: "false"
       POCKET_ID_URL: ${POCKET_ID_URL}
       POCKET_ID_API_KEY: ${POCKET_ID_API_KEY}
     networks:
