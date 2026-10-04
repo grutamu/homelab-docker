@@ -7,7 +7,7 @@ This is a **stock install** of the stack removed in #166. That one had a
 Discord gateway, five specialist sub-agent profiles with souls versioned in
 git, a kanban board they coordinated through, a sync script that pushed those
 profiles into the container, and state restored from the pre-Docker host. None
-of it came back. What is here is the container, one MCPJungle token, and an
+of it came back. What is here is the container and an
 empty data dir — the agent runs on its own defaults.
 
 ```
@@ -164,39 +164,45 @@ doctor` reporting the provider does not resolve.
 
 ## Wiring up the homelab tools
 
-A stock config knows nothing about MCPJungle — `mcp_servers` is absent from a
-fresh `config.yaml`, so injecting `MCP_HOMELAB_API_KEY` on its own gets you an
-agent with no homelab reach at all. The previous install had this in its
-restored config and never had to add it.
+**Not currently wired up** — the agent is unused. Homelab tools come from the
+Cloudflare MCP portal at `https://mcp-portal.calzone.zone/mcp` (see
+`../mcp-servers/readme.md`). MCPJungle, which the previous wiring pointed at,
+was removed on 2026-10-03; the live `config.yaml` in the data dir may still
+carry a dead `homelab` entry for `mcp.calzone.zone` — remove it with
+`hermes mcp remove homelab`.
 
-```bash
-ssh root@docker01 'printf "y\ny\n" | docker exec -i hermes-agent \
-  hermes mcp add homelab --url https://mcp.calzone.zone/mcp --auth header'
-```
+To connect it:
 
-Two prompts, hence the two `y`s: *"Does this server require authentication?"*
-and *"Enable all 210 tools?"*. **Do not run it with `</dev/null`** — the tool
-prompt EOFs to `Cancelled.` after doing all the discovery work, which looks
-like success until you check. `docker exec -i` is enough; no TTY needed.
+1. Create an Access service token and store both halves on the `hermes-agent`
+   1Password item as `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET`
+   (the secret prints once):
+   ```bash
+   cf zero-trust access service-tokens create --body '{"name":"hermes-agent","duration":"8760h"}'
+   ```
+2. Add a reusable **Service Auth** policy for it (decision `non_identity`,
+   include `{"service_token":{"token_id":…}}`) to the portal's Access app
+   **and** to every `Homelab MCP — <server>` app. The `Homelab owner` policy
+   alone rejects it.
+3. Uncomment the two lines in `.env.tpl`, add `CF_ACCESS_CLIENT_ID:` and
+   `CF_ACCESS_CLIENT_SECRET:` to the compose `environment:`, deploy.
+4. In `config.yaml` (interpolations, never literal values — the dashboard's
+   `GET /api/env` surface can read the file):
+   ```yaml
+   mcp_servers:
+     homelab:
+       url: https://mcp-portal.calzone.zone/mcp
+       headers:
+         CF-Access-Client-Id: ${CF_ACCESS_CLIENT_ID}
+         CF-Access-Client-Secret: ${CF_ACCESS_CLIENT_SECRET}
+       enabled: true
+   ```
+   Tools land on a **new session**, so restart before testing.
 
-Authentication needs no answer beyond the first `y`: the CLI finds
-`MCP_HOMELAB_API_KEY` already in the container environment and reports
-`✓ already configured`. What it writes is an interpolation, not the value:
-
-```yaml
-mcp_servers:
-  homelab:
-    url: https://mcp.calzone.zone/mcp
-    headers:
-      Authorization: Bearer ${MCP_HOMELAB_API_KEY}
-    enabled: true
-```
-
-Worth checking after any future re-add — a literal token in `config.yaml` would
-be readable through the dashboard's `GET /api/env` surface.
-
-Tools land on a **new session**, not the running one, so restart before
-testing.
+The portal shows every client the same tools — there is no per-client
+allow-list any more. Today that means read-only Proxmox, but UniFi's write
+tools (firewall deletion included) and Home Assistant's service calls are all
+reachable. If the agent should see less, give it its own portal with fewer
+servers rather than sharing `homelab`.
 
 ## Deploy
 
@@ -218,7 +224,7 @@ Acceptance, in order — each one fails differently:
 ```bash
 # model reachable, agent completes a turn
 docker exec hermes-agent hermes chat -q "Reply with exactly: HERMES ONLINE."
-# tools wired, and the gateway actually calls them
+# tools wired (only once "Wiring up the homelab tools" is done)
 docker exec hermes-agent hermes chat -q "Use the adguard tools to report the AdGuard Home version."
 # dashboard up, TLS valid, auth gate armed
 curl -s https://hermes.calzone.zone/api/status | jq '.auth_required, .auth_providers, .gateway_state'
@@ -227,28 +233,18 @@ curl -s https://hermes.calzone.zone/api/status | jq '.auth_required, .auth_provi
 
 ## Secrets
 
-`MCP_HOMELAB_API_KEY` is injected via `op run` (`.env.tpl`) rather than left in
-the data dir's `.env`. Anything in that file is listed by `GET /api/env` and
-editable through the dashboard — and by the agent. Injected env vars are not.
+Secrets are injected via `op run` (`.env.tpl`) rather than left in the data
+dir's `.env`. Anything in that file is listed by `GET /api/env` and editable
+through the dashboard — and by the agent. Injected env vars are not.
 
 The original `hermes-agent` 1Password item was **archived** when #166 removed
 this stack, and Connect cannot read an archived item. A fresh item was created
 on 2026-08-27 with a single field; the archived one is left alone as an audit
 trail.
 
-`MCP_HOMELAB_API_KEY` is a **new** `hermes-default` MCPJungle client, not the
-`claude-code` token the previous install shared — so revoking the agent does
-not also cut off Claude Code. Its `--allow` list is
-`proxmox,unifi_network,home_assistant,grafana,adguard,netbox`, full parity with
-the removed install.
-
-**That allow-list is the only enforced boundary.** The removed install layered
-a versioned `SOUL.md` on top of it telling the agent to never infer approval
-for a destructive action; a stock install has no such file. The list includes
-the full-Administrator `proxmox` credential and UniFi's `unifi_execute`, which
-fronts ~200 tools including firewall deletion — so nothing but the agent's own
-judgment stands between it and a destructive call. Narrowing the client means
-delete + recreate, which issues a different token.
+The old `MCP_HOMELAB_API_KEY` field (an MCPJungle `hermes-default` client
+token) is dead since MCPJungle's removal on 2026-10-03; it can be deleted from
+the item.
 
 `GITHUB_TOKEN` is **not set**. The archived item's 40-char PAT was not reused
 (unknown scopes, archived since 2026-08-14). Both the `.env.tpl` line and the
@@ -280,9 +276,7 @@ this host on 2026-07-25.
 
 - **Discord.** No `DISCORD_BOT_TOKEN`, no gateway. The bot application from the
   previous install may still exist in the Discord developer portal.
-- **Sub-agents and kanban.** One agent, nothing to dispatch to. The
-  `proxmox_ro` MCPJungle registration that once backed the `virt` specialist is
-  still there and still useful as a read-only Proxmox path.
+- **Sub-agents and kanban.** One agent, nothing to dispatch to.
 - **The OpenAI-compatible API server** (`:8642`). Nothing needs it — the
   dashboard and gateway talk inside the container. To turn it on, set
   `API_SERVER_ENABLED=true`, `API_SERVER_HOST=0.0.0.0`, and an `API_SERVER_KEY`

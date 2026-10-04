@@ -29,11 +29,13 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 #              cold boot, nothing else can deploy until it is live.
 #   traefik    second. It owns the `proxy` network that sixteen other stacks
 #              attach to as external, so it has to exist before they start.
+#   infra      before mcp-servers. It owns the `mcp-servers` network, which
+#              mcp-servers attaches to as external.
 #   backup     last. It attaches to other stacks' networks as external.
 STACKS=(1password traefik infra monitoring pocket-id
         mediaserver torrent immich paperless frigate netbox
         audiobookshelf mealie portainer grimmory
-        minio mcpjungle hermes-agent backup adguard-sync)
+        minio mcp-servers hermes-agent backup adguard-sync)
 
 if [ "${1:-}" = "--list" ]; then
     printf '%s\n' "${STACKS[@]}"

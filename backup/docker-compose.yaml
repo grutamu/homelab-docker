@@ -24,7 +24,6 @@ services:
       - IMMICH_DB_PASSWORD
       - NETBOX_DB_PASSWORD
       - PAPERLESS_DB_PASSWORD
-      - MCPJUNGLE_DB_PASSWORD
       - GRIMMORY_DB_PASSWORD
       - RESTIC_PASSWORD
     labels:
@@ -42,15 +41,13 @@ services:
           # Traefik host label is backrest.calzone.zone, so adguard-sync
           # publishes a CNAME with the same name as the container; the search
           # domain resolves `backrest` to the host, where 9898 is not published,
-          # and the scrape is refused. (mcpjungle avoids this only because its
-          # host is mcp.calzone.zone, which doesn't match its container name.)
+          # and the scrape is refused.
           # This alias has no DNS record, so it resolves via Docker's embedded
           # DNS to the proxy-network address.
           - backrest-metrics
       immich_immich:
       netbox_netbox:
       paperless_paperless:
-      mcpjungle_mcpjungle:
       grimmory_grimmory:
 
 volumes:
@@ -68,8 +65,6 @@ networks:
   netbox_netbox:
     external: true
   paperless_paperless:
-    external: true
-  mcpjungle_mcpjungle:
     external: true
   grimmory_grimmory:
     external: true

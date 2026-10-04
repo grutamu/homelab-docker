@@ -51,7 +51,7 @@ fi
 # Token names must be unique per service account, so count the existing ones.
 N=$(api GET "/api/serviceaccounts/$SA_ID/tokens" \
   | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
-TOKEN_NAME="mcpjungle-$((N + 1))"
+TOKEN_NAME="mcp-servers-$((N + 1))"
 
 TOKEN=$(api POST "/api/serviceaccounts/$SA_ID/tokens" \
   '{"name":"'"$TOKEN_NAME"'"}' \
@@ -60,9 +60,9 @@ TOKEN=$(api POST "/api/serviceaccounts/$SA_ID/tokens" \
 [ -n "$TOKEN" ] || { echo "token creation returned nothing" >&2; exit 1; }
 echo "created token '$TOKEN_NAME' (${#TOKEN} chars)"
 
-op item edit mcpjungle --vault docker \
+op item edit mcp-servers --vault docker \
   "GRAFANA_SERVICE_ACCOUNT_TOKEN[password]=$TOKEN" \
   "GRAFANA_URL[text]=http://grafana:3000" >/dev/null
 echo "stored GRAFANA_SERVICE_ACCOUNT_TOKEN and GRAFANA_URL in 1Password"
 echo
-echo "Now re-register the server:  ./register-servers.py grafana"
+echo "Now redeploy:  ssh root@docker01 'bash -l -c \"/root/homelab-docker/deploy.sh mcp-servers\"'"
