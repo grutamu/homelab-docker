@@ -235,9 +235,9 @@ home-assistant 77, unifi 208, adguard 29.
   meta-tools, which defeats the portal's per-tool toggles. Note env names
   changed from the old stdio pin (`UNIFI_NETWORK_HOST` → `UNIFI_HOST`).
 - **Pocket ID** ([`vplme/pocket-id-mcp`](https://github.com/vplme/pocket-id-mcp),
-  Rust) — **read-only** (`POCKET_ID_MCP_READ_ONLY`): 33 read tools of 91 —
-  users, groups, OIDC clients, audit logs, version/health. Writes and the
-  "dangerous" tier (user/passkey deletion, login-token minting) are not
+  Rust) — **read + write** since 2026-10-03 (`POCKET_ID_MCP_READ_ONLY=false`;
+  was read-only, 38 tools): users, groups, OIDC clients, audit logs. The
+  "dangerous" tier (user/passkey deletion, login-token minting) is still not
   registered. That matters more here than anywhere: Pocket ID is the SSO for
   every `pocket-id-auth@file` service, and its API key is all-or-nothing admin,
   so the key — not the tool list — is the real exposure. Give it an expiry and
