@@ -65,9 +65,57 @@ jobs:
             # re-checking untouched images across concurrent PRs exhausts that
             # for no signal — an image already on main was verified when it
             # landed. Scoping to the diff cut this roughly tenfold.
+            #
+            # Images a service *builds* (it has `build:`) never touch a
+            # registry, so a manifest lookup can only fail. For those the
+            # equivalent question is "will this build context resolve on
+            # deploy?" — checked against the context itself, below, rather
+            # than skipped.
+            BUILT=$(docker compose -f "$stack/docker-compose.yaml" config --format json 2>/dev/null \
+                      | jq -r '.services[] | select(.build) | "\(.image // "")\t\(.build.context)\t\(.build.dockerfile // "Dockerfile")"')
+
             for image in $(git diff "$BASE"...HEAD -- "$stack/docker-compose.yaml" \
                              | sed -n 's/^+[[:space:]]*image:[[:space:]]*//p' \
                              | tr -d "\"'" | sort -u); do
+              build=$(printf '%s\n' "$BUILT" | awk -F'\t' -v i="$image" '$1 == i { print $2 "\t" $3; exit }')
+              if [ -n "$build" ]; then
+                context=${build%%$(printf '\t')*}
+                dockerfile=${build#*$(printf '\t')}
+                case "$context" in
+                  http://*|https://*|git@*|git://*)
+                    # Remote git context, `repo#ref`. Fetch exactly that ref
+                    # and require the Dockerfile in it: proves the pinned
+                    # commit exists upstream and is buildable input, without
+                    # spending minutes on the build itself.
+                    repo=${context%%#*}
+                    ref=${context#*#}
+                    [ "$ref" = "$context" ] && ref=HEAD
+                    tmp=$(mktemp -d)
+                    if git -C "$tmp" init -q \
+                       && git -C "$tmp" fetch -q --depth 1 "$repo" "$ref" 2>"$tmp/err" \
+                       && git -C "$tmp" cat-file -e "FETCH_HEAD:$dockerfile" 2>/dev/null; then
+                      echo "    ok  $image (built from $repo@$ref)"
+                    else
+                      echo "::error::$stack: build context for $image does not resolve: $context ($dockerfile)"
+                      sed 's/^/        /' "$tmp/err" 2>/dev/null
+                      RC=1
+                    fi
+                    rm -rf "$tmp"
+                    ;;
+                  *)
+                    # Local context: config already resolved it to an
+                    # absolute path in this checkout.
+                    if [ -f "$context/$dockerfile" ]; then
+                      echo "    ok  $image (built from $context/$dockerfile)"
+                    else
+                      echo "::error::$stack: no $dockerfile in build context $context for $image"
+                      RC=1
+                    fi
+                    ;;
+                esac
+                continue
+              fi
+
               # An exhausted quota returns a generic failure that is easy to
               # misread as a missing tag. "Could not verify" is not "does not
               # exist" — warn, never fail, or a rate limit silently blocks
