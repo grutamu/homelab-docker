@@ -81,6 +81,12 @@
       "groupName": "torrent stack"
     },
     {
+      "description": "linuxserver/qbittorrent also publishes old Ubuntu-release tags (20.04.1, ...) that sort as 'major 20' — #224 'upgraded' 5.2.4 to a 2021 build of qBittorrent 4.3.9. Only allow real qBittorrent versions.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["lscr.io/linuxserver/qbittorrent"],
+      "allowedVersions": "<20"
+    },
+    {
       "description": "Group all paperless updates",
       "matchFileNames": ["paperless/**"],
       "groupName": "paperless stack"
