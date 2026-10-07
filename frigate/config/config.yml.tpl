@@ -68,8 +68,6 @@ go2rtc:
     frigate_front_lq: rtspx://192.168.1.1:7441/wJUTOiaAWvzFj0CX
     frigate_frontdoor_hq: rtspx://192.168.1.1:7441/aW5kuiYd6041kfpv
     frigate_frontdoor_lq: rtspx://192.168.1.1:7441/wGHaudajQAV9316J
-    frigate_patio_hq: rtspx://192.168.1.1:7441/dmTPm1QgPIo8exM3
-    frigate_patio_lq: rtspx://192.168.1.1:7441/9GU3KNq2hSW7qEuQ
     frigate_garage_hq: rtspx://192.168.1.1:7441/xnexsGcsDCI8PxZY
     frigate_garage_lq: rtspx://192.168.1.1:7441/aDWsDvkL16CmQpiB
     frigate_packagecam: rtspx://192.168.1.1:7441/mpgv0uUu622nxXTQ
@@ -101,20 +99,6 @@ cameras:
           roles:
             - detect
         - path: rtsp://localhost:8554/frigate_frontdoor_hq
-          input_args: preset-rtsp-restream
-          roles:
-            - record
-      output_args:
-        record: preset-record-ubiquiti
-
-  frigate_patio:
-    ffmpeg:
-      inputs:
-        - path: rtsp://localhost:8554/frigate_patio_lq
-          input_args: preset-rtsp-restream
-          roles:
-            - detect
-        - path: rtsp://localhost:8554/frigate_patio_hq
           input_args: preset-rtsp-restream
           roles:
             - record

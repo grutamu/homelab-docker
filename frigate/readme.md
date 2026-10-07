@@ -90,7 +90,6 @@ Every camera pulls two go2rtc streams, low-res for `detect` and high-res for
 |---|---|---|
 | `frigate_front` | 640×360 | 2688×1512 |
 | `frigate_frontdoor` | 480×360 | 1600×1200 |
-| `frigate_patio` | 640×360 | 3840×2160 |
 | `frigate_garage` | 640×360 | 2688×1512 |
 | `frigate_packagecam` | 1600×1200 | 1600×1200 |
 
@@ -111,8 +110,7 @@ they are enrichments with their own config sections.
 ## Storage
 
 Recordings go to TrueNAS over NFS (`/mnt/ssd-pool/frigate`), 3 days continuous
-plus 30 days of motion-only for alerts and detections. `frigate_patio` records
-at 4K, so it will consume noticeably more than the others.
+plus 30 days of motion-only for alerts and detections.
 
 `shm_size` is 450 MB. Frigate needs roughly
 `(w × h × 1.5 × 9 + 270480)` bytes per camera for the *detect* resolution, so
