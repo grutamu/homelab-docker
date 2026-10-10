@@ -23,7 +23,7 @@ services:
   grafana-mcp:
     <<: *common
     container_name: grafana-mcp
-    image: grafana/mcp-grafana:2.0.0
+    image: grafana/mcp-grafana:2.0.1
     mem_limit: 256m
     # The image entrypoint hard-codes `--transport sse`; replace it rather than
     # appending, since a second --transport would be ambiguous.
@@ -69,7 +69,7 @@ services:
   proxmox-ro-mcp:
     <<: *common
     container_name: proxmox-ro-mcp
-    image: ghcr.io/rekklesna/proxmoxmcp-plus:0.5.24
+    image: ghcr.io/rekklesna/proxmoxmcp-plus:v0.6.1
     mem_limit: 384m
     environment:
       PROXMOX_MCP_MODE: mcp-http
@@ -119,7 +119,7 @@ services:
   unifi-mcp:
     <<: *common
     container_name: unifi-mcp
-    image: ghcr.io/sirkirby/unifi-network-mcp:0.36.2
+    image: ghcr.io/sirkirby/unifi-network-mcp:0.37.0
     mem_limit: 384m
     environment:
       UNIFI_MCP_HTTP_ENABLED: "true"
@@ -143,7 +143,7 @@ services:
   adguard-mcp:
     <<: *common
     container_name: adguard-mcp
-    image: ghcr.io/samik081/mcp-adguard-home:0.10.0
+    image: ghcr.io/samik081/mcp-adguard-home:0.10.1
     mem_limit: 256m
     # Serves MCP at `/`, not `/mcp` — `/mcp` is a 404. No auth option exists.
     environment:
