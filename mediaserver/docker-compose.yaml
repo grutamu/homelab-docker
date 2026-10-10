@@ -149,7 +149,7 @@ services:
       - proxy
 
   recyclarr:
-    image: ghcr.io/recyclarr/recyclarr:8.7.2
+    image: ghcr.io/recyclarr/recyclarr:8.7.3
     container_name: recyclarr
     restart: unless-stopped
     volumes:
