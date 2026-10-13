@@ -81,10 +81,10 @@
       "groupName": "torrent stack"
     },
     {
-      "description": "linuxserver/qbittorrent also publishes old Ubuntu-release tags (20.04.1, ...) that sort as 'major 20' — #224 'upgraded' 5.2.4 to a 2021 build of qBittorrent 4.3.9. Only allow real qBittorrent versions.",
+      "description": "linuxserver/qbittorrent publishes legacy tags that sort as fake majors: old Ubuntu-release tags (20.04.1 — #224 'upgraded' 5.2.4 to a 2021 build of qBittorrent 4.3.9) and 14.x.x builds of qBittorrent 4.x (#248). Pin to real 5.x releases; a qBittorrent 6 move is a deliberate manual change.",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["lscr.io/linuxserver/qbittorrent"],
-      "allowedVersions": "<20"
+      "allowedVersions": "/^5\\.\\d+\\.\\d+$/"
     },
     {
       "description": "Group all paperless updates",
