@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     # Pinned, not `:stable` — bump this and the template's `version:` together.
     # See readme.md.
-    image: ghcr.io/blakeblackshear/frigate:0.18.0
+    image: ghcr.io/blakeblackshear/frigate:0.18.2
     shm_size: "450mb"
     devices:
       # OpenVINO on the Arc A310; no Coral.
