@@ -1,7 +1,7 @@
 ---
 services:
   prometheus:
-    image: prom/prometheus:v3.15.0
+    image: prom/prometheus:v3.15.1
     container_name: prometheus
     restart: unless-stopped
     extra_hosts:
@@ -101,7 +101,7 @@ services:
       - proxy
 
   blackbox_exporter:
-    image: prom/blackbox-exporter:v0.29.0
+    image: prom/blackbox-exporter:v0.29.1
     container_name: blackbox_exporter
     restart: unless-stopped
     command:
@@ -124,7 +124,7 @@ services:
       - proxy
 
   alloy:
-    image: grafana/alloy:v1.21.0
+    image: grafana/alloy:v1.21.1
     container_name: alloy
     restart: unless-stopped
     command:
