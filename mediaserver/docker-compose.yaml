@@ -21,7 +21,7 @@ services:
       - proxy
 
   plex:
-    image: lscr.io/linuxserver/plex:1.43.4
+    image: lscr.io/linuxserver/plex:1.43.5
     container_name: plex
     restart: unless-stopped
 # Add Configurations for GPU Hardware Rendering Here:
