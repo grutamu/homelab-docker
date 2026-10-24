@@ -119,7 +119,7 @@ services:
   unifi-mcp:
     <<: *common
     container_name: unifi-mcp
-    image: ghcr.io/sirkirby/unifi-network-mcp:0.39.1
+    image: ghcr.io/sirkirby/unifi-network-mcp:0.39.3
     mem_limit: 384m
     environment:
       UNIFI_MCP_HTTP_ENABLED: "true"
