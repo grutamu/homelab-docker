@@ -50,7 +50,7 @@ services:
     networks:
       - paperless
   webserver:
-    image: ghcr.io/paperless-ngx/paperless-ngx:3.3.4
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.4.0
     restart: unless-stopped
     depends_on:
       - db
