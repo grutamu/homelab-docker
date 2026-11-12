@@ -124,7 +124,7 @@ services:
       - proxy
 
   seerr:
-    image: ghcr.io/seerr-team/seerr:v3.5.1
+    image: ghcr.io/seerr-team/seerr:v3.5.2
     init: true
     container_name: seerr
     restart: unless-stopped
@@ -203,7 +203,7 @@ services:
       - proxy
 
   tautulli:
-    image: lscr.io/linuxserver/tautulli:2.18.2
+    image: lscr.io/linuxserver/tautulli:2.19.1
     container_name: tautulli
     restart: unless-stopped
     environment:
@@ -222,7 +222,7 @@ services:
       - proxy
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr:3.31.0
+    image: ghcr.io/maintainerr/maintainerr:3.32.0
     container_name: maintainerr
     restart: unless-stopped
     user: 1000:1000
